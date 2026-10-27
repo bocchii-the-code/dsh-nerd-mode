@@ -2,7 +2,7 @@
 
 Two skills and one switch. `/study` guides one concept or one task and writes nothing. `/study-plus` runs a recorded session against a dated, human-readable record of what the learner has produced. The switch makes teaching the default posture of any conversation, in any mode.
 
-Terms are defined in [GLOSSARY.md](./GLOSSARY.md). Decisions live in `docs/adr/`.
+Terms are defined in [GLOSSARY.md](../../GLOSSARY.md). Decisions live in `docs/adr/`.
 
 Status: v2 settled 2026-10-27, replacing both v1 presets. See ADR 0008. v2.1 moves the switch into the composer and renames the command to `/nerd-mode`. See ADR 0009.
 

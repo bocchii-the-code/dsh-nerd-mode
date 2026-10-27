@@ -1,11 +1,16 @@
-[![English](https://img.shields.io/badge/English-switch-d0d7de)](./README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-current-2f81f7)](./README.zh.md)
+<p align="center">
+  <img src="assets/nerd.svg" width="280" alt="手绘的书呆子，粗框眼镜，两颗门牙">
+</p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/icon-dark.svg">
-  <img src="assets/icon-light.svg" width="120" height="120" alt="Nerd Mode">
-</picture>
+<h1 align="center">Nerd Mode：dsh 学习开关</h1>
 
-# Nerd Mode：dsh 学习开关
+<hr>
+
+<p align="center"><em>一次一个概念，聊天结束后记录还在。</em></p>
+
+<p align="center">
+  <a href="./README.md"><img src="https://img.shields.io/badge/English-switch-d0d7de" alt="English"></a>
+</p>
 
 聊天里的学习通常在答案到达时就结束了：没有检验，也留不下任何东西。Nerd Mode 改的是 dsh 面对一个问题时做的事。它一步一步地教，在该做选择的地方停下来，并且能留下带日期的记录，让一个主题活过几周，而不只是一次对话。
 
@@ -149,7 +154,7 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 - 插件用 `!!js` 表达式从 `cordis.patch.yml` 加载自己的 `skills/` 目录。补丁是宿主进程代码，改之前先读。
 - 如果你改了包名，记得同步 `cordis.patch.yml` 里的 `resolve('dsh-nerd-mode/package.json')`。
 - 随包的第三方技能各自保留许可，见 [NOTICE.md](./NOTICE.md)。
-- 设计记录：[SPEC.md](./SPEC.md)、[GLOSSARY.md](./GLOSSARY.md)、`docs/adr/`。
+- 设计记录：[SPEC](./docs/specs/2026-10-27-study-plus-v2.md)、[GLOSSARY.md](./GLOSSARY.md)、`docs/adr/`。文档结构见 [docs/README.md](./docs/README.md)。
 - 在 `@deepseek-ai/dsh` 0.2.1-rc.3 和 Node 22 上测过。
 
 ## 卸载

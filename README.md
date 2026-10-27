@@ -1,11 +1,16 @@
-[![English](https://img.shields.io/badge/English-current-2f81f7)](./README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-switch-d0d7de)](./README.zh.md)
+<p align="center">
+  <img src="assets/nerd.svg" width="280" alt="A hand-drawn nerd with thick glasses and two buck teeth">
+</p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/icon-dark.svg">
-  <img src="assets/icon-light.svg" width="120" height="120" alt="Nerd Mode">
-</picture>
+<h1 align="center">Nerd Mode for DeepSeek Harness</h1>
 
-# Nerd Mode for DeepSeek Harness
+<hr>
+
+<p align="center"><em>One concept at a time, with a record that outlives the chat.</em></p>
+
+<p align="center">
+  <a href="./README.zh.md"><img src="https://img.shields.io/badge/%E4%B8%AD%E6%96%87-switch-d0d7de" alt="中文"></a>
+</p>
 
 Learning in a chat usually ends when the answer arrives: nothing is checked, and nothing survives the conversation. Nerd Mode changes what dsh does with a question. It teaches in steps, it stops where the choice matters, and it can keep a dated record, so a subject lasts weeks instead of one sitting.
 
@@ -149,7 +154,7 @@ The pill in the composer bar sends `/nerd-mode`. It sits left of Full Throttle, 
 - The plugin loads its own `skills/` folder from `cordis.patch.yml` with a `!!js` expression. Review patch changes as host-process code.
 - If you rename the package, update the `resolve('dsh-nerd-mode/package.json')` string in `cordis.patch.yml`.
 - Bundled third-party skills keep their own licenses. See [NOTICE.md](./NOTICE.md).
-- Design notes: [SPEC.md](./SPEC.md), [GLOSSARY.md](./GLOSSARY.md), `docs/adr/`.
+- Design notes: [SPEC](./docs/specs/2026-10-27-study-plus-v2.md), [GLOSSARY.md](./GLOSSARY.md), `docs/adr/`. Doc layout: [docs/README.md](./docs/README.md).
 - Tested with `@deepseek-ai/dsh` 0.2.1-rc.3 on Node 22.
 
 ## Uninstall

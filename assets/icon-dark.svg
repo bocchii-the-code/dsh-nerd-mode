@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Nerd Mode">
-  <path d="M12 112 C15 100 24 94 39 90 C35 84 32 78 29 73 C26 68 28 64 32 61 L35 58 L35 18 C35 10 39 7 44 7 C49 7 53 11 53 18 L53 49 C57 43 62 42 65 46 C69 50 66 55 63 59 L59 63 C65 60 70 61 72 65 C74 69 71 74 67 78 C63 82 62 87 63 91 C65 87 68 82 69 76 C70 68 68 61 68 52 C68 42 72 34 79 28 C87 22 98 23 105 31 C111 38 114 48 112 60 C110 75 103 85 92 89 C105 93 114 101 117 112 L117 116 L12 116 Z" fill="none" stroke="#f0f6fc" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M77 48 C77 45 80 43 84 43 L87 43 C91 43 93 46 93 50 L93 55 C93 59 90 62 86 62 L82 62 C79 62 77 59 77 56 Z M99 48 C99 45 102 43 106 43 L109 43 C113 43 115 46 115 50 L115 55 C115 59 112 62 108 62 L104 62 C101 62 99 59 99 56 Z" fill="#2f81f7" stroke="#f0f6fc" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M93 51 L99 51" fill="none" stroke="#f0f6fc" stroke-width="4" stroke-linecap="round"/>
-</svg>
