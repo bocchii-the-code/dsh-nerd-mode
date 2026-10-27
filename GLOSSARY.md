@@ -4,13 +4,21 @@ A dsh skill that runs a study session against a durable, dated record of what on
 
 ## Language
 
-**study-plus**:
-The skill that runs a study session: five-step spine, concept graph, evidence log. Invoked as `/study-plus`.
-_Avoid_: study mode, mentor, tutor
+**study** (小课):
+The guide skill. Teaches one concept or one task by guided steps, stops at a fork, and writes no record. Invoked as `/study`, or chosen by the model while Study mode is on.
+_Avoid_: quick class, mini lesson, tutorial, study mode
+
+**study-plus** (大课):
+The recorded session skill: five-step spine, concept graph, evidence log. Invoked as `/study-plus`. Always writes the four files.
+_Avoid_: study, lesson, mentor, tutor
 
 **Study mode**:
-The dsh agent preset that loads skills, including this one. Not the skill itself.
-_Avoid_: using it to mean study-plus
+The switched-on state of one conversation. It sets teaching as the default posture and the guide as the default answer shape. It is neither a preset nor a skill. The header chip prints `Nerd mode` as its display name.
+_Avoid_: using it to mean study-plus, or the former Study mode preset
+
+**Fork**:
+A point in a guided explanation where more than one route changes the result. The guide stops, states the choice, and asks one question. No rubric, no grade.
+_Avoid_: checkpoint, quiz, test
 
 **Concept**:
 A named idea with a one-line definition and prerequisite links. The unit that learner state attaches to.

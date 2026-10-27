@@ -1,21 +1,35 @@
 {
   "name": "study-plus-dsh",
-  "version": "0.1.0",
-  "description": "Study Plus preset and skills for DeepSeek Harness.",
+  "version": "0.2.0",
+  "description": "A study switch and study skills for DeepSeek Harness.",
   "license": "MIT",
   "type": "module",
   "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client.js"
+  },
   "files": [
     "lib",
+    "client.js",
     "cordis.patch.yml",
     "skills",
     "README.md",
+    "NOTICE.md",
     "LICENSE"
   ],
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
     }
+  },
+  "scripts": {
+    "test": "node --test"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

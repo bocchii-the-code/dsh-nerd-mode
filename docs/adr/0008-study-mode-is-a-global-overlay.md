@@ -1,0 +1,9 @@
+# Study mode is a global overlay, not a preset
+
+v1 shipped as an agent preset: `study-plus`, then `Study mode`, each a plugin list with its own persona. A preset is frozen at a session's first turn (`agent-preset/locked`), so a learner who is already mid-task in General mode cannot become a learner without starting again. The same teaching text exists in three places: two presets and `SPEC.md`.
+
+Study mode becomes one profile-level plugin. It registers three things: a session projection keyed `studyMode` that folds the session log, a prompt section named `study:policy` whose text is a function of that projection, and the command `/study-mode`. A client chip follows and calls the same command. Because the plugin mounts at profile level rather than inside a preset, its section reaches every agent in every preset, including presets added later. `dsh-harness-dev-context` is the shipped precedent for a global section that reads per-session state.
+
+Alternatives. Mounting the overlay inside each preset was rejected: `applyEntryPatches` indexes top-level rows and `group: true` rows only, so a third-party bundle cannot insert into a preset's `plugins`, and the profile would have to restate every preset row to get one. Shadowing `deployment:persona-prefix` with empty text was rejected as the first step: it needs an `agent/created` listener and a re-registration on every flip, and an appended section with a precedence clause carries the same authority for this use. Flipping the plugin manager's `disabled` was rejected: that is profile-wide and affects every session.
+
+Consequences. The overlay cannot delete a base mode's persona text, only outrank it, which is why the section opens with a precedence sentence. Subagents get their own session and therefore start with the switch off. The package stops being a preset bundle, so the mode picker loses both Study entries. State costs one map lookup per step and no extra model request.

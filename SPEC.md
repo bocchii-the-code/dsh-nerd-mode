@@ -1,29 +1,38 @@
-# study-plus, v1
+# Study Plus and Study, v2
 
-A dsh skill that runs a study session against a dated, human-readable record of what the learner has actually produced.
+Two skills and one switch. `/study` guides one concept or one task and writes nothing. `/study-plus` runs a recorded session against a dated, human-readable record of what the learner has produced. The switch makes teaching the default posture of any conversation, in any mode.
 
 Terms are defined in [GLOSSARY.md](./GLOSSARY.md). Decisions live in `docs/adr/`.
 
-Status: skill, junctions, and preset persona installed 2026-10-25. The preset widened the same day: three skills, delegation, a general shell, and unrestricted writes. Restart dsh, then run the acceptance test.
+Status: v2 settled 2026-10-27, replacing both v1 presets. See ADR 0008.
 
 ## Non-goals
 
-No spaced-repetition scheduler, no decay timer, no UI panel, no multi-learner, no plugin bundle. The lesson stays text plus SVG figures. A converted document and a one-page HTML explainer may support it, but neither replaces the lesson.
+No spaced-repetition scheduler, no decay timer, no multi-learner. The lesson stays text plus SVG figures. A converted document and a one-page HTML explainer may support it, but neither replaces the lesson.
+
+The switch edits text only. It never changes the tool set, so the request tool catalog and the prompt cache stay stable. The guide reads nothing and writes nothing.
 
 ## Delivery
 
 Five changes, all reversible.
 
-1. `~/.agents/skills/study-plus/SKILL.md`: the protocol. The only source of truth for the prompt.
-2. A directory junction `~/.dsh/study-skills/study-plus` pointing at that folder, the same wiring `teach` uses. No skill-root edit is needed, and adding the global root instead would load roughly 120 unrelated skills into every session.
-3. Remove the junction `~/.dsh/study-skills/tutor`. Two teaching protocols in one preset blend into neither. The `tutor` skill file is untouched and the junction can be restored.
-4. The Study mode persona in `~/.dsh/profiles/desktop/cordis.patch.yml`: point it at `/study-plus`, keep the study files in `study/<topic>/` in the workspace, and mirror the skill's teaching rules so a casual explanation keeps the same quality. Without this, the persona tells the model to load a missing skill and forbids the files a session must write.
+1. `skills/study/SKILL.md`: the guide. User-invocable, and model-invocable while the switch is on.
+2. `skills/study-plus/SKILL.md`: the recorded session. Its protocol is unchanged.
+3. `lib/index.js`: the switch. One session projection, one prompt section, one command.
+4. `cordis.patch.yml`: a profile-level row, not a preset. It also loads the bundled `skills/` folder as a provider, so the package needs no junction root.
+5. `client.js`: the header chip, loaded from the same package. Plain JavaScript, no build step.
 
-5. Three more skills join the study root as junctions: `humanizer`, `convert-documents-to-markdown`, and `answer-me-with-html`. The preset also gains `delegation`, a general shell rule, and permission to write outside the topic. The lesson format does not change. See ADR 0007.
+Two v1 artifacts go away: the `study-skills` junction root, and both Study presets in the profile. `diagram` moves into the global skill root, where its five siblings already live. See ADR 0008.
 
 `teach` stays: it is invoked explicitly as `/teach` and does not blend.
 
-Skill frontmatter mirrors `teach`, so the skill is explicit and never fires by accident:
+The recorded session mirrors `teach`, so it is explicit and never fires by accident. The guide loads by itself while the switch is on.
+
+```yaml
+name: study
+description: Guide one concept or one task in steps, stopping once at a fork. Writes no file.
+argument-hint: "<concept or task>"
+```
 
 ```yaml
 name: study-plus
@@ -31,6 +40,30 @@ description: Run one study session against a dated record of what the learner ha
 disable-model-invocation: true
 argument-hint: "<topic>, or empty to continue the last topic"
 ```
+
+## The switch
+
+One profile-level plugin, so its section reaches every agent in every preset. A preset cannot be entered after the first turn (`agent-preset/locked`), which is why the switch is not a mode.
+
+- State: a session projection keyed `studyMode`, folded from the log's `command/run` and `command/done` events. It survives compaction, resume, and fork. No new event type is written, because an unknown stored type stops the session from reopening.
+- Control: `/study-mode on` and `/study-mode off`. A bare `/study-mode` turns it on. The header chip `Nerd mode` stays visible in both states, dim when off, and sends the same command.
+- Prompt: one section named `study:policy` at order 550, after the persona and after plan policy. Its text function returns the configured block only while the session's flag is on. The block opens by stating that it outranks earlier persona and style text, because an appended section cannot delete what came before.
+- Scope: teaching applies to learning-shaped requests only. Explaining a concept, tutoring homework, walking through code, and exam preparation get the guided shape. Writing a feature, searching, editing config, and running commands get the normal answer.
+- Not changed: the tool set. The switch edits text, so the request tool catalog and the prompt cache stay stable.
+- Subagents: each runs its own session, so each starts with the switch off.
+
+## The guide (`/study`)
+
+One engine at two scales. The concept scale teaches one idea. The task scale produces one artifact, usually homework or code.
+
+- Read nothing, write nothing. The guide never opens `study/`, so it cannot know what the record says. When the learner wants a record, the answer is `/study-plus`.
+- Steps, not a wall. Order the explanation: intuition, then terms, then formal detail. Number the steps when there are more than three.
+- One fork per run. Stop at the first point where more than one route changes the result, state the choice, ask one question, and wait. Do not stop again unless the answer opens a new fork.
+- The model acts. For a task, produce the artifact and write the reason beside each step. The learner is not asked to type the code.
+- No grading. No rubric, no pass, no miss, no log. A wrong answer gets the wrong step named and the correct route shown.
+- Ending. Offer similar practice and do not impose it. Practice that needs a record belongs to `/study-plus`.
+
+Everything below describes the recorded session, `/study-plus`. The guide writes no files, so none of it applies to `/study`.
 
 ## Per-topic workspace
 
@@ -87,7 +120,7 @@ The Teach step is a lecture, not a summary.
 - Open with a title that names the idea, never the session or the date.
 - Number the headings and name each after its content.
 - No length cap. Teach until the concept is complete by the tutor's judgment, and send one message.
-- Load `writing-beats` once per session and follow its beats. The preset carries a local copy with `disable-model-invocation` removed, because the global skill is manual-only.
+- Load `writing-beats` once per session and follow its beats. The package carries a local copy with `disable-model-invocation` removed, because the global skill is manual-only.
 - Three or more symbols get a short table before the first formula.
 - A figure lives at `study/<slug>/diagrams/<name>.svg` and is referenced from the workspace root. The client escapes inline SVG, so the file must exist on disk before the message renders.
 - Every plotted point is computed with pwsh, never placed by eye.
@@ -122,17 +155,17 @@ The graph builder mixes three tiers for a better narrative, in this order of wei
 
 ## Acceptance test
 
-1. Switch to the Study mode preset and run `/study-plus Shampoo and Adam optimizers`.
-2. It offers a graph of 15-30 concepts with prerequisites and waits for approval. Edit one row to prove the gate works.
-3. Run one complete session on the first ready concept.
-4. Name a concept that has at least one unfinished prerequisite. The tutor confirms the target, writes `plan.md`, and teaches the lowest unfinished prerequisite, not the lowest-numbered concept overall.
-5. `study/shampoo-and-adam/` in the workspace contains `graph.md`, `state.md`, `log.md`, and `plan.md`, with a dated row.
-6. Start a session and stop after the lecture, before the questions. The row reads `in_process`, with no date. Restart dsh. The next session repeats the lecture and then asks the questions.
-7. After a graded session, restart dsh. `/study-plus` still resolves and the state survives.
-8. Ask for a one-page visual explainer of one concept. The tutor loads `answer-me-with-html`, writes the page, and names the path.
-9. The observable advantage over ChatGPT: it names the next concept, the reason, and the date of the evidence behind it. ChatGPT cannot name any of the three.
+1. In General mode, run `/study-mode on`. Ask a concept question. The answer walks steps and stops once at a fork. No file appears under `study/`.
+2. Ask for a small script while the switch is on. The artifact is produced, with the reason beside each step.
+3. Ask a non-learning request, such as a config edit. It is handled directly, with no teaching detour.
+4. Click the `Nerd mode` chip. It goes dim, and the next answer is back to normal.
+5. Restart dsh and reopen the session. The chip shows the state it had.
+6. Start a subagent while the switch is on. The subagent answers normally, because it has its own session.
+7. Run `/study` with the switch off. It works.
+8. Run `/study-plus <topic>`. The recorded session runs as before: graph approval, five steps, four files, a dated row.
+9. The mode picker shows no Study entries.
 
-No code means no lint or unit test. The smoke test is this run, plus a read-back of the four files to confirm the tables are intact.
+The switch needs the host services, so it has no unit test. The smoke test is this run, plus `node --check lib/index.js` and a YAML parse of `cordis.patch.yml`.
 
 ## Open risks
 
@@ -143,4 +176,7 @@ No code means no lint or unit test. The smoke test is this run, plus a read-back
 - **Workspace-local state splits the record.** The same topic studied in two folders produces two independent learner models. The files are plain markdown, so moving `study/<slug>/` is a copy, but nothing merges them.
 - **A crashed session leaves no log block.** The `in_process` row is the only trace, it is undated, and it is the one row written for the tutor's action rather than the learner's. See ADR 0005.
 - **A target can stall.** A path waits on a prerequisite the learner avoids, and nothing forces progress. The target persists until reached or cleared. See ADR 0006.
-- **The widened preset removes the tool fence.** General shell, delegation, and writes anywhere mean fetched content can reach a command or a file outside the topic. The persona's data-not-command rule is the only guard. See ADR 0007.
+- **An appended section cannot delete a persona.** The overlay outranks earlier text by declaration, not by removal. A base mode with loud contrary rules can still leak through. The defense is the precedence sentence and a base mode that does not contradict teaching.
+- **The chip widens the install surface.** A client bundle runs in the app's renderer, so a bad chip can break the header, not just a reply. It stays plain JavaScript with no build step so the review is the whole check.
+- **A subagent runs without the overlay.** Delegated research and figure work happen outside the teaching rules. That is intended, but it means a subagent can answer a learner's question in a flat voice.
+- **The switch is a declaration, not a fence.** Any tool the base mode has stays available while teaching. The data-not-command rule remains the only guard on fetched text.
