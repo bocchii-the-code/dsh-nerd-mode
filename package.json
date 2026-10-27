@@ -7,11 +7,13 @@
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./client": "./client.js"
+    "./client": "./client.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "lib",
     "client.js",
+    "assets",
     "cordis.patch.yml",
     "skills",
     "README.md",

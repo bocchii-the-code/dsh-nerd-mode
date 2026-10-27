@@ -1,5 +1,10 @@
 [![English](https://img.shields.io/badge/English-current-2f81f7)](./README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-switch-d0d7de)](./README.zh.md)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/icon-dark.svg">
+  <img src="assets/icon-light.svg" width="120" height="120" alt="Nerd Mode">
+</picture>
+
 # Nerd Mode for DeepSeek Harness
 
 Learning in a chat usually ends when the answer arrives: nothing is checked, and nothing survives the conversation. Nerd Mode changes what dsh does with a question. It teaches in steps, it stops where the choice matters, and it can keep a dated record, so a subject lasts weeks instead of one sitting.
@@ -30,7 +35,7 @@ From a local folder or tarball:
 dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ```
 
-Restart dsh. Every mode gains the `/study-mode` command and a `Nerd mode` switch in the session header. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
+Restart dsh. Every mode gains the `/nerd-mode` command and a `Nerd mode` pill in the composer bar. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
 
 ## Usage
 
@@ -111,13 +116,13 @@ An example. You are reading the Shampoo paper and hit the preconditioner. `/stud
 ### Commands
 
 ```text
-/study-mode on          teaching posture for this conversation
-/study-mode off
+/nerd-mode on           teaching posture for this conversation
+/nerd-mode off
 /study <concept or task>
 /study-plus <topic>     recorded session with the four study files
 ```
 
-The switch in the session header sends `/study-mode`. It stays visible in both states, dim when off.
+The pill in the composer bar sends `/nerd-mode`. It sits left of Full Throttle, stays visible in both states, and goes dim when off.
 
 ## What the switch does
 

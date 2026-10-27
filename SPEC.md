@@ -4,7 +4,7 @@ Two skills and one switch. `/study` guides one concept or one task and writes no
 
 Terms are defined in [GLOSSARY.md](./GLOSSARY.md). Decisions live in `docs/adr/`.
 
-Status: v2 settled 2026-10-27, replacing both v1 presets. See ADR 0008.
+Status: v2 settled 2026-10-27, replacing both v1 presets. See ADR 0008. v2.1 moves the switch into the composer and renames the command to `/nerd-mode`. See ADR 0009.
 
 ## Non-goals
 
@@ -20,7 +20,7 @@ Five changes, all reversible.
 2. `skills/study-plus/SKILL.md`: the recorded session. Its protocol is unchanged.
 3. `lib/index.js`: the switch. One session projection, one prompt section, one command.
 4. `cordis.patch.yml`: a profile-level row, not a preset. It also loads the bundled `skills/` folder as a provider, so the package needs no junction root.
-5. `client.js`: the header switch, loaded from the same package. Plain JavaScript, no build step.
+5. `client.js`: the composer toggle, loaded from the same package. Plain JavaScript, no build step.
 
 Two v1 artifacts go away: the `study-skills` junction root, and both Study presets in the profile. `diagram` moves into the global skill root, where its five siblings already live. See ADR 0008.
 
@@ -46,11 +46,20 @@ argument-hint: "<topic>, or empty to continue the last topic"
 One profile-level plugin, so its section reaches every agent in every preset. A preset cannot be entered after the first turn (`agent-preset/locked`), which is why the switch is not a mode.
 
 - State: a session projection keyed `studyMode`, folded from the log's `command/run` and `command/done` events. It survives compaction, resume, and fork. No new event type is written, because an unknown stored type stops the session from reopening.
-- Control: `/study-mode on` and `/study-mode off`. A bare `/study-mode` turns it on. The header switch `Nerd mode` stays visible in both states, dim when off, and sends the same command.
+- Control: `/nerd-mode on` and `/nerd-mode off`. A bare `/nerd-mode` turns it on. The composer toggle `Nerd mode` stays visible in both states, dim when off, and sends the same command.
 - Prompt: one section named `study:policy` at order 550, after the persona and after plan policy. Its text function returns the configured block only while the session's flag is on. The block opens by stating that it outranks earlier persona and style text, because an appended section cannot delete what came before.
 - Scope: teaching applies to learning-shaped requests only. Explaining a concept, tutoring homework, walking through code, and exam preparation get the guided shape. Writing a feature, searching, editing config, and running commands get the normal answer.
 - Not changed: the tool set. The switch edits text, so the request tool catalog and the prompt cache stay stable.
 - Subagents: each runs its own session, so each starts with the switch off.
+
+### Composer toggle
+
+The switch sits in the composer toolbar, not the session header. It registers in `conversation.input.left` with order -1, so the row reads Full access, Nerd mode, Full Throttle. The old header entry is deleted.
+
+- Shape: a 28px pill with a 16px book icon and the text `Nerd mode`, no status dot. The whole pill carries the state: muted when off, the theme's business color when on, the error color while a failed command is unresolved.
+- Click: sends `/nerd-mode on` or `/nerd-mode off` through `ctx.remote.commands.execute`. This writes a command card into the transcript, the same way a Full access change does. A second click is ignored until the first command settles.
+- Truth: the `studyMode` projection stays the only source of truth. A failed command shows the error color and never flips the pill.
+- Naming: the UI, README, glossary, and command say Nerd mode. The projection key `studyMode` and the section id `study:policy` keep their names, because stored state and the host wire schema depend on them. See ADR 0009.
 
 ## The guide (`/study`)
 
@@ -155,17 +164,17 @@ The graph builder mixes three tiers for a better narrative, in this order of wei
 
 ## Acceptance test
 
-1. In General mode, run `/study-mode on`. Ask a concept question. The answer walks steps and stops once at a fork. No file appears under `study/`.
+1. In General mode, run `/nerd-mode on`. Ask a concept question. The answer walks steps and stops once at a fork. No file appears under `study/`.
 2. Ask for a small script while the switch is on. The artifact is produced, with the reason beside each step.
 3. Ask a non-learning request, such as a config edit. It is handled directly, with no teaching detour.
-4. Click the `Nerd mode` switch. It goes dim, and the next answer is back to normal.
+4. Click the `Nerd mode` pill in the composer. It goes dim, and the next answer is back to normal.
 5. Restart dsh and reopen the session. The switch shows the state it had.
 6. Start a subagent while the switch is on. The subagent answers normally, because it has its own session.
 7. Run `/study` with the switch off. It works.
 8. Run `/study-plus <topic>`. The recorded session runs as before: graph approval, five steps, four files, a dated row.
 9. The mode picker shows no Study entries.
 
-The switch needs the host services, so it has no unit test. The smoke test is this run, plus `node --check lib/index.js` and a YAML parse of `cordis.patch.yml`.
+The switch needs the host services, so it has no end-to-end test. `test/client.test.mjs` stubs React and the slot registry, then asserts the slot name, order, label, and the command each click sends. The smoke test is this run, plus `npm test`, `node --check lib/index.js`, and a YAML parse of `cordis.patch.yml`.
 
 ## Open risks
 
@@ -177,6 +186,6 @@ The switch needs the host services, so it has no unit test. The smoke test is th
 - **A crashed session leaves no log block.** The `in_process` row is the only trace, it is undated, and it is the one row written for the tutor's action rather than the learner's. See ADR 0005.
 - **A target can stall.** A path waits on a prerequisite the learner avoids, and nothing forces progress. The target persists until reached or cleared. See ADR 0006.
 - **An appended section cannot delete a persona.** The overlay outranks earlier text by declaration, not by removal. A base mode with loud contrary rules can still leak through. The defense is the precedence sentence and a base mode that does not contradict teaching.
-- **The switch widens the install surface.** A client bundle runs in the app's renderer, so a bad switch can break the header, not just a reply. It stays plain JavaScript with no build step so the review is the whole check.
+- **The switch widens the install surface.** A client bundle runs in the app's renderer, so a bad switch can break the composer, not just a reply. It stays plain JavaScript with no build step so the review is the whole check.
 - **A subagent runs without the overlay.** Delegated research and figure work happen outside the teaching rules. That is intended, but it means a subagent can answer a learner's question in a flat voice.
 - **The switch is a declaration, not a fence.** Any tool the base mode has stays available while teaching. The data-not-command rule remains the only guard on fetched text.

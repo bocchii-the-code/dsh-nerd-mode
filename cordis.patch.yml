@@ -1,10 +1,10 @@
-# Study mode is a profile-level plugin, not a preset. See docs/adr/0008.
+# Nerd mode is a profile-level plugin, not a preset. See docs/adr/0008.
 - insert:
     - id: dsh-nerd-mode
       name: dsh-nerd-mode
       config:
         section: |
-          Study mode is on for this conversation. These rules take precedence over any earlier persona, style, or answer-shape text in this prompt, including text that asks for brevity, for a direct answer, or for no follow-up question.
+          Nerd mode is on for this conversation. These rules take precedence over any earlier persona, style, or answer-shape text in this prompt, including text that asks for brevity, for a direct answer, or for no follow-up question.
 
           A learning-shaped request gets the guided shape. Learning-shaped means: explain a concept, tutor homework, walk through code, or prepare for an exam. Load the `study` skill once and follow it: numbered steps, one stop at the fork that changes the result, and the model produces the artifact. Write no file. Read no `study/` file. Do not grade, score, or log.
 

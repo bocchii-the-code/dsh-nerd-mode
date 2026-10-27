@@ -1,5 +1,10 @@
 [![English](https://img.shields.io/badge/English-switch-d0d7de)](./README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-current-2f81f7)](./README.zh.md)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/icon-dark.svg">
+  <img src="assets/icon-light.svg" width="120" height="120" alt="Nerd Mode">
+</picture>
+
 # Nerd Mode：dsh 学习开关
 
 聊天里的学习通常在答案到达时就结束了：没有检验，也留不下任何东西。Nerd Mode 改的是 dsh 面对一个问题时做的事。它一步一步地教，在该做选择的地方停下来，并且能留下带日期的记录，让一个主题活过几周，而不只是一次对话。
@@ -30,7 +35,7 @@ dsh plugin --profile <profile> add github:bocchii-the-code/dsh-nerd-mode
 dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ```
 
-重启 dsh。每个模式都会多出 `/study-mode` 命令，会话标题栏多一个 `Nerd mode` 开关。模式选择器不会多出新条目：插件挂在 profile 层，不是预设。
+重启 dsh。每个模式都会多出 `/nerd-mode` 命令，输入框工具栏多一个 `Nerd mode` 胶囊。模式选择器不会多出新条目：插件挂在 profile 层，不是预设。
 
 ## 使用方法
 
@@ -111,13 +116,13 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ### 命令
 
 ```text
-/study-mode on          这次对话进入教学姿势
-/study-mode off
+/nerd-mode on           这次对话进入教学姿势
+/nerd-mode off
 /study <概念或任务>
 /study-plus <主题>      带四个学习文件的记录型会话
 ```
 
-标题栏的开关发的就是 `/study-mode`。它一直显示，关闭时变暗。
+输入框工具栏里的胶囊发的就是 `/nerd-mode`。它排在 Full Throttle 左边，一直显示，关闭时变暗。
 
 ## 开关做了什么
 
