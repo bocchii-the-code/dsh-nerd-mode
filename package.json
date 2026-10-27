@@ -4,6 +4,14 @@
   "description": "A study switch and study skills for DeepSeek Harness.",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bocchii-the-code/dsh-nerd-mode.git"
+  },
+  "homepage": "https://github.com/bocchii-the-code/dsh-nerd-mode#readme",
+  "bugs": {
+    "url": "https://github.com/bocchii-the-code/dsh-nerd-mode/issues"
+  },
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
