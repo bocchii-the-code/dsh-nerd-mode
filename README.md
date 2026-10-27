@@ -2,7 +2,7 @@
 
 # Nerd Mode for DeepSeek Harness
 
-A study switch and two study skills for dsh. `/study` guides one concept or one task and writes nothing. `/study-plus` runs a recorded session against a dated learner model. The switch makes teaching the default posture of any conversation, in any mode.
+Learning in a chat usually ends when the answer arrives: nothing is checked, and nothing survives the conversation. Nerd Mode changes what dsh does with a question. It teaches in steps, it stops where the choice matters, and it can keep a dated record, so a subject lasts weeks instead of one sitting.
 
 ## Requirements
 
