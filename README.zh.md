@@ -35,7 +35,7 @@ dsh plugin --profile <profile> add github:bocchii-the-code/dsh-nerd-mode
 dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ```
 
-重启 dsh。每个模式都会多出 `/nerd-mode` 命令，输入框工具栏多一个 `Nerd mode` 胶囊。模式选择器不会多出新条目：插件挂在 profile 层，不是预设。
+重启 dsh。每个模式都会多出 `/nerd-mode` 命令，输入框工具栏多一个 `Nerd Mode` 胶囊。模式选择器不会多出新条目：插件挂在 profile 层，不是预设。
 
 ## 使用方法
 
@@ -129,6 +129,7 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 - 它改的是文字，不是工具。工具目录和提示缓存都不变。
 - 只对学习类请求生效：讲清概念、辅导作业、讲解代码、准备考试。写功能、查资料、改配置、跑命令照常。
 - 开关只作用于这一次会话。状态存在会话日志里，压缩上下文、恢复会话都不丢。
+- 命令执行失败时，窗口顶部会弹一条说明原因的提示，胶囊保持原状态。
 - 子代理各自跑自己的会话，所以默认都是关闭的。
 - 它删不掉基础模式的人格文字，只能声明自己的规则优先。
 

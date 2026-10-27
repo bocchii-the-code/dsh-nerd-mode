@@ -35,7 +35,7 @@ From a local folder or tarball:
 dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ```
 
-Restart dsh. Every mode gains the `/nerd-mode` command and a `Nerd mode` pill in the composer bar. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
+Restart dsh. Every mode gains the `/nerd-mode` command and a `Nerd Mode` pill in the composer bar. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
 
 ## Usage
 
@@ -129,6 +129,7 @@ The pill in the composer bar sends `/nerd-mode`. It sits left of Full Throttle, 
 - It changes text, not tools. The tool set and the prompt cache stay stable.
 - Teaching applies to learning-shaped requests only: explain a concept, tutor homework, walk through code, prepare for an exam. A feature request, a search, a config edit, or a command runs as usual.
 - The switch is per conversation. Its state lives in the session log, so compaction and resume keep it.
+- If the command fails, a toast at the top of the window names the reason, and the pill keeps its state.
 - Subagents run their own session, so each starts with the switch off.
 - It cannot delete a base mode's persona text. It outranks that text by declaration.
 

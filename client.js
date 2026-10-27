@@ -2,9 +2,10 @@ window.__ModuleLoader__.load({
   id: 'dsh-nerd-mode/client',
   factory(require) {
     const React = require('react');
+    const { Toast } = require('@deepseek-ai/dsh-client-ui-primitives');
 
     const SLOT = 'conversation.input.left';
-    const LABEL = 'Nerd mode';
+    const LABEL = 'Nerd Mode';
 
     // 16px book, same footprint as the Full Throttle bolt.
     const BOOK = React.createElement(
@@ -29,15 +30,7 @@ window.__ModuleLoader__.load({
     );
 
     // The theme owns the colors; only the state picks which alias to read.
-    function pillStyle(active, failed) {
-      if (failed) {
-        const error = 'var(--dsw-alias-state-error-primary, #e5484d)';
-        return {
-          background: `color-mix(in srgb, ${error} 16%, transparent)`,
-          boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${error} 55%, transparent)`,
-          color: error,
-        };
-      }
+    function pillStyle(active) {
       if (active) {
         const business = 'var(--dsw-alias-state-business-primary)';
         return {
@@ -54,70 +47,102 @@ window.__ModuleLoader__.load({
       };
     }
 
+    // Unknown commands resolve as { ok: true, value: undefined }; they never
+    // reach the command executor and write nothing to the session log.
+    function failureText(result) {
+      if (!result?.ok) {
+        return `Nerd Mode did not switch: ${result?.error?.message ?? 'the host rejected the command'}`;
+      }
+      if (result.value == null) {
+        return 'Nerd Mode did not switch: /nerd-mode is not available in this build.';
+      }
+      const outcome = result.value.result;
+      if (outcome?.kind === 'error') {
+        return `Nerd Mode did not switch: ${outcome.text ?? 'the command failed'}`;
+      }
+      return null;
+    }
+
     function NerdModeToggle({ useProjection, execute }) {
       const state = useProjection('studyMode');
       const active = state?.active === true;
       const [busy, setBusy] = React.useState(false);
-      const [failed, setFailed] = React.useState(false);
+      const [failure, setFailure] = React.useState(null);
+      const [toast, setToast] = React.useState(null);
 
       React.useEffect(() => {
-        setFailed(false);
+        setFailure(null);
+        setToast(null);
       }, [active]);
 
       const onClick = async () => {
         if (busy) return;
         setBusy(true);
-        setFailed(false);
+        setFailure(null);
+        setToast(null);
         try {
           const result = await execute(active ? '/nerd-mode off' : '/nerd-mode on');
-          if (!result?.ok || result.value === undefined) setFailed(true);
-        } catch {
-          setFailed(true);
+          const text = failureText(result);
+          if (text !== null) {
+            setFailure(text);
+            setToast({ id: Date.now(), text });
+          }
+        } catch (error) {
+          const text = `Nerd Mode did not switch: ${error?.message ?? 'the host rejected the command'}`;
+          setFailure(text);
+          setToast({ id: Date.now(), text });
         } finally {
           setBusy(false);
         }
       };
 
       return React.createElement(
-        'button',
-        {
-          type: 'button',
-          role: 'switch',
-          'aria-checked': active,
-          'aria-label': LABEL,
-          'data-state': failed ? 'error' : active ? 'on' : 'off',
-          title: failed
-            ? 'Nerd mode did not switch. Click to retry.'
-            : active
-              ? 'Nerd mode is on'
-              : 'Nerd mode is off',
-          disabled: busy,
-          onMouseDown: (event) => event.preventDefault(),
-          onClick,
-          style: {
-            alignItems: 'center',
-            border: 'none',
-            borderRadius: 'var(--dsw-radius-sm)',
-            cursor: busy ? 'progress' : 'pointer',
-            display: 'inline-flex',
-            fontFamily: 'inherit',
-            fontSize: 13,
-            fontWeight: 500,
-            gap: 6,
-            height: 28,
-            lineHeight: '20px',
-            padding: '0 8px',
-            transition: 'background 120ms ease, color 120ms ease',
-            ...pillStyle(active, failed),
+        React.Fragment,
+        null,
+        React.createElement(
+          'button',
+          {
+            type: 'button',
+            role: 'switch',
+            'aria-checked': active,
+            'aria-label': LABEL,
+            'data-state': active ? 'on' : 'off',
+            title: failure ?? (active ? 'Nerd Mode is on' : 'Nerd Mode is off'),
+            disabled: busy,
+            onMouseDown: (event) => event.preventDefault(),
+            onClick,
+            style: {
+              alignItems: 'center',
+              border: 'none',
+              borderRadius: 'var(--dsw-radius-sm)',
+              cursor: busy ? 'progress' : 'pointer',
+              display: 'inline-flex',
+              fontFamily: 'inherit',
+              fontSize: 13,
+              fontWeight: 500,
+              gap: 6,
+              height: 28,
+              lineHeight: '20px',
+              padding: '0 8px',
+              transition: 'background 120ms ease, color 120ms ease',
+              ...pillStyle(active),
+            },
           },
-        },
-        BOOK,
-        React.createElement('span', null, LABEL),
+          BOOK,
+          React.createElement('span', null, LABEL),
+        ),
+        toast === null
+          ? null
+          : React.createElement(Toast, {
+              key: toast.id,
+              text: toast.text,
+              onDone: () => setToast(null),
+            }),
       );
     }
 
     return {
-      inject: ['slots', 'remote.commands'],
+      inject: ['slots', 'remote', 'remote.commands'],
       apply(ctx) {
         ctx.slots.inject(SLOT, () =>
           ctx.slots.register({

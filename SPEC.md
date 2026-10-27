@@ -46,7 +46,7 @@ argument-hint: "<topic>, or empty to continue the last topic"
 One profile-level plugin, so its section reaches every agent in every preset. A preset cannot be entered after the first turn (`agent-preset/locked`), which is why the switch is not a mode.
 
 - State: a session projection keyed `studyMode`, folded from the log's `command/run` and `command/done` events. It survives compaction, resume, and fork. No new event type is written, because an unknown stored type stops the session from reopening.
-- Control: `/nerd-mode on` and `/nerd-mode off`. A bare `/nerd-mode` turns it on. The composer toggle `Nerd mode` stays visible in both states, dim when off, and sends the same command.
+- Control: `/nerd-mode on` and `/nerd-mode off`. A bare `/nerd-mode` turns it on. The composer toggle `Nerd Mode` stays visible in both states, dim when off, and sends the same command.
 - Prompt: one section named `study:policy` at order 550, after the persona and after plan policy. Its text function returns the configured block only while the session's flag is on. The block opens by stating that it outranks earlier persona and style text, because an appended section cannot delete what came before.
 - Scope: teaching applies to learning-shaped requests only. Explaining a concept, tutoring homework, walking through code, and exam preparation get the guided shape. Writing a feature, searching, editing config, and running commands get the normal answer.
 - Not changed: the tool set. The switch edits text, so the request tool catalog and the prompt cache stay stable.
@@ -54,12 +54,12 @@ One profile-level plugin, so its section reaches every agent in every preset. A 
 
 ### Composer toggle
 
-The switch sits in the composer toolbar, not the session header. It registers in `conversation.input.left` with order -1, so the row reads Full access, Nerd mode, Full Throttle. The old header entry is deleted.
+The switch sits in the composer toolbar, not the session header. It registers in `conversation.input.left` with order -1, so the row reads Full access, Nerd Mode, Full Throttle. The old header entry is deleted.
 
-- Shape: a 28px pill with a 16px book icon and the text `Nerd mode`, no status dot. The whole pill carries the state: muted when off, the theme's business color when on, the error color while a failed command is unresolved.
-- Click: sends `/nerd-mode on` or `/nerd-mode off` through `ctx.remote.commands.execute`. This writes a command card into the transcript, the same way a Full access change does. A second click is ignored until the first command settles.
-- Truth: the `studyMode` projection stays the only source of truth. A failed command shows the error color and never flips the pill.
-- Naming: the UI, README, glossary, and command say Nerd mode. The projection key `studyMode` and the section id `study:policy` keep their names, because stored state and the host wire schema depend on them. See ADR 0009.
+- Shape: a 28px pill with a 16px book icon and the text `Nerd Mode`, no status dot. The whole pill carries on and off: muted when off, the theme's business color when on. A failed command never recolors it.
+- Click: sends `/nerd-mode on` or `/nerd-mode off` through `ctx.remote.commands.execute`. This writes a command card into the transcript, the same way a Full access change does. A second click is ignored until the first command settles. A failure shows a toast at the top of the window (`Toast` from the client primitives) with the reason, and keeps that reason in the pill's tooltip. Success shows no toast.
+- Truth: the `studyMode` projection stays the only source of truth. A failed command leaves the pill in its current state.
+- Naming: the UI, README, and glossary say Nerd Mode; the command is `/nerd-mode`. The projection key `studyMode` and the section id `study:policy` keep their names, because stored state and the host wire schema depend on them. See ADR 0009.
 
 ## The guide (`/study`)
 
@@ -167,14 +167,14 @@ The graph builder mixes three tiers for a better narrative, in this order of wei
 1. In General mode, run `/nerd-mode on`. Ask a concept question. The answer walks steps and stops once at a fork. No file appears under `study/`.
 2. Ask for a small script while the switch is on. The artifact is produced, with the reason beside each step.
 3. Ask a non-learning request, such as a config edit. It is handled directly, with no teaching detour.
-4. Click the `Nerd mode` pill in the composer. It goes dim, and the next answer is back to normal.
+4. Click the `Nerd Mode` pill in the composer. It goes dim, and the next answer is back to normal.
 5. Restart dsh and reopen the session. The switch shows the state it had.
 6. Start a subagent while the switch is on. The subagent answers normally, because it has its own session.
 7. Run `/study` with the switch off. It works.
 8. Run `/study-plus <topic>`. The recorded session runs as before: graph approval, five steps, four files, a dated row.
 9. The mode picker shows no Study entries.
 
-The switch needs the host services, so it has no end-to-end test. `test/client.test.mjs` stubs React and the slot registry, then asserts the slot name, order, label, and the command each click sends. The smoke test is this run, plus `npm test`, `node --check lib/index.js`, and a YAML parse of `cordis.patch.yml`.
+The switch needs the host services, so it has no end-to-end test. `test/client.test.mjs` stubs React, the slot registry, and the toast primitive, then asserts the slot name, order, label, the command each click sends, and the toast text for an unknown command and a remote failure. The smoke test is this run, plus `npm test`, `node --check lib/index.js`, and a YAML parse of `cordis.patch.yml`.
 
 ## Open risks
 
