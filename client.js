@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'study-plus-dsh/client',
+  id: 'dsh-nerd-mode/client',
   factory(require) {
     const React = require('react');
 

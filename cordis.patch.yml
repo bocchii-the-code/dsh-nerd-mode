@@ -1,7 +1,7 @@
 # Study mode is a profile-level plugin, not a preset. See docs/adr/0008.
 - insert:
-    - id: study-plus-dsh
-      name: study-plus-dsh
+    - id: dsh-nerd-mode
+      name: dsh-nerd-mode
       config:
         section: |
           Study mode is on for this conversation. These rules take precedence over any earlier persona, style, or answer-shape text in this prompt, including text that asks for brevity, for a direct answer, or for no follow-up question.
@@ -16,4 +16,4 @@
       config:
         providerName: study-plus
         includeDefaultRoots: false
-        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('study-plus-dsh/package.json')), 'skills')
+        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('dsh-nerd-mode/package.json')), 'skills')

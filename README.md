@@ -13,19 +13,19 @@ A study switch and two study skills for dsh. `/study` guides one concept or one 
 From npm:
 
 ```powershell
-dsh plugin --profile <profile> add study-plus-dsh
+dsh plugin --profile <profile> add dsh-nerd-mode
 ```
 
 From GitHub:
 
 ```powershell
-dsh plugin --profile <profile> add github:bocchii-the-code/study-plus-dsh
+dsh plugin --profile <profile> add github:bocchii-the-code/dsh-nerd-mode
 ```
 
 From a local folder or tarball:
 
 ```powershell
-dsh plugin --profile <profile> add C:\path\to\study-plus-dsh
+dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ```
 
 Restart dsh. Every mode gains the `/study-mode` command and a `Nerd mode` switch in the session header. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
@@ -63,7 +63,7 @@ The switch sends the same command. It stays visible in both states, dim when off
 ## Notes
 
 - The plugin loads its own `skills/` folder from `cordis.patch.yml` with a `!!js` expression. Review patch changes as host-process code.
-- If you rename the package, update the `resolve('study-plus-dsh/package.json')` string in `cordis.patch.yml`.
+- If you rename the package, update the `resolve('dsh-nerd-mode/package.json')` string in `cordis.patch.yml`.
 - Bundled third-party skills keep their own licenses. See [NOTICE.md](./NOTICE.md).
 - Design notes: [SPEC.md](./SPEC.md), [GLOSSARY.md](./GLOSSARY.md), `docs/adr/`.
 - Tested with `@deepseek-ai/dsh` 0.2.1-rc.3 on Node 22.
@@ -71,5 +71,5 @@ The switch sends the same command. It stays visible in both states, dim when off
 ## Uninstall
 
 ```powershell
-dsh plugin --profile <profile> remove study-plus-dsh
+dsh plugin --profile <profile> remove dsh-nerd-mode
 ```
