@@ -28,7 +28,7 @@ From a local folder or tarball:
 dsh plugin --profile <profile> add C:\path\to\study-plus-dsh
 ```
 
-Restart dsh. Every mode gains the `/study-mode` command and a `Nerd mode` chip in the session header. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
+Restart dsh. Every mode gains the `/study-mode` command and a `Nerd mode` switch in the session header. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
 
 ## Use
 
@@ -39,7 +39,7 @@ Restart dsh. Every mode gains the `/study-mode` command and a `Nerd mode` chip i
 /study-plus <topic>     recorded session with the four study files
 ```
 
-The chip sends the same command. It stays visible in both states, dim when off.
+The switch sends the same command. It stays visible in both states, dim when off.
 
 ## What the switch does
 
@@ -53,9 +53,12 @@ The chip sends the same command. It stays visible in both states, dim when off.
 
 - `study`: the guide. No file, no grade.
 - `study-plus`: the recorded session. Five steps, concept graph, evidence log.
-- `teach`, `writing-beats`, `diagram`, `humanizer`, `convert-documents-to-markdown`.
-
-`answer-me-with-html` is not included. Install it separately if you want one-page HTML explainers.
+- `diagram`: one SVG figure per idea. Written for this package.
+- `answer-me-with-html`: one-page HTML explainers, by QingYunA.
+- `teach`: a dated teaching workspace, by Matt Pocock.
+- `writing-beats`: beat-by-beat article structure, by Matt Pocock.
+- `humanizer`: rewrite AI-sounding prose, by Siqi Chen.
+- `convert-documents-to-markdown`: Word, PDF, and ebook conversion, by firecrawl.
 
 ## Notes
 

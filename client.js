@@ -3,7 +3,7 @@ window.__ModuleLoader__.load({
   factory(require) {
     const React = require('react');
 
-    function StudyModeChip({ useProjection, execute }) {
+    function StudyModeSwitch({ useProjection, execute }) {
       const studyMode = useProjection('studyMode');
       const [failed, setFailed] = React.useState(false);
       const projectedActive = studyMode?.active === true;
@@ -63,7 +63,7 @@ window.__ModuleLoader__.load({
             inject: (sessionId) => ({
               execute: (command) => ctx.remote.commands.execute(sessionId, command, []),
             }),
-          }, StudyModeChip),
+          }, StudyModeSwitch),
         );
       },
     };

@@ -13,7 +13,7 @@ The recorded session skill: five-step spine, concept graph, evidence log. Invoke
 _Avoid_: study, lesson, mentor, tutor
 
 **Study mode**:
-The switched-on state of one conversation. It sets teaching as the default posture and the guide as the default answer shape. It is neither a preset nor a skill. The header chip prints `Nerd mode` as its display name.
+The switched-on state of one conversation. It sets teaching as the default posture and the guide as the default answer shape. It is neither a preset nor a skill. The header switch prints `Nerd mode` as its display name.
 _Avoid_: using it to mean study-plus, or the former Study mode preset
 
 **Fork**:
