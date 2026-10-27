@@ -32,34 +32,22 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 
 Restart dsh. Every mode gains the `/study-mode` command and a `Nerd mode` switch in the session header. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
 
-## Use
+## Usage
 
-```text
-/study-mode on          teaching posture for this conversation
-/study-mode off
-/study <concept or task>
-/study-plus <topic>     recorded session with the four study files
-```
+Two skills, two sizes. Both teach one thing at a time and both stop to ask. They differ in what they keep.
 
-The switch in the session header sends the same command. It stays visible in both states, dim when off.
+### Quick lesson: `/study`
 
-### Two lesson sizes
+**What it does.** Walks one concept or one task from the first step to the last, and stops once at the point where the route changes the result. For a concept it explains in layers: intuition, terms, formal detail. For a task it produces the artifact and writes one line of reason beside each step. It reads no file and writes no file, so it works in any folder and leaves nothing behind.
 
-`/study` and `/study-plus` are the same engine at two sizes. Pick by what you need after the answer ends.
+**When to use it.** A question you want to understand now and will probably not return to.
 
-| | `/study`, quick lesson | `/study-plus`, long lesson |
-|---|---|---|
-| Writes files | never | `study/<topic>/`: `graph.md`, `state.md`, `log.md`, `plan.md` |
-| Reads files | never | those four, before it speaks |
-| Questions | one, at the fork | three per concept, plus a teach-back |
-| Grading | none | pass and miss, rubric written before the question |
-| Remembers you | only this conversation | across sessions, with dates |
-| Typical span | one sitting, one idea | 15 to 30 concepts over weeks |
-| Best for | a question you want to understand now | a subject you are learning over time |
+- Reading a paper and a term stops you.
+- A homework problem you have to finish tonight.
+- A file whose logic you need to follow before you change it.
+- A small decision where you want the trade-off spelled out before you pick.
 
-### Quick lesson
-
-Use it when the answer has to leave you able to explain the idea, not just move on.
+**How to use it.**
 
 ```text
 /study why does Adam divide by 1 - beta^t
@@ -67,25 +55,50 @@ Use it when the answer has to leave you able to explain the idea, not just move 
 /study help me finish problem 3, and explain each step        # with homework
 ```
 
-You get a title, the central idea, numbered steps, a symbol table when the symbols get dense, one worked example, the common mistake, and one stop at the fork where the route changes the result. For a task you also get the finished artifact, with one line of reason beside each step.
+Type the command, or turn the switch on and just ask. With the switch on, a learning-shaped request gets this shape by default.
 
-No file appears. Nothing is scored. If you want it recorded, take the next size up.
+**What you get.** A title, the central idea, numbered steps, a symbol table when the symbols get dense, one worked example, the common mistake, and one stop at the fork. For a task, the finished artifact with its reasoning.
 
-With the switch on you can skip the command: a learning-shaped request gets this shape by default.
+**What it does not do.** No file appears. Nothing is scored. Nothing is remembered after the conversation ends.
 
-### Long lesson
+### Long lesson: `/study-plus`
 
-Use it when the topic outlives one conversation.
+**What it does.** Builds a concept graph for one topic, then teaches one concept per session against a record of what you have already demonstrated. The record is four markdown files in the workspace. The lesson reads them at the start of every session, writes them at the end, and dates every claim about what you know.
+
+**When to use it.** A subject you will still be learning next month.
+
+- You are working through a textbook, a course, or a paper properly.
+- You need to know what to study next, not just what to ask now.
+- You want evidence of progress, not an impression of it.
+- You keep looking things up and forgetting them.
+
+**How to use it.** First session, later sessions, and the target.
 
 ```text
-/study-plus Shampoo and Adam optimizers       # first session builds the graph
-/study-plus                                    # later sessions continue the topic
-/study-plus I want to reach the matrix square root   # set a target
+/study-plus Shampoo and Adam optimizers              # first session builds the graph
+/study-plus                                           # later sessions continue the topic
+/study-plus I want to reach the matrix square root    # set a target
 ```
 
 First session: it proposes 15 to 30 concepts with prerequisite links and waits. You approve or edit one row, then name what you already know well enough to skip. Then it teaches one concept in five steps: recall one earlier concept cold, teach to completion, three unseen questions, a teach-back, and a dated record.
 
 Later sessions read the four files first, so the first line names the next concept, the reason, and the date of the evidence behind it.
+
+**What you get.** A concept order, one concept taught to completion, a graded check, and a record that survives restarts.
+
+**What it does not do.** It does not schedule reviews, and it does not guess that you know something. Only an answer you produced changes the record.
+
+### What each one leaves behind
+
+| | `/study`, quick lesson | `/study-plus`, long lesson |
+|---|---|---|
+| Writes files | none | `study/<topic>/`: `graph.md`, `state.md`, `log.md`, `plan.md` |
+| Reads files | none | those four, before the first line |
+| Remembered next session | no | yes, with dates |
+| Graded | no | pass and miss, rubric written first |
+| Typical span | one sitting, one idea | 15 to 30 concepts over weeks |
+
+If a `study/` folder appears in your workspace, that was `/study-plus`. `/study` never creates one.
 
 ### Which one
 
@@ -94,6 +107,17 @@ Later sessions read the four files first, so the first line names the next conce
 - Started with `/study` and keep coming back? Move up. Build the graph once, and the earlier conversation still informs it.
 
 An example. You are reading the Shampoo paper and hit the preconditioner. `/study what does the Shampoo preconditioner actually do` settles it in one sitting. If you decide to read the paper properly over a month, open `/study-plus Shampoo and Adam optimizers` and let it order the concepts first.
+
+### Commands
+
+```text
+/study-mode on          teaching posture for this conversation
+/study-mode off
+/study <concept or task>
+/study-plus <topic>     recorded session with the four study files
+```
+
+The switch in the session header sends `/study-mode`. It stays visible in both states, dim when off.
 
 ## What the switch does
 
