@@ -1,0 +1,33 @@
+{
+  "name": "study-plus-dsh",
+  "version": "0.1.0",
+  "description": "Study Plus preset and skills for DeepSeek Harness.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "study",
+    "tutor",
+    "agent-skill"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
