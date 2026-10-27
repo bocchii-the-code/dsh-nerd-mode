@@ -38,7 +38,7 @@ Two skills, two sizes. Both teach one thing at a time and both stop to ask. They
 
 ### Quick lesson: `/study`
 
-**What it does.** Walks one concept or one task from the first step to the last, and stops once at the point where the route changes the result. For a concept it explains in layers: intuition, terms, formal detail. For a task it produces the artifact and writes one line of reason beside each step. It reads no file and writes no file, so it works in any folder and leaves nothing behind.
+**What it does.** Walks one concept or one task from the first step to the last, and stops once at the fork: the point where the choice changes the result. For a concept it explains in layers, from intuition to terms to formal detail. For a task it produces the artifact and writes one line of reason beside each step. It reads no file and writes no file, so it works in any folder and leaves nothing behind.
 
 **When to use it.** A question you want to understand now and will probably not return to.
 
@@ -57,18 +57,18 @@ Two skills, two sizes. Both teach one thing at a time and both stop to ask. They
 
 Type the command, or turn the switch on and just ask. With the switch on, a learning-shaped request gets this shape by default.
 
-**What you get.** A title, the central idea, numbered steps, a symbol table when the symbols get dense, one worked example, the common mistake, and one stop at the fork. For a task, the finished artifact with its reasoning.
+**What you get.** A title, the central idea, numbered steps, and a symbol table when the symbols get dense. One worked example, the common mistake, and the single stop at the fork. For a task, the finished artifact with its reasoning.
 
-**What it does not do.** No file appears. Nothing is scored. Nothing is remembered after the conversation ends.
+**What it does not do.** No file appears, and nothing is scored. None of it survives the conversation.
 
 ### Long lesson: `/study-plus`
 
-**What it does.** Builds a concept graph for one topic, then teaches one concept per session against a record of what you have already demonstrated. The record is four markdown files in the workspace. The lesson reads them at the start of every session, writes them at the end, and dates every claim about what you know.
+**What it does.** Builds a concept graph for one topic, then teaches one concept per session against a record of what you have already demonstrated. The record is four markdown files in the workspace. Every session reads them before the first line, updates them at the end, and dates every claim about what you know.
 
 **When to use it.** A subject you will still be learning next month.
 
 - You are working through a textbook, a course, or a paper properly.
-- You need to know what to study next, not just what to ask now.
+- You want to know what to study next, and a chat only answers what you ask.
 - You want evidence of progress, not an impression of it.
 - You keep looking things up and forgetting them.
 
@@ -86,7 +86,7 @@ Later sessions read the four files first, so the first line names the next conce
 
 **What you get.** A concept order, one concept taught to completion, a graded check, and a record that survives restarts.
 
-**What it does not do.** It does not schedule reviews, and it does not guess that you know something. Only an answer you produced changes the record.
+**What it does not do.** It schedules no reviews and never guesses that you know something. Only an answer you produced changes the record.
 
 ### What each one leaves behind
 
@@ -122,8 +122,8 @@ The switch in the session header sends `/study-mode`. It stays visible in both s
 ## What the switch does
 
 - It changes text, not tools. The tool set and the prompt cache stay stable.
-- It applies to learning-shaped requests only: explain a concept, tutor homework, walk through code, prepare for an exam. A feature request, a search, a config edit, or a command runs as usual.
-- It is per conversation. The state lives in the session log, so compaction and resume keep it.
+- Teaching applies to learning-shaped requests only: explain a concept, tutor homework, walk through code, prepare for an exam. A feature request, a search, a config edit, or a command runs as usual.
+- The switch is per conversation. Its state lives in the session log, so compaction and resume keep it.
 - Subagents run their own session, so each starts with the switch off.
 - It cannot delete a base mode's persona text. It outranks that text by declaration.
 
