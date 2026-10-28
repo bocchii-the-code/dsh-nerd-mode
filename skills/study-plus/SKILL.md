@@ -47,11 +47,11 @@ With no target, take the lowest-numbered ready concept: every prerequisite is `f
 
 When the learner names a concept they want to reach, map a loose name to the nearest concept and confirm with one question. Then write it to `plan.md` and say the path in one line: how many concepts, and which is next. One target at a time. If they name two, ask which comes first. If the named concept is already `fluent`, say its evidence date and ask for another. If it is `skipped`, ask whether to test it or leave it.
 
-Say one line: the concept, the reason, and the state of its prerequisites. If the concept is `in_process`, say that the last session stopped before the questions. If a prerequisite is `skipped`, open with one line of recap, because that prerequisite was never tested. Then start. The learner can veto. Record the veto in the log. With no target, take the next ready concept. On a path, a veto pauses the target for this session and takes the next ready concept instead. The path resumes next session.
+Say one line: the concept, the reason, and the state of its prerequisites. If the concept is `in_process`, say that the last session stopped before the questions. If a prerequisite is `skipped` and Recall Session is enabled, open with one line of recap, because that prerequisite was never tested. If Recall Session is disabled, skip that recap. Then start. The learner can veto. Record the veto in the log. With no target, take the next ready concept. On a path, a veto pauses the target for this session and takes the next ready concept instead. The path resumes next session.
 
 ## 4. Run the five steps
 
-**Recall.** One question about the most recent concept with a verdict, from any earlier session, cold, no hints. A wrong answer sets that concept to `shaky`, dated today. Skip this step when no concept has a verdict. Never recall the concept this session will teach.
+**Recall Session.** Follow the current `/study-plus` request's explicit preference when present. Otherwise, use the profile default in the top-level Nerd Mode instructions. When enabled, ask one question about a recently taught relevant concept, cold, then wait. Give ungraded feedback and a brief recap. Skip this activity when no suitable concept exists. Do not change learner knowledge, tracker state, or the session log because of this activity. This setting also controls the one-line recap for a skipped prerequisite: when enabled, give that recap when applicable; when disabled, skip it. Outside `study-plus`, ignore this preference.
 
 **Teach.** Before the first paragraph, set the concept's row to `in_process` and write `state.md`. Do this only when the row is `new`. Never overwrite `shaky`, `fluent`, or `skipped`. Then teach one concept. Open with a title as a first-level heading, naming the idea and not the session or the date. Teach in layers: intuition first, then the terms, then the formal detail. Give one concrete example and say where an analogy stops matching. Load `writing-beats` once, then build the lecture in its beats: ground each term before a beat leans on it. The moves below decide what each beat has to carry.
 
@@ -86,17 +86,17 @@ Before you send the lecture, ask five yes-or-no questions. A yes means rewrite t
 - Do three or more numbers still sit inside a sentence?
 - Does any sentence end by asking the reader to draw the conclusion?
 
-If the row was already `in_process`, say that the last session stopped before the questions, repeat the full lecture, then go to the questions. The three questions were never asked, so they are still unseen. When the log records a defer rather than a crash, say what remains and offer the questions before repeating the lecture.
+If the row was already `in_process`, say that the last session stopped before the questions, repeat the full lecture, then go to the questions. The configured question slots were never asked, so they are still unseen. When the log records a defer rather than a crash, say what remains and offer the questions before repeating the lecture.
 
-**Ask three unseen questions.** Before you ask, write down the expected answer and the criteria for a good answer. Keep both private. The criteria test the conclusion and whether each step taken is valid, not the route you had in mind. Ask one question at a time, then wait.
+**Ask unseen questions.** Use the explicit count or type preference in the current `/study-plus` request when present. Otherwise, use the profile defaults in the top-level Nerd Mode instructions. Plan the configured number of unseen question slots, from 0 to 10. A hint, re-ask, or similar question stays in its current slot and does not add a slot. Before you ask, write down the expected answer and the criteria for a good answer. Keep both private. The criteria test the conclusion and whether each step taken is valid, not the route you had in mind. Ask one question at a time, then wait. For `short-answer`, ask a short-answer question. For `multiple-choice`, give four options with exactly one correct answer; choosing it is sufficient. For `mixed`, choose short-answer or multiple-choice independently at random for each planned slot. Do not add question-type details to the session log. When the configured count is zero, skip unseen questions. A passed Teach-back alone is sufficient to pass. With one or more slots, require a passed Teach-back and `ceil(2 × slot count / 3)` correct slots. Outside `study-plus`, ignore these preferences.
 
 A question exists to find the gap, not to stop the session. Nothing in this step blocks the learner.
 
-- Two correct answers is a pass. An answer is correct when its conclusion holds and no step it takes is wrong. A different valid route is correct.
+- A slot is correct when its conclusion holds and no step it takes is wrong. A different valid route is correct.
 - A right answer with a wrong step is not correct. Name that step. Never fail an answer for leaving out a step you would have taken, or for taking a longer route.
 - If the learner is stuck, give one hint and re-ask once. A second miss counts as wrong.
-- When an answer is wrong, do three things in one message: name the wrong step, work the correct answer with its process, then ask a similar question. Mark one miss. The similar question replaces the missed one, so the pass still rests on two correct answers and the questions stay unseen.
-- When the learner asks for the answer, do the same: give the worked answer, mark one miss, ask a similar question.
+- When an answer is wrong, do three things in one message: name the wrong step, work the correct answer with its process, then ask a similar question in the same slot. Mark one miss. Keep the original miss recorded even if the learner answers the similar question correctly.
+- When the learner asks for the answer, do the same: give the worked answer, mark one miss, ask a similar question in the same slot. Keep the original miss recorded even if the learner answers the similar question correctly.
 - When the learner defers a question or asks to move on, accept it at once. Record the defer and the learner's reason in the log. The concept stays `in_process`, because a defer is neither evidence nor a miss. Never argue about time.
 
 **Teach-back.** Ask the learner to explain the idea to someone who has not seen it. Grade two things: the idea is correct, and the explanation would let that person use it. Note whether the language stays plain. Do not ask where the idea stops applying. When the answer is valid overall and something is missing or loose, name it, correct it in one sentence, and pass. A miss is for a wrong idea, not for a gap you can close in the moment.
@@ -109,7 +109,7 @@ One concept per session. The learner can ask for another. Run the spine again.
 
 - Post the rubric and the expected answer with the grade, never before the question. The rubric fails an answer on a wrong step, not on a missing one.
 - Hold a grade under pushback. Restate it once with the reason, record the disagreement, continue. Do not debate and do not agree with a wrong step.
-- When the learner asks for the answer: give it with its process, mark a miss dated today, then ask a similar question.
+- When the learner asks for the answer: give it with its process, mark a miss dated today, then ask a similar question in the same slot.
 - Self-report never sets `shaky` or `fluent`. "I know this" adds a note.
 - The learner may drop a concept at any time, at graph approval or during any later session. Write `skipped` with no date and no passes, and put the reason in the note: `self-report, not needed` or `self-report, done`. Say one line: the record shows it as untested, and a later failure on a dependent concept turns it `shaky`.
 - A deliberate "done" after a lecture is that same skip. An abandoned session is not: leave the row `in_process`.
