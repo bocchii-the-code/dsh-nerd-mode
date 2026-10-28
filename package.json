@@ -44,6 +44,9 @@
   "scripts": {
     "test": "node --test"
   },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": "^3.18.5"
+  },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
