@@ -1,5 +1,7 @@
 # Fluent is a session claim, and no scheduler ships in v1
 
+Status: accepted, 2026-10-27. The pass bar is now count-driven; see [ADR 0013](0013-session-defaults-for-recall-and-questions.md).
+
 `fluent` means two correct unseen answers plus a graded teach-back in one session. It does not mean retained. There is no spaced-repetition scheduler, no decay timer, and no due queue in v1.
 
 This is a deliberate deviation from the obvious design. A learner model without decay goes stale: a concept marked fluent in March still reads fluent in June. The mitigation is cheap and structural instead of algorithmic: every state row carries the date of its last evidence, and the tutor must state that date whenever it relies on the label.
