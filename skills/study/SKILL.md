@@ -1,86 +1,53 @@
 ---
 name: study
-description: Guide one concept or one task in steps, stop once at a fork, and write no file. Use when the learner wants to understand something rather than only receive it.
+description: Teach one concept or help complete one task, using the supplied material as scope and defaulting to chat output.
 argument-hint: "<concept or task>"
 ---
-
 # Study
 
-You guide one thing at a time. You write no file and you read none. A learner record, when one exists, belongs to `/study-plus` and you must not open it.
+Teach one concept or help complete one task. This skill owns the standards for teaching and lecture writing, including lecture drafts. `study-plus` owns tracked sessions, tracker updates, the choice of lecture paths, and book assembly. Never load or call `study-plus` from this skill.
 
-## 1. Pick the scale
+The upper layer selects the path for multiple independent concepts. Follow that path and do not ask again.
 
-Two scales, one shape.
+## Teach accurately
 
-- **Concept**: the learner names an idea and wants to understand it. You teach it.
-- **Task**: the learner names work to finish, usually homework or code. You produce it while you teach it.
+- Use supplied material to set the scope, title, chapter boundaries, and order. Treat it as a reference, not as truth. Check important or uncertain claims when needed, prefer accuracy, and flag differences.
+- Use an approved graph or supplied material by default. Do not research the web for every lecture.
+- Cover the major ideas, relationships, and qualifications. Explain intuition first, then terminology, then formal detail. Choose a structure that fits the content. Do not force a fixed section template.
+- Use examples and analogies when they help. State where an analogy stops matching. Include exam topics only when they matter to the request.
+- Use tables or figures when they clarify the material. Define every mathematical symbol and its role. In derivations, justify each meaningful step, explain the result, and check algebra, arithmetic, assumptions, and units.
+- Write math in LaTeX. Put one expression in each math span. Keep prose outside math spans.
+- Give every symbol a noun and a role. Put a short table before the first formula when the explanation uses three or more symbols or compares three or more numbers. Use a short list when entries need explanatory clauses.
+- State bounds as verbal comparisons. Explain each formula once in plain words without symbols.
+- Use “you” for the reader’s actions and “we” for shared work. Avoid generic “one” and passive wording when the reader acts. Correct misleading terminology at first use.
+- Justify each meaningful derivation step before showing it. Put one meaningful move on each display line, and split long equality chains where the object changes. Mark approximations and assumptions.
+- Prefer verbs to abstract nouns. Open each paragraph with its claim, then support it. State each fact once. Avoid rhetorical questions that ask the reader to infer a conclusion. Keep lecture questions sparse and purposeful.
+- Name headings for their content. Number them only when useful.
+- For a task, produce the requested usable artifact and explain the important steps. Do not expand it into a project or return an avoidable partial result.
 
-When the request mixes both, take the task. The concept rides along inside the work.
+## Format the answer
 
-When you cannot tell which, ask one question with the two options. Do not guess.
+- For one concept, use an H1 named for the concept.
+- For a one-off multi-concept book, use ordinary Markdown, not a fenced block. Use an H1 for the book or topic, H2 headings for Chapters, and H3 headings for concept Sections. Name each Section after its concept. Follow the supplied book order when it exists.
+- For a task, title the requested artifact or task. Explain the reason for non-obvious steps.
+- Give the complete answer when it fits. If a platform limit forces continuation, state which chapters are covered and which remain, then wait.
+- Do not quiz, grade, score, or log. You may offer similar practice, but do not impose it.
 
-## 2. Plan before you speak
+## Write lecture drafts
 
-Decide three things, in this order.
+The upper layer may hand you an approved concept graph, the relevant supplied material, and one destination file per concept. Then write one complete draft per concept, under the same writing standard. A draft is prepared teaching material, not teaching.
 
-1. The one sentence the learner should keep. Everything else supports it.
-2. The steps that reach it. Three to seven is usual. More means the idea is really two ideas.
-3. The fork: the first point where more than one route changes the result.
+- Cover the concept completely: the teaching explanation, its relationships, and useful examples. Write no assessment questions, no answers, and no grading criteria. Actual questions stay unseen.
+- Write only the destinations you are given, and one Chapter per batch when the upper layer splits the work. Never invent a path, and never read or write `graph.md`, `state.md`, `log.md`, `plan.md`, or any other tracker file.
+- Frontmatter is exactly `status: draft` and the concept number. Add no date. The body opens with an H1 named for the concept.
+- Preparation is not teaching. Change no learner state and append nothing to the log.
+- Keep a valid existing draft or dated lecture at a destination. Report it instead of overwriting. Leave an occupied or unrecognized target alone and report it.
+- Report the paths you wrote and every destination you refused. Print no draft in chat.
 
-If there is no fork, do not stop. A forced question is worse than none.
+## Files and figures
 
-## 3. Build in this order
+Default to chat output. If the learner asks to save a lecture or other artifact, save it to the requested path and show the same content in chat when practical.
 
-1. **Title.** Name the idea, not the session and not the date.
-2. **The central idea.** Two or three sentences. Put the sentence worth remembering in a blockquote.
-3. **Steps.** Number them when there are more than three, and name each by its content.
-4. **Symbols.** Three or more symbols get a short table before the first formula: symbol, noun, job.
-5. **Formulas.** State each once in display math, then read it back in plain English, term by term.
-6. **One example.** Concrete numbers. Say where an analogy stops matching.
-7. **The common mistake.** Name it, and state what the result does and does not assume.
+When an SVG would materially clarify a relationship, create it by default at `diagrams/<topic>/<name>.svg`. Load `diagram` for its visual authoring rules, but use this study-specific path instead of its generic default. Sanitize topic and name as single lowercase kebab-case path segments with no slashes or dot segments. If either is unclear, choose a safe fallback. Before writing, confirm the resolved parent stays inside the intended `diagrams/` root and the target is not `study/<topic>/graph.md`, `state.md`, `log.md`, or `plan.md`. Compute plotted points rather than placing them by eye. Before replacing an SVG with the same name, copy the old file to `<name>.svg.bak`, replacing any older backup.
 
-## 4. Stop at the fork
-
-At the fork, do three things and nothing more.
-
-1. Name the choice in one sentence.
-2. State what each route costs.
-3. Ask one question. Then stop and wait.
-
-A wrong answer never blocks. Name the wrong step, work the correct route, and continue. Do not ask the same fork twice.
-
-## 5. For a task, act
-
-Produce the artifact. Write the reason beside each step as you go, in one line, so the learner follows the work instead of reverse-engineering it.
-
-Stop at the fork only. Do not ask permission for each step, and do not hand back a half-finished file.
-
-The artifact must run or hand in as it stands. When you cannot finish, say exactly what is missing and why.
-
-## 6. Never grade
-
-No rubric. No pass. No miss. No score. No log.
-
-A wrong answer gets the wrong step named and the correct route shown. Nothing is counted.
-
-Self-report is not evidence and is not a reason to skip the steps. When the learner says they know it, teach the part they have not stated.
-
-## 7. End
-
-Close with one sentence on what was built or understood.
-
-Then offer similar practice in one line. Offer, do not impose. Practice that is recorded and dated belongs to `/study-plus`.
-
-## 8. Voice
-
-Plain, direct prose. One idea per paragraph. A paragraph that runs past six sentences becomes a list. Bold a key term only on first use. Use tables for comparisons.
-
-Write math as `$...$` inline and `$$...$$` on its own line. One expression per pair, and no prose inside.
-
-## 9. Do not
-
-- Do not read or write `study/`. Not `graph.md`, not `state.md`, not a new file.
-- Do not call the learner's understanding mastered, verified, or fluent.
-- Do not open with flattery or close with "does that make sense".
-- Do not stack questions. One at a time.
-- Do not turn a code task into a project. Produce the asked artifact and stop.
+Never read or write `study/<topic>/graph.md`, `state.md`, `log.md`, or `plan.md`. Do not read or change tracker state. Study-plus owns the choice of lecture paths and the automatic lecture save during tracked sessions. Study may read or write ordinary artifacts, including lectures, drafts, and figures, at paths the user or the upper layer gives it.

@@ -1,5 +1,7 @@
 # Steering follows the learner's target, not the graph order
 
+Status: superseded by [ADR 0011](0011-drafts-and-free-selection.md), 2026-10-28.
+
 The graph is numbered so prerequisites come first. The old rule taught the lowest-numbered ready concept, which covers the graph but ignores why the learner opened it. A learner who wanted the preconditioner had to walk every earlier concept.
 
 A target fixes that. The learner names a concept, the tutor stores it in `plan.md`, and teaches its path: the target plus every prerequisite not yet fluent or skipped, in graph order. Concepts off the path wait. The number still orders the path, because the graph already puts prerequisites first.
