@@ -65,7 +65,7 @@ function readConceptTable(text, errors) {
     if (row.number !== expected) errors.push(`Concept table row ${index + 1} is numbered ${row.number}; concept numbers must be consecutive in learning order starting at 1.`);
     if (!row.name) errors.push(`Concept ${row.number} has no name in the Concept column.`);
   });
-  return { headers, rows, headerIndexes };
+  return { headers, rows };
 }
 
 function readChapterList(text, heading, errors) {
@@ -118,10 +118,8 @@ function parseGraph(text, topicFallback) {
   const hasBlock = table.headers.includes('block');
   let chapters;
   let mappings = new Map();
-  let newSchema = false;
 
   if (hasChapter || hasSection) {
-    newSchema = true;
     if (!hasChapter || !hasSection) errors.push('The new concept table requires both Chapter and Section columns.');
     if (!chapterHeadings && table.rows.some((row) => /^\d+$/.test(row.chapterText) && Number(row.chapterText) > 1)) {
       errors.push('A multi-chapter graph needs a ## Chapters list with each chapter title and scope.');
@@ -191,7 +189,7 @@ function parseGraph(text, topicFallback) {
   }
 
   if (errors.length) throw graphError(errors);
-  return { ...metadata, chapters, rows: table.rows, mappings, newSchema };
+  return { ...metadata, chapters, rows: table.rows, mappings };
 }
 
 function parseLecture(file) {

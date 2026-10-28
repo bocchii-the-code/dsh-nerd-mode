@@ -18,7 +18,6 @@
 
     var layout = document.querySelector('.am-doc-layout');
     var body = document.querySelector('.am-doc-body');
-    var doc = document.querySelector('.am-doc');
     var current = 0;
     var timer = 0;
 
@@ -106,11 +105,6 @@
       '@media (max-width: 800px) { .bk-top { gap: 8px; padding: 0 12px; } .bk-title { flex: 1 1 0; } .bk-search { margin-left: auto; } .bk-search input { width: clamp(88px, 34vw, 150px); } .bk-mobile { display: block; } .bk-nav { display: none; } .bk-nav-mobile { display: block; } .am-doc-layout, .am-doc-layout--notoc { grid-template-columns: minmax(0, 1fr) !important; } .bk-context { flex-wrap: wrap; } .bk-context-section { white-space: normal; } }'
     ].join('\n');
     document.head.appendChild(style);
-
-    if (doc) {
-      var header = doc.querySelector(':scope > header');
-      if (header) header.style.display = 'none';
-    }
 
     var top = document.createElement('header');
     top.className = 'bk-top';

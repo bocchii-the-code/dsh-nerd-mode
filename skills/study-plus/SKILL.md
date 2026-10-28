@@ -166,7 +166,7 @@ Book: <title, optional>
 1. <chapter title>: <scope>
 
 | # | Concept | Definition | Prerequisites | Chapter | Section |
-|---|---|---|---|---|---:|---:|
+|---|---|---|---|---:|---:|
 | 1 | <name> | <one line> | - | 1 | 1 |
 | 2 | <name> | <one line> | 1 | 1 | 2 |
 ```

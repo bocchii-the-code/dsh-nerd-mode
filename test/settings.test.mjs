@@ -1,20 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createRequire, registerHooks } from 'node:module'
 import { readFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
-
-const profileRequire = createRequire(join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'profiles', 'desktop', 'package.json'))
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    if (specifier === '@deepseek-ai/schemastery') {
-      return nextResolve(pathToFileURL(profileRequire.resolve(specifier)).href, context)
-    }
-    return nextResolve(specifier, context)
-  },
-})
 
 const { Config, apply } = await import('../lib/index.js')
 const SETTINGS = {
@@ -23,11 +9,12 @@ const SETTINGS = {
   unseenQuestionType: 'short-answer',
 }
 
-function makeSession(events = []) {
+function makeSession(events = [], messages = []) {
   return {
     seq: events.length,
     eventAt: (seq) => events[seq],
-    deriveMessages: () => [],
+    // The host returns the full surface history here, not just the current turn.
+    deriveMessages: () => messages,
   }
 }
 
@@ -58,12 +45,12 @@ function makeCtx(active = true) {
   return { ctx, handlers, section: () => section }
 }
 
-function promptFor({ settings = SETTINGS, events = [], active = true } = {}) {
+function promptFor({ settings = SETTINGS, events = [], messages = [], active = true } = {}) {
   const config = Config({ section: 'base Nerd Mode policy', ...settings })
   const { ctx, section } = makeCtx(active)
 
   apply(ctx, config)
-  const session = makeSession(events)
+  const session = makeSession(events, messages)
   return section().text({ agent: { session } })
 }
 
@@ -136,6 +123,7 @@ test('prompt reads active settings for a completed study-plus invocation', () =>
   const events = invocationEvents('study-plus')
   const expectedInstructions = [
     '',
+    '',
     'Study-plus profile defaults for this tracked session:',
     '- Recall Session: enabled.',
     '- Post-lecture questions: 8; type: mixed.',
@@ -154,6 +142,7 @@ test('prompt reads active settings for a completed study-plus invocation', () =>
     promptFor({ settings: { recallSessionEnabled: false, unseenQuestionCount: 0 }, events }),
     [
       'base Nerd Mode policy',
+      '',
       'Study-plus profile defaults for this tracked session:',
       '- Recall Session: disabled.',
       '- Post-lecture questions: 0; type: short-answer.',
@@ -180,6 +169,20 @@ test('claim handler records the direct study-plus message and survives other cla
   }
 
   claim({ agent: { session }, message: messages[0] })
+  assert.match(section().text({ agent: { session } }), /Study-plus profile defaults for this tracked session/)
+})
+
+test('a later turn keeps the defaults while the skill invocation stays in history', () => {
+  const { ctx, handlers, section } = makeCtx()
+  apply(ctx, Config({ section: 'base Nerd Mode policy' }))
+  const claim = handlers.get('agent/inbox/claimed')
+  const session = makeSession([], [skillInvocation('study-plus')])
+
+  claim({
+    agent: { session },
+    message: { id: 'msg-2', source: { kind: 'user' }, content: [{ type: 'text', text: 'continue' }] },
+  })
+
   assert.match(section().text({ agent: { session } }), /Study-plus profile defaults for this tracked session/)
 })
 
