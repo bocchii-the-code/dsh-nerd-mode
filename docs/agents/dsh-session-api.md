@@ -15,6 +15,21 @@ type declarations and implementation in `D:\DSH\resources\app.asar`.
 - `ctx.systemPrompt.section({ name, order, text })` registers a prompt section.
   The host calls `text(context)` on each prompt build.
 
+Event payload shapes differ by type. Read the real log before trusting a shape.
+
+- `user/message` stores the message directly in `event.data`: `content`,
+  `source`, `role`, `id`. There is no `event.data.message`.
+- `tool/result`, `system/message`, `assistant/message`, and `developer/message`
+  wrap the message as `event.data.message`.
+- `tool/call` stores `callId`, `name`, and `arguments` (a JSON string) directly
+  in `event.data`.
+- `tool/ptc-dispatch` stores a sub-tool result with `name`, `arguments` (an
+  object, not a string), `isError`, and `content`. It has no `message`. A
+  `skill` call made inside `run_code` appears here, not as a `tool/call`.
+
+A resumed, forked, or externally written seed can carry a partial payload.
+Guard nested reads instead of failing the turn.
+
 Message sources include `user`, `skill-invocation`, `tool`, and
 `agent-instructions`.
 

@@ -1,7 +1,6 @@
 ---
 name: study-plus
 description: Run one tracked session against a dated learning record. Load for an explicit command or after the user chooses tracked study in the upper router.
-disable-model-invocation: false
 argument-hint: "<topic>, or empty to continue the last topic"
 ---
 # Study Plus

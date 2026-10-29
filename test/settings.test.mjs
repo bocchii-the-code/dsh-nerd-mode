@@ -66,10 +66,23 @@ function invocationEvents(name, request = '/study-plus') {
   const invocation = skillInvocation(name)
   return [
     { type: 'turn/start', data: {} },
-    { type: 'user/message', data: { message: userMessage(request) } },
+    // Real sessions store user message fields directly in `data`.
+    { type: 'user/message', data: userMessage(request) },
     { type: 'tool/call', data: { name: 'skill', callId: name, arguments: JSON.stringify({ name }) } },
     { type: 'tool/result', data: { message: { isError: false, source: { callId: name } } } },
-    { type: 'user/message', data: { message: invocation } },
+    { type: 'user/message', data: invocation },
+  ]
+}
+
+function ptcInvocationEvents(name = 'study-plus') {
+  const subCallId = 'root-1:ptc:1'
+  return [
+    { type: 'turn/start', data: {} },
+    { type: 'user/message', data: userMessage('start a tracked session') },
+    { type: 'tool/call', data: { name: 'run_code', callId: 'root-1', arguments: '{}' } },
+    { type: 'tool/ptc-dispatch-start', data: { rootCallId: 'root-1', subCallId, name: 'skill', arguments: { name } } },
+    { type: 'tool/ptc-dispatch', data: { rootCallId: 'root-1', subCallId, name: 'skill', arguments: { name }, isError: false, content: [] } },
+    { type: 'tool/result', data: { message: { isError: false, source: { callId: 'root-1' } } } },
   ]
 }
 
@@ -110,13 +123,35 @@ test('prompt keeps the section unchanged without a completed study-plus skill lo
   failed[3].data.message.isError = true
   const plain = [
     { type: 'turn/start', data: {} },
-    { type: 'user/message', data: { message: userMessage('/study-plus') } },
+    { type: 'user/message', data: userMessage('/study-plus') },
   ]
 
   assert.equal(promptFor({ events: ordinary }), 'base Nerd Mode policy')
   assert.equal(promptFor({ events: failed }), 'base Nerd Mode policy')
   assert.equal(promptFor({ events: plain }), 'base Nerd Mode policy')
   assert.equal(promptFor({ active: false, events: invocationEvents('study-plus') }), '')
+})
+
+test('prompt reads a step with ordinary user messages and a tool result', () => {
+  const events = [
+    { type: 'turn/start', data: {} },
+    { type: 'user/message', data: userMessage('teach me TypeScript') },
+    { type: 'tool/call', data: { name: 'pwsh', callId: 'call-1', arguments: '{}' } },
+    { type: 'tool/result', data: { message: { isError: false, source: { callId: 'call-1' } } } },
+  ]
+
+  assert.equal(promptFor({ events }), 'base Nerd Mode policy')
+})
+
+test('prompt tolerates partial events from a resumed or seeded log', () => {
+  const events = [
+    { type: 'turn/start', data: {} },
+    { type: 'user/message', data: {} },
+    { type: 'tool/call', data: {} },
+    { type: 'tool/result', data: {} },
+  ]
+
+  assert.equal(promptFor({ events }), 'base Nerd Mode policy')
 })
 
 test('prompt reads active settings for a completed study-plus invocation', () => {
@@ -150,6 +185,29 @@ test('prompt reads active settings for a completed study-plus invocation', () =>
       'An explicit preference in the current /study-plus request overrides its profile default for this session and does not update the profile.',
     ].join('\n'),
   )
+})
+
+test('prompt recognizes a study-plus load dispatched through run_code', () => {
+  assert.match(
+    promptFor({ events: ptcInvocationEvents('study-plus') }),
+    /Study-plus profile defaults for this tracked session/,
+  )
+  assert.equal(promptFor({ events: ptcInvocationEvents('study') }), 'base Nerd Mode policy')
+
+  const failed = ptcInvocationEvents('study-plus')
+  failed[4].data.isError = true
+  assert.equal(promptFor({ events: failed }), 'base Nerd Mode policy')
+})
+
+test('a PTC study-plus load keeps the defaults on a later turn', () => {
+  const { ctx, section } = makeCtx()
+  apply(ctx, Config({ section: 'base Nerd Mode policy' }))
+  const session = makeSession(ptcInvocationEvents('study-plus'))
+
+  assert.match(section().text({ agent: { session } }), /Study-plus profile defaults/)
+  // The next turn has no dispatch event of its own; the cached id keeps the defaults.
+  session.seq = 0
+  assert.match(section().text({ agent: { session } }), /Study-plus profile defaults/)
 })
 
 test('claim handler records the direct study-plus message and survives other claims', () => {
