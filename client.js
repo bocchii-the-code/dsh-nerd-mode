@@ -565,8 +565,437 @@ window.__ModuleLoader__.load({
       );
     }
 
+    // The conversation view bar, driven by the entries in `conversation.view`.
+    // Live build orders: chat 0, trajectory 10, context 20, fleet 30.
+    const VIEW_SLOT = 'conversation.view';
+    const VIEW_ID = 'study';
+    const VIEW_LABEL = 'Study';
+    const VIEW_ORDER = 100;
+    const TRACKER_ROOT = 'study';
+    const DASH = '—';
+
+    // --- Tracker parsing -----------------------------------------------------
+    // Parsing lives here because the client bundle is a classic script: a
+    // relative require throws and an export statement is invalid.
+
+    function splitRow(line) {
+      return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+    }
+
+    function tableBlocks(text) {
+      const blocks = [];
+      let current = null;
+      for (const line of String(text ?? '').split(/\r?\n/)) {
+        if (!line.trim().startsWith('|')) {
+          current = null;
+          continue;
+        }
+        const cells = splitRow(line);
+        if (cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell))) continue;
+        if (current === null) {
+          current = { header: cells, rows: [] };
+          blocks.push(current);
+        } else {
+          current.rows.push(cells);
+        }
+      }
+      return blocks;
+    }
+
+    const columnOf = (block, name) => block.header
+      .findIndex((cell) => cell.toLowerCase() === name.toLowerCase());
+
+    function parseDate(value) {
+      const match = /^\d{4}-\d{2}-\d{2}/.exec(String(value ?? '').trim());
+      return match ? match[0] : null;
+    }
+
+    function parseGraph(text) {
+      const lines = String(text ?? '').split(/\r?\n/);
+      let topic = null;
+      let book = null;
+      const chapters = new Map();
+      let inChapters = false;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        const topicMatch = /^#\s*Topic:\s*(.+)$/i.exec(trimmed);
+        if (topicMatch) topic = topicMatch[1].trim();
+        const bookMatch = /^Book:\s*(.+)$/i.exec(trimmed);
+        if (bookMatch) book = bookMatch[1].trim();
+        if (/^##\s*Chapters\s*$/i.test(trimmed)) {
+          inChapters = true;
+          continue;
+        }
+        if (!inChapters) continue;
+        const chapterRow = /^(\d+)\.\s*(.+?)(?::.*)?$/.exec(trimmed);
+        if (chapterRow) chapters.set(Number(chapterRow[1]), chapterRow[2].trim());
+        else if (trimmed !== '') inChapters = false;
+      }
+
+      const table = tableBlocks(text).find((block) => columnOf(block, 'Concept') !== -1);
+      const concepts = [];
+      let malformed = 0;
+      if (table) {
+        const nameAt = columnOf(table, 'Concept');
+        const chapterAt = columnOf(table, 'Chapter');
+        const sectionAt = columnOf(table, 'Section');
+        table.rows.forEach((cells, position) => {
+          if (cells.length !== table.header.length || cells[nameAt] === '') {
+            malformed += 1;
+            return;
+          }
+          const chapter = chapterAt === -1 ? 1 : Number.parseInt(cells[chapterAt], 10);
+          const section = sectionAt === -1 ? concepts.length + 1 : Number.parseInt(cells[sectionAt], 10);
+          concepts.push({
+            name: cells[nameAt],
+            chapter: Number.isInteger(chapter) && chapter > 0 ? chapter : 1,
+            section: Number.isInteger(section) && section > 0 ? section : position + 1,
+            order: position,
+          });
+        });
+      }
+      return { topic, book, chapters, concepts, malformed };
+    }
+
+    function parseState(text) {
+      const table = tableBlocks(text).find((block) => columnOf(block, 'State') !== -1);
+      const states = new Map();
+      let malformed = 0;
+      if (!table) return { states, malformed };
+      const nameAt = columnOf(table, 'Concept');
+      const stateAt = columnOf(table, 'State');
+      const dateAt = columnOf(table, 'Last evidence');
+      for (const cells of table.rows) {
+        if (cells.length !== table.header.length || cells[nameAt] === '') {
+          malformed += 1;
+          continue;
+        }
+        states.set(cells[nameAt], {
+          state: cells[stateAt].toLowerCase(),
+          date: dateAt === -1 ? null : parseDate(cells[dateAt]),
+        });
+      }
+      return { states, malformed };
+    }
+
+    function parseLog(text) {
+      const blocks = [];
+      let current = null;
+      for (const line of String(text ?? '').split(/\r?\n/)) {
+        const heading = /^##\s+(.+)$/.exec(line.trim());
+        if (heading) {
+          current = { date: heading[1].trim(), concept: null, result: null };
+          blocks.push(current);
+          continue;
+        }
+        if (current === null) continue;
+        const field = /^(Concept|Result):\s*(.*)$/i.exec(line.trim());
+        if (!field) continue;
+        if (field[1].toLowerCase() === 'concept') current.concept = field[2].trim() || null;
+        else current.result = field[2].trim() || null;
+      }
+      return blocks.filter((block) => block.concept !== null || block.result !== null);
+    }
+
+    const latestEvidence = (text) => {
+      const dates = [...parseState(text).states.values()].map((row) => row.date ?? '');
+      return dates.sort().pop() ?? '';
+    };
+
+    function buildSnapshot(topic, graphText, stateText, logText) {
+      const graph = parseGraph(graphText);
+      const state = parseState(stateText);
+      const log = parseLog(logText);
+      const chapterTitle = (chapter) => graph.chapters.get(chapter) ?? graph.book ?? graph.topic ?? topic;
+
+      const concepts = graph.concepts
+        .map((concept) => {
+          const row = state.states.get(concept.name) ?? { state: 'new', date: null };
+          return { ...concept, ...row, chapterTitle: chapterTitle(concept.chapter) };
+        })
+        .sort((left, right) => left.chapter - right.chapter
+          || left.section - right.section
+          || left.order - right.order);
+      concepts.forEach((concept, position) => { concept.position = position; });
+
+      const skipped = concepts.filter((concept) => concept.state === 'skipped').length;
+      const fluent = concepts.filter((concept) => concept.state === 'fluent').length;
+      const denominator = concepts.length - skipped;
+      const percentage = denominator > 0 ? Math.floor((fluent / denominator) * 100) : null;
+
+      const current = concepts
+        .filter((concept) => concept.date !== null)
+        .sort((left, right) => right.date.localeCompare(left.date))[0] ?? null;
+      const previous = current === null ? null : concepts[current.position - 1] ?? null;
+      const remaining = current === null ? concepts : concepts.slice(current.position + 1);
+      const next = remaining.find((concept) => concept.state !== 'fluent' && concept.state !== 'skipped') ?? null;
+      const nextState = next !== null
+        ? 'concept'
+        : remaining.some((concept) => concept.state === 'skipped') ? 'all-skipped' : 'end';
+
+      const shaky = concepts
+        .filter((concept) => concept.state === 'shaky')
+        .sort((left, right) => (right.date ?? '').localeCompare(left.date ?? ''));
+
+      return {
+        topic,
+        bookTitle: graph.book ?? graph.topic ?? topic,
+        total: concepts.length,
+        skipped,
+        fluent,
+        denominator,
+        percentage,
+        concepts,
+        current,
+        previous,
+        next,
+        nextState,
+        shaky,
+        shakyTotal: shaky.length,
+        cycles: log.slice(-3).reverse().map((block) => ({
+          date: block.date,
+          label: block.result ?? block.concept ?? '',
+        })),
+        malformed: graph.malformed + state.malformed,
+      };
+    }
+
+    // --- Tracker reads -------------------------------------------------------
+
+    async function readText(files, sessionId, path) {
+      const result = await files.read(sessionId, path, {});
+      if (result.ok) return result.value?.text ?? '';
+      // A missing file is an empty input, not a failure.
+      if (result.error?.code === 'workspace-file/not-found') return '';
+      throw new Error(result.error?.message ?? `${path} could not be read`);
+    }
+
+    async function loadTopic(files, sessionId, topic, stateText) {
+      const base = `${TRACKER_ROOT}/${topic}`;
+      const [state, graph, log] = await Promise.all([
+        stateText === undefined ? readText(files, sessionId, `${base}/state.md`) : stateText,
+        readText(files, sessionId, `${base}/graph.md`),
+        readText(files, sessionId, `${base}/log.md`),
+      ]);
+      const snapshot = buildSnapshot(topic, graph, state, log);
+      return snapshot.total === 0 ? { status: 'empty', topic } : { status: 'ready', snapshot };
+    }
+
+    // "Changed most recently" is read from the newest dated Evidence, because
+    // the file surface exposes no modification time.
+    async function discoverTopics(files, sessionId) {
+      const listing = await files.list(sessionId, TRACKER_ROOT);
+      if (!listing.ok) {
+        if (listing.error?.code === 'workspace-file/not-found') return { topics: [], content: { status: 'empty' } };
+        throw new Error(listing.error?.message ?? 'the Tracker folder could not be read');
+      }
+      const topics = (listing.value?.entries ?? [])
+        .filter((entry) => entry.type === 'directory')
+        .map((entry) => entry.name);
+      if (topics.length === 0) return { topics, content: { status: 'empty' } };
+      const states = [];
+      for (const topic of topics) {
+        states.push({ topic, text: await readText(files, sessionId, `${TRACKER_ROOT}/${topic}/state.md`) });
+      }
+      states.sort((left, right) => latestEvidence(right.text).localeCompare(latestEvidence(left.text)));
+      const chosen = states[0];
+      return { topics, content: await loadTopic(files, sessionId, chosen.topic, chosen.text) };
+    }
+
+    // --- Study view ----------------------------------------------------------
+
+    const conceptLabel = (concept) => `${concept.chapterTitle} · Section ${concept.section} · ${concept.name}`;
+
+    function progressBlock(snapshot) {
+      if (snapshot.percentage === null) {
+        return React.createElement('div', { 'data-study-progress': 'none', style: panelProgressStyle },
+          React.createElement('p', { style: panelFigureStyle }, DASH),
+          React.createElement('p', { style: panelMutedStyle }, 'Every Concept is skipped.'));
+      }
+      const text = `${snapshot.percentage}% of the Book`;
+      return React.createElement('div', { style: panelProgressStyle },
+        React.createElement('div', {
+          role: 'progressbar',
+          'aria-label': 'Book progress',
+          'aria-valuemin': 0,
+          'aria-valuemax': 100,
+          'aria-valuenow': snapshot.percentage,
+          'aria-valuetext': text,
+          style: panelTrackStyle,
+        }, React.createElement('div', {
+          style: { ...panelFillStyle, width: `${snapshot.percentage}%` },
+        })),
+        React.createElement('p', { style: panelMutedStyle }, text),
+        snapshot.current === null
+          ? React.createElement('p', { style: panelMutedStyle }, 'No evidence yet')
+          : null);
+    }
+
+    function stripBlock(snapshot) {
+      const slots = [
+        ['Previous', snapshot.previous === null ? DASH : conceptLabel(snapshot.previous)],
+        ['Current', snapshot.current === null ? 'No lesson recorded yet' : conceptLabel(snapshot.current)],
+        ['Next', snapshot.next !== null
+          ? conceptLabel(snapshot.next)
+          : snapshot.nextState === 'all-skipped' ? 'Everything left is skipped' : 'End of Book'],
+      ];
+      return React.createElement('dl', { style: panelStripStyle },
+        ...slots.map(([label, value]) => React.createElement('div', { key: label, style: panelStripCellStyle },
+          React.createElement('dt', { style: panelStripLabelStyle }, label),
+          React.createElement('dd', { style: panelStripValueStyle }, value))));
+    }
+
+    function topicPicker(topics, value, onTopic) {
+      if (topics.length < 2) return null;
+      return React.createElement('label', { style: panelFieldStyle },
+        React.createElement('span', null, 'Topic'),
+        React.createElement('select', {
+          'aria-label': 'Topic',
+          value,
+          onChange: (event) => onTopic(event.target.value),
+          style: panelSelectStyle,
+        }, ...topics.map((topic) => React.createElement('option', { key: topic, value: topic }, topic))));
+    }
+
+    function readyBody(snapshot, error, topics, onTopic) {
+      const nodes = [
+        React.createElement('div', { style: panelHeaderStyle },
+          React.createElement('h2', { style: panelTitleStyle }, snapshot.bookTitle),
+          topicPicker(topics, snapshot.topic, onTopic)),
+      ];
+      if (error) {
+        nodes.push(React.createElement('p', { role: 'alert', style: panelMutedStyle },
+          `The Tracker could not be read: ${error}.`));
+      }
+      nodes.push(progressBlock(snapshot), stripBlock(snapshot));
+
+      const shown = snapshot.shaky.slice(0, 5);
+      nodes.push(React.createElement('section', { 'data-study-section': 'shaky', style: panelSectionStyle },
+        React.createElement('h3', { style: panelHeadingStyle }, 'Shaky Concepts'),
+        shown.length === 0
+          ? React.createElement('p', { style: panelMutedStyle }, 'No shaky Concepts.')
+          : React.createElement('ul', { style: panelListStyle },
+              ...shown.map((concept) => React.createElement('li', { key: concept.name }, conceptLabel(concept)))),
+        snapshot.shakyTotal > shown.length
+          ? React.createElement('p', { style: panelMutedStyle }, `${snapshot.shakyTotal - shown.length} more not shown.`)
+          : null));
+
+      nodes.push(React.createElement('section', { 'data-study-section': 'cycles', style: panelSectionStyle },
+        React.createElement('h3', { style: panelHeadingStyle }, 'Recent cycles'),
+        snapshot.cycles.length === 0
+          ? React.createElement('p', { style: panelMutedStyle }, 'No cycles yet.')
+          : React.createElement('ul', { style: panelListStyle },
+              ...snapshot.cycles.map((cycle, index) => React.createElement('li', { key: `${cycle.date}-${index}` },
+                `${cycle.date} · ${cycle.label}`)))));
+
+      if (snapshot.malformed > 0) {
+        nodes.push(React.createElement('p', { role: 'status', style: panelMutedStyle },
+          `${snapshot.malformed} malformed ${snapshot.malformed === 1 ? 'row was' : 'rows were'} ignored.`));
+      }
+      return nodes;
+    }
+
+    function StudyView({ sessionId, workspaceFiles }) {
+      const [topics, setTopics] = React.useState([]);
+      const [selected, setSelected] = React.useState(null);
+      const [content, setContent] = React.useState({ status: 'loading' });
+
+      React.useEffect(() => {
+        let live = true;
+        const run = async () => {
+          try {
+            const found = selected === null
+              ? await discoverTopics(workspaceFiles, sessionId)
+              : { topics: null, content: await loadTopic(workspaceFiles, sessionId, selected) };
+            if (!live) return;
+            if (found.topics !== null) setTopics(found.topics);
+            setContent(found.content);
+          } catch (error) {
+            if (!live) return;
+            const message = error?.message ?? 'the Tracker could not be read';
+            // Keep the last good snapshot so a failed reload does not blank the page.
+            setContent((previous) => previous.status === 'ready' || previous.status === 'empty'
+              ? { ...previous, error: message }
+              : { status: 'failed', error: message });
+          }
+        };
+        run();
+        return () => { live = false; };
+      }, [selected, sessionId, workspaceFiles]);
+
+      let nodes;
+      if (content.status === 'loading') {
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the Tracker…')];
+      } else if (content.status === 'failed') {
+        nodes = [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The Tracker could not be read: ${content.error}.`)];
+      } else if (content.status === 'empty') {
+        const searched = content.topic ? `${TRACKER_ROOT}/${content.topic}` : `${TRACKER_ROOT}/`;
+        const picker = topicPicker(topics, content.topic ?? selected, setSelected);
+        nodes = [
+          picker === null ? null : React.createElement('div', { style: panelHeaderStyle }, picker),
+          React.createElement('p', { style: panelMutedStyle }, `No Tracker in ${searched}. Run /study-plus to create one.`),
+        ];
+      } else {
+        nodes = readyBody(content.snapshot, content.error, topics, setSelected);
+      }
+      return React.createElement('div', {
+        role: 'region',
+        'aria-label': VIEW_LABEL,
+        style: panelStyle,
+      }, ...nodes);
+    }
+
+    const panelStyle = {
+      boxSizing: 'border-box',
+      color: 'var(--dsw-alias-label-primary)',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'var(--dsw-font-family, inherit)',
+      gap: 20,
+      maxWidth: 720,
+      paddingBottom: 24,
+      width: '100%',
+    };
+    const panelHeaderStyle = { alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' };
+    const panelTitleStyle = { fontSize: 16, fontWeight: 600, lineHeight: '24px', margin: 0 };
+    const panelMutedStyle = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 13, lineHeight: '20px', margin: 0 };
+    const panelHeadingStyle = { fontSize: 14, fontWeight: 600, lineHeight: '22px', margin: 0 };
+    const panelSectionStyle = { display: 'flex', flexDirection: 'column', gap: 8 };
+    const panelListStyle = { display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', margin: 0, padding: 0 };
+    const panelProgressStyle = { display: 'flex', flexDirection: 'column', gap: 8 };
+    const panelTrackStyle = { background: 'var(--dsw-alias-bg-layer-2)', borderRadius: 999, height: 8, overflow: 'hidden', width: '100%' };
+    const panelFillStyle = { background: 'var(--dsw-alias-state-business-primary)', height: '100%' };
+    const panelStripStyle = {
+      display: 'grid',
+      gap: 12,
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      margin: 0,
+    };
+    const panelStripCellStyle = {
+      background: 'var(--dsw-alias-bg-layer-1)',
+      border: '1px solid var(--dsw-alias-border-l2)',
+      borderRadius: 'var(--dsw-radius-sm)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+      padding: 12,
+    };
+    const panelStripLabelStyle = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 12, lineHeight: '18px', margin: 0 };
+    const panelStripValueStyle = { fontSize: 13, lineHeight: '20px', margin: 0 };
+    const panelFigureStyle = { fontSize: 28, fontWeight: 600, lineHeight: '36px', margin: 0 };
+    const panelFieldStyle = { alignItems: 'center', display: 'flex', fontSize: 13, gap: 8 };
+    const panelSelectStyle = {
+      background: 'var(--dsw-alias-bg-layer-1)',
+      border: '1px solid var(--dsw-alias-border-l3)',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'var(--dsw-alias-label-primary)',
+      font: 'inherit',
+      height: 32,
+      padding: '0 8px',
+    };
+
     return {
-      inject: ['slots', 'remote', 'remote.commands', 'configForms'],
+      inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'],
       apply(ctx) {
         ctx.slots.inject(SLOT, () =>
           ctx.slots.register({
@@ -589,6 +1018,18 @@ window.__ModuleLoader__.load({
             close,
             configForms: ctx.configForms,
           })),
+        );
+        ctx.slots.inject(VIEW_SLOT, () =>
+          ctx.slots.register({
+            name: VIEW_SLOT,
+            id: VIEW_ID,
+            order: VIEW_ORDER,
+            label: VIEW_LABEL,
+            inject: (sessionId) => ({
+              sessionId,
+              workspaceFiles: ctx.remote.workspaceFiles,
+            }),
+          }, StudyView),
         );
       },
     };

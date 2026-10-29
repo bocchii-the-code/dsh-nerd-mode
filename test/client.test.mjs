@@ -215,6 +215,7 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
           return executeImpl ? executeImpl(...args) : { ok: true, value: {} }
         },
       },
+      workspaceFiles: configOptions.files ?? fileRemote(),
     },
     configForms: {
       get(namespace) {
@@ -257,6 +258,47 @@ function render(active, executeImpl) {
 
 const buttonOf = (tree) => tree.props.children.find((child) => child?.type === 'button')
 const toastOf = (tree) => tree.props.children.find((child) => child?.type === FakeToast)
+
+// A stand-in for ctx.remote.workspaceFiles. Directories come from `dirs`, text
+// files from `files`, and a key in `failures` answers with that error instead.
+function fileRemote({ files = {}, dirs = {}, failures = {} } = {}) {
+  const calls = []
+  const isDirectory = (path, name) => Boolean(dirs[`${path}/${name}`])
+    || Object.keys(files).some((key) => key.startsWith(`${path}/${name}/`))
+  return {
+    calls,
+    async list(sessionId, path) {
+      calls.push(['list', sessionId, path])
+      if (failures[path]) return { ok: false, error: failures[path] }
+      if (!(path in dirs)) {
+        return { ok: false, error: { code: 'workspace-file/not-found', message: `${path} is not a folder` } }
+      }
+      return {
+        ok: true,
+        value: {
+          path,
+          truncated: false,
+          entries: dirs[path].map((name) => ({
+            name,
+            type: isDirectory(path, name) ? 'directory' : 'file',
+          })),
+        },
+      }
+    },
+    async read(sessionId, path, range) {
+      calls.push(['read', sessionId, path, range])
+      if (failures[path]) return { ok: false, error: failures[path] }
+      if (!(path in files)) {
+        return { ok: false, error: { code: 'workspace-file/not-found', message: `${path} does not exist` } }
+      }
+      const text = files[path]
+      return {
+        ok: true,
+        value: { text, offset: 1, lines: text.split('\n').length, eof: true },
+      }
+    },
+  }
+}
 
 test('registers one toggle in the composer bar', () => {
   assert.ok(client.inject.includes('remote'))
@@ -310,7 +352,7 @@ test('registers a standalone Nerd Mode settings section', () => {
   assert.equal(settings[0].options.id, 'dsh-nerd-mode')
   assert.equal(settings[0].options.label, 'Nerd Mode')
   assert.equal(settings[0].options.order, 30)
-  assert.deepEqual(client.inject, ['slots', 'remote', 'remote.commands', 'configForms'])
+  assert.deepEqual(client.inject, ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'])
 })
 
 test('uses the settings section close prop and subscribes with useSyncExternalStore', () => {
@@ -586,4 +628,386 @@ test('dismissing the toast keeps the tooltip text', async () => {
   const later = view.rerender(false)
   assert.equal(toastOf(later), undefined)
   assert.match(buttonOf(later).props.title, /not available in this build/)
+})
+
+// --- Study tab ---------------------------------------------------------------
+
+const GRAPH_TWO_CHAPTERS = [
+  '# Topic: gradient-descent',
+  'Book: Learning from Data',
+  '',
+  '## Chapters',
+  '1. Foundations: the basics',
+  '2. Optimization: getting faster',
+  '',
+  '| # | Concept | Definition | Prerequisites | Chapter | Section |',
+  '|---|---|---|---|---|---:|',
+  '| 1 | Loss function | how wrong the model is | - | 1 | 1 |',
+  '| 2 | Gradient | the slope of the loss | 1 | 1 | 2 |',
+  '| 3 | Learning rate | how far one step goes | 2 | 2 | 1 |',
+  '| 4 | Momentum | carry the last step | 3 | 2 | 2 |',
+].join('\n')
+
+const STATE_TWO_CHAPTERS = [
+  '| # | Concept | State | Last evidence | Passes | Misses | Note |',
+  '|---|---|---|---|---|---|---|',
+  '| 1 | Loss function | fluent | 2026-10-20 | 1 | 0 | |',
+  '| 2 | Gradient | shaky | 2026-10-28 | 0 | 2 | sign flip |',
+  '| 3 | Learning rate | shaky | 2026-10-27 | 0 | 1 | too large |',
+  '| 4 | Momentum | new | - | 0 | 0 | |',
+].join('\n')
+
+const LOG_TWO_CYCLES = [
+  '## 2026-10-26',
+  'Concept: Momentum',
+  'Gap: teaching stopped before the questions',
+  '',
+  '## 2026-10-27',
+  'Concept: Learning rate',
+  'Result: 1 of 3 correct',
+  'Gap: the step was too large',
+  '',
+  '## 2026-10-28',
+  'Concept: Gradient',
+  'Result: 2 of 3 correct; teach-back incomplete',
+  'Gap: the sign',
+].join('\n')
+
+const STATE_HEADER = [
+  '| # | Concept | State | Last evidence | Passes | Misses | Note |',
+  '|---|---|---|---|---|---|---|',
+].join('\n')
+
+const GRAPH_HEADER = [
+  '| # | Concept | Definition | Prerequisites | Chapter | Section |',
+  '|---|---|---|---|---:|---:|',
+].join('\n')
+
+function renderStudy(fixture) {
+  const files = fileRemote(fixture)
+  const mounted = mount(undefined, {}, { files })
+  const registration = mounted.registers.find(({ options }) => options.name === 'conversation.view')
+  assert.ok(registration, 'the client registers a conversation view')
+  const injected = registration.options.inject('session-1')
+  resetHooks()
+  const renderer = createRenderer(registration.component, () => injected)
+  return {
+    ...mounted,
+    files,
+    registration,
+    get tree() { return renderer.tree },
+    async settle() {
+      for (let turn = 0; turn < 60; turn += 1) {
+        await new Promise((resolve) => queueMicrotask(resolve))
+      }
+      return renderer.tree
+    },
+  }
+}
+
+function stripOf(tree) {
+  const list = allOfType(tree, 'dl')[0]
+  return list.props.children.map((cell) => ({
+    label: textOf(allOfType(cell, 'dt')[0]),
+    value: textOf(allOfType(cell, 'dd')[0]),
+  }))
+}
+
+const sectionOf = (tree, name) => allOfType(tree, 'section')
+  .find(({ props }) => props['data-study-section'] === name)
+const rowsOf = (tree, name) => allOfType(sectionOf(tree, name), 'li').map(textOf)
+
+const studyFixture = (overrides = {}) => ({
+  dirs: {
+    study: ['gradient-descent'],
+    'study/gradient-descent': ['graph.md', 'log.md', 'state.md'],
+  },
+  files: {
+    'study/gradient-descent/graph.md': GRAPH_TWO_CHAPTERS,
+    'study/gradient-descent/log.md': LOG_TWO_CYCLES,
+    'study/gradient-descent/state.md': STATE_TWO_CHAPTERS,
+  },
+  ...overrides,
+})
+
+test('registers a Study view after the shipped tabs', () => {
+  const { registers } = mount()
+  const views = registers.filter(({ options }) => options.name === 'conversation.view')
+  assert.equal(views.length, 1)
+  assert.equal(views[0].options.id, 'study')
+  assert.equal(views[0].options.label, 'Study')
+  assert.equal(views[0].options.order, 100)
+  const injected = views[0].options.inject('session-9')
+  assert.equal(injected.sessionId, 'session-9')
+  assert.equal(typeof injected.workspaceFiles.read, 'function')
+  assert.equal(typeof injected.workspaceFiles.list, 'function')
+})
+
+test('shows progress, the three Sections, shaky Concepts, and recent cycles', async () => {
+  const view = renderStudy(studyFixture())
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /25% of the Book/)
+  const progress = allOfType(tree, 'div').find(({ props }) => props.role === 'progressbar')
+  assert.equal(progress.props['aria-valuenow'], 25)
+  assert.equal(progress.props['aria-valuemin'], 0)
+  assert.equal(progress.props['aria-valuemax'], 100)
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Study'), true)
+  assert.deepEqual(stripOf(tree), [
+    { label: 'Previous', value: 'Foundations · Section 1 · Loss function' },
+    { label: 'Current', value: 'Foundations · Section 2 · Gradient' },
+    { label: 'Next', value: 'Optimization · Section 1 · Learning rate' },
+  ])
+  assert.deepEqual(rowsOf(tree, 'shaky'), [
+    'Foundations · Section 2 · Gradient',
+    'Optimization · Section 1 · Learning rate',
+  ])
+  assert.deepEqual(rowsOf(tree, 'cycles'), [
+    '2026-10-28 · 2 of 3 correct; teach-back incomplete',
+    '2026-10-27 · 1 of 3 correct',
+    '2026-10-26 · Momentum',
+  ])
+  assert.deepEqual([...new Set(view.files.calls.map(([method]) => method))], ['list', 'read'])
+})
+
+test('places a legacy graph in chapter one and keeps row order', async () => {
+  const view = renderStudy({
+    dirs: { study: ['legacy'], 'study/legacy': ['graph.md', 'state.md'] },
+    files: {
+      'study/legacy/graph.md': [
+        '# Topic: legacy',
+        '',
+        '| # | Concept | Definition | Prerequisites |',
+        '|---|---|---|---|',
+        '| 1 | Alpha | first | - |',
+        '| 2 | Beta | second | 1 |',
+      ].join('\n'),
+      'study/legacy/state.md': [
+        STATE_HEADER,
+        '| 1 | Alpha | fluent | 2026-10-01 | 1 | 0 | |',
+        '| 2 | Beta | new | - | 0 | 0 | |',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /50% of the Book/)
+  assert.deepEqual(stripOf(tree), [
+    { label: 'Previous', value: '—' },
+    { label: 'Current', value: 'legacy · Section 1 · Alpha' },
+    { label: 'Next', value: 'legacy · Section 2 · Beta' },
+  ])
+})
+
+test('shows a dash when every Concept is skipped', async () => {
+  const view = renderStudy({
+    dirs: { study: ['done'], 'study/done': ['graph.md', 'state.md'] },
+    files: {
+      'study/done/graph.md': [
+        '# Topic: done',
+        GRAPH_HEADER,
+        '| 1 | Alpha | first | - | 1 | 1 |',
+        '| 2 | Beta | second | 1 | 1 | 2 |',
+      ].join('\n'),
+      'study/done/state.md': [
+        STATE_HEADER,
+        '| 1 | Alpha | skipped | - | 0 | 0 | self-report, done |',
+        '| 2 | Beta | skipped | - | 0 | 0 | self-report, done |',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'progressbar'), false)
+  const figure = allOfType(tree, 'div').find(({ props }) => props['data-study-progress'] === 'none')
+  assert.equal(textOf(allOfType(figure, 'p')[0]), '—')
+  assert.match(textOf(tree), /Every Concept is skipped/)
+})
+
+test('shows zero progress and the next graph Section when the state table is missing', async () => {
+  const view = renderStudy({
+    dirs: { study: ['fresh'], 'study/fresh': ['graph.md'] },
+    files: {
+      'study/fresh/graph.md': [
+        '# Topic: fresh',
+        'Book: Fresh Book',
+        GRAPH_HEADER,
+        '| 1 | First | a | - | 1 | 1 |',
+        '| 2 | Second | b | 1 | 1 | 2 |',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /0% of the Book/)
+  assert.match(textOf(tree), /No evidence yet/)
+  assert.deepEqual(stripOf(tree), [
+    { label: 'Previous', value: '—' },
+    { label: 'Current', value: 'No lesson recorded yet' },
+    { label: 'Next', value: 'Fresh Book · Section 1 · First' },
+  ])
+})
+
+test('ignores a malformed state row and says how many', async () => {
+  const view = renderStudy({
+    dirs: { study: ['broken'], 'study/broken': ['graph.md', 'state.md'] },
+    files: {
+      'study/broken/graph.md': [
+        '# Topic: broken',
+        GRAPH_HEADER,
+        '| 1 | Alpha | first | - | 1 | 1 |',
+        '| 2 | Beta | second | 1 | 1 | 2 |',
+        '| 3 | Gamma | third | 2 | 1 | 3 |',
+      ].join('\n'),
+      'study/broken/state.md': [
+        STATE_HEADER,
+        '| 1 | Alpha | fluent | 2026-10-20 | 1 | 0 | |',
+        '| 2 | Beta | shaky | 2026-10-28 |',
+        '| 3 | Gamma | new | - | 0 | 0 | |',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /1 malformed row was ignored/)
+  assert.match(textOf(tree), /33% of the Book/)
+})
+
+test('names the searched folder when the workspace has no Tracker', async () => {
+  const view = renderStudy({ dirs: {}, files: {} })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /No Tracker in study\//)
+  assert.match(textOf(tree), /\/study-plus/)
+})
+
+test('names the failure when a Tracker file cannot be read', async () => {
+  const view = renderStudy(studyFixture({
+    failures: {
+      'study/gradient-descent/state.md': { code: 'gateway/internal', message: 'Permission denied' },
+    },
+  }))
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /Permission denied/)
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'progressbar'), false)
+})
+
+test('defaults to the most recent topic and switches on request', async () => {
+  const view = renderStudy({
+    dirs: {
+      study: ['alpha', 'beta'],
+      'study/alpha': ['graph.md', 'state.md'],
+      'study/beta': ['graph.md', 'state.md'],
+    },
+    files: {
+      'study/alpha/graph.md': ['# Topic: alpha', 'Book: Alpha Book', GRAPH_HEADER, '| 1 | One | a | - | 1 | 1 |'].join('\n'),
+      'study/alpha/state.md': [STATE_HEADER, '| 1 | One | fluent | 2026-10-01 | 1 | 0 | |'].join('\n'),
+      'study/beta/graph.md': ['# Topic: beta', 'Book: Beta Book', GRAPH_HEADER, '| 1 | Two | b | - | 1 | 1 |'].join('\n'),
+      'study/beta/state.md': [STATE_HEADER, '| 1 | Two | shaky | 2026-10-28 | 0 | 1 | |'].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /Beta Book/)
+  const select = allOfType(tree, 'select')[0]
+  assert.deepEqual(select.props.children.map(textOf), ['alpha', 'beta'])
+  assert.equal(select.props.value, 'beta')
+
+  select.props.onChange({ target: { value: 'alpha' } })
+  const switched = await view.settle()
+
+  assert.match(textOf(switched), /Alpha Book/)
+  assert.equal(allOfType(switched, 'select')[0].props.value, 'alpha')
+})
+
+test('says the Book is finished when nothing is left after the current Section', async () => {
+  const view = renderStudy({
+    dirs: { study: ['end'], 'study/end': ['graph.md', 'state.md'] },
+    files: {
+      'study/end/graph.md': [
+        '# Topic: end',
+        GRAPH_HEADER,
+        '| 1 | Alpha | first | - | 1 | 1 |',
+        '| 2 | Beta | second | 1 | 1 | 2 |',
+      ].join('\n'),
+      'study/end/state.md': [
+        STATE_HEADER,
+        '| 1 | Alpha | fluent | 2026-10-01 | 1 | 0 | |',
+        '| 2 | Beta | fluent | 2026-10-02 | 1 | 0 | |',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(stripOf(tree)[2], { label: 'Next', value: 'End of Book' })
+})
+
+test('says everything left is skipped when only skipped Concepts remain', async () => {
+  const view = renderStudy({
+    dirs: { study: ['left'], 'study/left': ['graph.md', 'state.md'] },
+    files: {
+      'study/left/graph.md': [
+        '# Topic: left',
+        GRAPH_HEADER,
+        '| 1 | Alpha | first | - | 1 | 1 |',
+        '| 2 | Beta | second | 1 | 1 | 2 |',
+        '| 3 | Gamma | third | 2 | 1 | 3 |',
+      ].join('\n'),
+      'study/left/state.md': [
+        STATE_HEADER,
+        '| 1 | Alpha | fluent | 2026-10-01 | 1 | 0 | |',
+        '| 2 | Beta | skipped | - | 0 | 0 | self-report, done |',
+        '| 3 | Gamma | skipped | - | 0 | 0 | self-report, done |',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(stripOf(tree)[2], { label: 'Next', value: 'Everything left is skipped' })
+})
+
+test('lists five shaky Concepts and counts the rest', async () => {
+  const numbers = [1, 2, 3, 4, 5, 6]
+  const view = renderStudy({
+    dirs: { study: ['many'], 'study/many': ['graph.md', 'state.md'] },
+    files: {
+      'study/many/graph.md': [
+        '# Topic: many',
+        GRAPH_HEADER,
+        ...numbers.map((number) => `| ${number} | Concept ${number} | note | - | 1 | ${number} |`),
+      ].join('\n'),
+      'study/many/state.md': [
+        STATE_HEADER,
+        ...numbers.map((number) => `| ${number} | Concept ${number} | shaky | 2026-10-0${number} | 0 | 1 | |`),
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(rowsOf(tree, 'shaky'), [
+    'many · Section 6 · Concept 6',
+    'many · Section 5 · Concept 5',
+    'many · Section 4 · Concept 4',
+    'many · Section 3 · Concept 3',
+    'many · Section 2 · Concept 2',
+  ])
+  assert.match(textOf(sectionOf(tree, 'shaky')), /1 more not shown/)
+})
+
+test('keeps the topic selector when the chosen topic has no graph', async () => {
+  const view = renderStudy({
+    dirs: { study: ['alpha', 'notes'], 'study/alpha': ['graph.md', 'state.md'], 'study/notes': [] },
+    files: {
+      'study/alpha/graph.md': ['# Topic: alpha', 'Book: Alpha Book', GRAPH_HEADER, '| 1 | One | a | - | 1 | 1 |'].join('\n'),
+      'study/alpha/state.md': [STATE_HEADER, '| 1 | One | fluent | 2026-10-01 | 1 | 0 | |'].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  allOfType(tree, 'select')[0].props.onChange({ target: { value: 'notes' } })
+  const switched = await view.settle()
+
+  assert.match(textOf(switched), /No Tracker in study\/notes/)
+  assert.equal(allOfType(switched, 'select')[0].props.value, 'notes')
 })
