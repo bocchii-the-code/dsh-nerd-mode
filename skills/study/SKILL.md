@@ -17,7 +17,9 @@ The upper layer selects the path for multiple independent concepts. Follow that 
 - Use examples and analogies when they help. State where an analogy stops matching. Include exam topics only when they matter to the request.
 - Use tables or figures when they clarify the material. Define every mathematical symbol and its role. In derivations, justify each meaningful step, explain the result, and check algebra, arithmetic, assumptions, and units.
 - Write math in LaTeX. Put one expression in each math span. Keep prose outside math spans.
-- Give every symbol a noun and a role. Put a short table before the first formula when the explanation uses three or more symbols or compares three or more numbers. Use a short list when entries need explanatory clauses.
+- Give every symbol a noun and a role. Define each symbol once, where the reader first meets it: inside the sentence for an inline mention, or in one line directly above the first display formula that uses it. Keep the line in the formula's reading order, and switch to one symbol per line when a definition needs an explanatory clause. Do not restate a symbol that an earlier sentence or definition line already made clear.
+- When four or more symbols each appear in two or more formulas, put a short table of just those symbols before the first formula. The table is a lookup aid, not a definition, so it does not remove any symbol from the line above a formula.
+- Compare three or more numbers in a short table before the first formula.
 - State bounds as verbal comparisons. Explain each formula once in plain words without symbols.
 - Use “you” for the reader’s actions and “we” for shared work. Avoid generic “one” and passive wording when the reader acts. Correct misleading terminology at first use.
 - Justify each meaningful derivation step before showing it. Put one meaningful move on each display line, and split long equality chains where the object changes. Mark approximations and assumptions.

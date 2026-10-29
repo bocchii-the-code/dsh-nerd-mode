@@ -132,3 +132,11 @@ _Avoid_: lesson, chapter, section, content dump
 **Figure**:
 One SVG image that shows one idea, used in a lesson or lecture.
 _Avoid_: chart, picture
+
+**Symbol definition** (符号定义):
+The line directly above a display formula that gives each symbol the formula introduces a noun and a role. A symbol gets one definition, at the place the reader first meets it, and later formulas reuse it.
+_Avoid_: notation, legend
+
+**Symbol table** (符号表):
+A table at the head of a lecture that lists only the symbols several formulas share. It is a lookup aid, not a definition.
+_Avoid_: glossary, notation table

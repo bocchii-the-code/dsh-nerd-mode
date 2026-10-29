@@ -69,7 +69,7 @@ Type the command, or turn the switch on and just ask. With the switch on, a lear
 
 An explicit `/study-plus` goes straight to tracked study, even when the request names several concepts. An explicit `/study`, or a request that arrives through Nerd Mode without a command, asks one question when it names two or more independent concepts: a one-off book-style answer in chat, or a tracked `/study-plus` session. The one-off answer uses a title, chapter headings, and section headings in plain Markdown.
 
-**What you get.** A title, the central idea, numbered steps, and a symbol table when the symbols get dense. One worked example, the common mistake, and the single stop at the fork. For a task, the finished artifact with its reasoning.
+**What you get.** A title, the central idea, numbered steps, one line of symbols above each formula, and a short table only when four or more symbols keep coming back. One worked example, the common mistake, and the single stop at the fork. For a task, the finished artifact with its reasoning.
 
 **What it does not do.** It does not score, keep a learner record, or continue a topic across sessions. It saves a lecture or other requested artifact only when you ask, and then at the path you name.
 

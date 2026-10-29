@@ -10,6 +10,8 @@ Amended 2026-10-28 by the [lecture drafts and free exploration spec](2026-10-28-
 
 Amended 2026-10-28 by the [session defaults spec](2026-10-28-nerd-mode-settings.md) and [ADR 0013](../adr/0013-session-defaults-for-recall-and-questions.md): profile defaults in DSH Settings for the Recall Session, unfixed unseen-question count and form, and the count-driven pass bar. The Recall Session is the learner-answer form and not the old tutor recap.
 
+Amended 2026-10-29 by symbol placement: a symbol is defined where the reader first meets it, and a head table appears only for symbols shared by several formulas.
+
 ## Non-goals
 
 No spaced-repetition scheduler, no decay timer, no multi-learner. The lesson stays text plus SVG figures. A converted document and a one-page HTML explainer may support it, but neither replaces the lesson.
@@ -157,7 +159,7 @@ Use the approved graph and the learner's material by default. Do not run an exte
 
 A lecture carries the main ideas, their relationships, and the qualifications that limit them. It moves from intuition to terms to formal detail. It uses concrete examples and analogies, and states where an analogy stops matching. Headings follow the content, and a fixed five-beat template is not required. Exam focus appears only when it is relevant.
 
-Math uses LaTeX. Define every symbol and its role. Justify every nontrivial derivation step and interpret each equation in plain words. Check algebra, arithmetic, assumptions, and units before sending.
+Math uses LaTeX. Define each symbol once, where the reader first meets it: inline in the sentence, or in one line above the first display formula that uses it. When four or more symbols each appear in two or more formulas, a short table of those shared symbols sits before the first formula as a lookup aid, not a definition. Justify every nontrivial derivation step and interpret each equation in plain words. Check algebra, arithmetic, assumptions, and units before sending.
 
 `study` ends with an optional practice offer and no understanding check. For a task, it produces the requested artifact and does not force the work into a chapter.
 
