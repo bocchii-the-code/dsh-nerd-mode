@@ -1,6 +1,6 @@
 {
   "name": "dsh-nerd-mode",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A study switch and study skills for DeepSeek Harness.",
   "license": "MIT",
   "type": "module",
