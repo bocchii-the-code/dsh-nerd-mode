@@ -1090,20 +1090,23 @@ window.__ModuleLoader__.load({
     }
 
     // A missing folder is an empty listing. Any other failure becomes data.
+    // `found` tells the caller whether the folder exists, so a missing root and
+    // an empty root can render different pages.
     async function listFolder(files, sessionId, path) {
       try {
         const listing = await files.list(sessionId, path);
-        if (listing.ok) return { entries: listing.value?.entries ?? [], error: null };
-        if (listing.error?.code === 'workspace-file/not-found') return { entries: [], error: null };
-        return { entries: [], error: listing.error?.message ?? `${path} could not be read` };
+        if (listing.ok) return { entries: listing.value?.entries ?? [], error: null, found: true };
+        if (listing.error?.code === 'workspace-file/not-found') return { entries: [], error: null, found: false };
+        return { entries: [], error: listing.error?.message ?? `${path} could not be read`, found: false };
       } catch (error) {
-        return { entries: [], error: error?.message ?? `${path} could not be read` };
+        return { entries: [], error: error?.message ?? `${path} could not be read`, found: false };
       }
     }
 
     async function loadLectures(files, sessionId) {
-      const model = { topics: [], error: null };
+      const model = { topics: [], error: null, rootFound: false };
       const root = await listFolder(files, sessionId, TRACKER_ROOT);
+      model.rootFound = root.found;
       if (root.error !== null) {
         model.error = root.error;
         return model;
@@ -1152,40 +1155,123 @@ window.__ModuleLoader__.load({
       return model;
     }
 
+    // One column, titles wrap, no fixed height. The outline is the focus ring.
+    const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}';
+    const lectureRowStyle = {
+      background: 'none',
+      border: 'none',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'inherit',
+      cursor: 'pointer',
+      font: 'inherit',
+      lineHeight: '22px',
+      overflowWrap: 'anywhere',
+      padding: '2px 4px',
+      textAlign: 'left',
+      whiteSpace: 'normal',
+      width: '100%',
+    };
+    const lectureFoldStyle = {
+      background: 'none',
+      border: '1px solid var(--dsw-alias-border-l2)',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'var(--dsw-alias-label-tertiary)',
+      cursor: 'pointer',
+      font: 'inherit',
+      lineHeight: '22px',
+      padding: '6px 10px',
+      textAlign: 'left',
+      width: '100%',
+    };
+
+    const LECTURE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // `2026-10-28` reads as `28 Oct 2026`: shorter than the ISO form and still one date.
+    function lectureDate(value) {
+      const [year, month, day] = value.split('-');
+      const name = LECTURE_MONTHS[Number(month) - 1];
+      return name === undefined ? value : `${Number(day)} ${name} ${year}`;
+    }
+
+    // One mark per entry: a draft says Draft, a taught Lecture says when it was taught.
+    function lectureMark(entry) {
+      if (entry.state === 'draft') return 'Draft';
+      if (entry.state === 'taught' && entry.date !== null) return lectureDate(entry.date);
+      return null;
+    }
+
+    // The whole row is the button, so its text is also its accessible name.
+    function lectureRow(entry) {
+      const mark = lectureMark(entry);
+      return React.createElement('li', { key: entry.number },
+        React.createElement('button', {
+          type: 'button',
+          className: 'lectures-entry',
+          style: lectureRowStyle,
+        }, `${entry.number} · ${entry.title}${mark === null ? '' : ` · ${mark}`}`));
+    }
+
+    function lectureTopic(group, open, onToggle) {
+      const main = group.entries.filter((entry) => entry.state !== 'archived');
+      const archived = group.entries.filter((entry) => entry.state === 'archived');
+      const nodes = [
+        React.createElement('h2', { key: 'heading', style: panelHeadingStyle }, group.topic),
+        main.length === 0
+          ? React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.')
+          : React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map(lectureRow)),
+      ];
+      if (archived.length > 0) {
+        nodes.push(React.createElement('button', {
+          key: 'fold',
+          type: 'button',
+          className: 'lectures-fold',
+          'aria-expanded': open,
+          onClick: () => onToggle(group.topic),
+          style: lectureFoldStyle,
+        }, `Archived lectures (${archived.length})`));
+        if (open) {
+          nodes.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map(lectureRow)));
+        }
+      }
+      return React.createElement('section', { key: group.topic, style: panelSectionStyle }, ...nodes);
+    }
+
     function LecturesPage({ sessionId, workspaceFiles }) {
       const [content, setContent] = React.useState({ status: 'loading' });
+      const [openTopics, setOpenTopics] = React.useState({});
 
       React.useEffect(() => {
         let live = true;
         const run = async () => {
           const model = await loadLectures(workspaceFiles, sessionId);
           if (!live) return;
-          // `error` is model data for the failure line in the next ticket.
           setContent({ status: 'ready', ...model });
         };
         run();
         return () => { live = false; };
       }, [sessionId, workspaceFiles]);
 
+      const toggle = (topic) => setOpenTopics((previous) => ({
+        ...previous,
+        [topic]: previous[topic] !== true,
+      }));
+
       let nodes;
       if (content.status === 'loading') {
         nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the lectures…')];
+      } else if (content.error === null && !content.rootFound) {
+        nodes = [React.createElement('p', { style: panelMutedStyle }, `No Tracker in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
       } else {
-        nodes = content.topics.map((group) => React.createElement('section', {
-          key: group.topic,
-          style: panelSectionStyle,
-        },
-          React.createElement('h2', { style: panelHeadingStyle }, group.topic),
-          React.createElement('ul', { style: panelListStyle },
-            ...group.entries.map((entry) => React.createElement('li', {
-              key: entry.number,
-            }, `${entry.number} · ${entry.title}`)))));
+        nodes = content.error === null
+          ? []
+          : [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The lecture library could not be read: ${content.error}.`)];
+        nodes.push(...content.topics.map((group) => lectureTopic(group, openTopics[group.topic] === true, toggle)));
       }
       return React.createElement('div', {
         role: 'region',
         'aria-label': LECTURES_LABEL,
         style: panelStyle,
-      }, ...nodes);
+      }, React.createElement('style', null, LECTURES_CSS), ...nodes);
     }
 
     // A page type names no resource pattern and no `multiple`, so the host
