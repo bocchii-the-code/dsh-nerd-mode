@@ -103,10 +103,12 @@ The first session runs in a fixed order.
   propose 15 to 30 concepts in prerequisite order, grouped into Chapters
   show the chapter list and the concept table together, then wait
   you approve, edit, or rebuild the graph
-  you name the concepts you can skip
+  you answer one calibration round: goal, background, and concepts to skip
   write one complete draft per concept, skipped concepts included
   teach each concept: recall (optional) → lecture → configured unseen questions → teach-back → dated record
 ```
+
+Approval asks one calibration round: the goal for the topic, prior exposure in your own words, and the concepts you already know well enough to skip. It writes a `Teaching level` line into `graph.md`, with `Goal` and `Background` when you give them. Every lecture then follows that level: `beginner` splits a multi-step concept into numbered steps and explains terms a standard lecture assumes, and `advanced` uses one pass with at most one example per idea. The level shapes the lecture only, never the questions, the teach-back, or the record, and a change asked mid-topic lasts for the session unless you say to keep it.
 
 Drafts count as preparation, not learning. Every lecture follows the `/study` writing standard and is saved before it is shown.
 

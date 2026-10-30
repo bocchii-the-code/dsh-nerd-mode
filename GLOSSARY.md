@@ -56,6 +56,18 @@ _Avoid_: session (when referring to one Concept's teaching and assessment)
 The set of concepts for one topic, their prerequisite links, and their Chapter and Section placement. It is also called the chapter graph when it carries that placement.
 _Avoid_: syllabus, curriculum, outline
 
+**Calibration** (开课校准):
+The one-time question round for a new topic. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
+_Avoid_: onboarding, interview, survey
+
+**Teaching level**:
+A self-reported pitch for one topic, with three values: `beginner`, `standard`, and `advanced`. It sets both step size and explanation detail. It says nothing about mastery, never changes a state, and never counts as evidence.
+_Avoid_: learner level, proficiency, difficulty
+
+**Teaching brief**:
+The three `graph.md` lines passed verbatim to `study`: `Goal`, `Background`, and `Teaching level`. It is context for writing a lecture, not a record of what the learner knows.
+_Avoid_: learner profile, learner model, settings
+
 **Learner model**:
 A durable record of what one learner has demonstrated, one state per concept, used to decide what to teach next.
 _Avoid_: learner profile, memory, progress tracker
