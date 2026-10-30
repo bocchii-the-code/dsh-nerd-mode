@@ -126,7 +126,6 @@ window.__ModuleLoader__.load({
           }, 'Close'),
         );
       }
-      if (draft === null) return null;
       const current = settingsValues(snapshot);
       const dirty = !sameSettings(draft, current);
       const writable = snapshot.writable === true;
@@ -512,7 +511,7 @@ window.__ModuleLoader__.load({
             setToast({ id: Date.now(), text });
           }
         } catch (error) {
-          const text = `Nerd Mode did not switch: ${error?.message ?? 'the host rejected the command'}`;
+          const text = failureText({ ok: false, error });
           setFailure(text);
           setToast({ id: Date.now(), text });
         } finally {
@@ -984,9 +983,9 @@ window.__ModuleLoader__.load({
       marginLeft: 2,
     };
     const panelTrackStyle = {
-      background: 'var(--dsw-alias-fill-tsp-secondary)',
+      background: 'var(--dsw-alias-border-l3)',
       borderRadius: 999,
-      height: 6,
+      height: 8,
       overflow: 'hidden',
       width: '100%',
     };
