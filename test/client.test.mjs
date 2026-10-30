@@ -198,7 +198,25 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
       return true
     },
   }
+  const dockTypes = []
   const ctx = {
+    effect(fn) {
+      return fn()
+    },
+    inject(deps, callback) {
+      const has = (name) => name.split('.').reduce((value, key) => value?.[key], ctx) !== undefined
+      if (!deps.every(has)) return () => {}
+      callback(ctx)
+      return () => {}
+    },
+    ...(configOptions.dock === false ? {} : {
+      sidebarRightTabs: {
+        register(definition) {
+          dockTypes.push(definition)
+          return () => {}
+        },
+      },
+    }),
     slots: {
       inject(_name, fn) {
         return fn()
@@ -226,8 +244,9 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
       describe: () => description,
     },
   }
+  // Cordis has a scoped inject, but apply itself always runs.
   client.apply(ctx)
-  return { registers, executed, mutations, scope, getCalls: () => getCalls, description }
+  return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description }
 }
 
 function render(active, executeImpl) {
@@ -1013,4 +1032,48 @@ test('keeps the topic selector when the chosen topic has no graph', async () => 
 
   assert.match(textOf(switched), /No Tracker in study\/notes/)
   assert.equal(allOfType(switched, 'select')[0].props.value, 'notes')
+})
+
+// --- Lectures dock page ------------------------------------------------------
+
+test('registers one Lectures dock page with a guide entry and one body', () => {
+  const { dockTypes, registers } = mount()
+
+  assert.equal(dockTypes.length, 1)
+  const [definition] = dockTypes
+  assert.equal(definition.id, 'dsh-nerd-mode/lectures')
+  assert.equal(definition.kind, 'lectures')
+  assert.equal(definition.patterns, undefined)
+  assert.equal(definition.multiple, undefined)
+
+  assert.equal(definition.guide.length, 1)
+  const [entry] = definition.guide
+  assert.equal(entry.title(), 'Lectures')
+  assert.match(entry.description(), /lectures/i)
+  assert.equal(typeof entry.icon, 'function')
+
+  const bodies = registers.filter(({ options }) => options.name === 'sidebar.right.pane.tab')
+  assert.equal(bodies.length, 1)
+  assert.equal(bodies[0].options.key, definition.id)
+})
+
+test('renders one placeholder line in a region named Lectures', () => {
+  const { registers } = mount()
+  const body = registers.find(({ options }) => options.name === 'sidebar.right.pane.tab')
+  resetHooks()
+  const tree = createRenderer(body.component, () => ({ sessionId: 'session-1' })).tree
+
+  assert.equal(allOfType(tree, 'p').length, 1)
+  assert.match(textOf(tree), /Saved lectures will appear here/)
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures'), true)
+})
+
+test('registers no Lectures seat when the dock registry is absent', () => {
+  const { dockTypes, registers } = mount(undefined, {}, { dock: false })
+  const has = (name, id) => registers.some(({ options }) => options.name === name && options.id === id)
+
+  assert.deepEqual(dockTypes, [])
+  assert.equal(has('conversation.input.left', 'nerd-mode'), true)
+  assert.equal(has('settings.section', 'dsh-nerd-mode'), true)
+  assert.equal(has('conversation.view', 'study'), true)
 })
