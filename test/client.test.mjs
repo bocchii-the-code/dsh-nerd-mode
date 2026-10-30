@@ -1064,16 +1064,23 @@ test('registers one Lectures dock page with a guide entry and one body', () => {
 
 function renderLectures(fixture) {
   const files = fileRemote(fixture)
+  const opened = []
   const mounted = mount(undefined, {}, { files })
   const registration = mounted.registers.find(({ options }) => options.name === 'sidebar.right.pane.tab')
   assert.ok(registration, 'the client registers a Lectures body')
-  const injected = registration.options.inject('session-1')
+  const injected = {
+    ...registration.options.inject('session-1'),
+    useTabInfo: () => ({
+      tab: { actions: { openResource: (address, options) => opened.push([address, options]) } },
+    }),
+  }
   resetHooks()
   const renderer = createRenderer(registration.component, () => injected)
   return {
     ...mounted,
     files,
     registration,
+    opened,
     get tree() { return renderer.tree },
     async settle() {
       for (let turn = 0; turn < 60; turn += 1) {
@@ -1189,6 +1196,48 @@ test('folds archived lectures into a collapsed group that opens on click', async
     '02 · Groups and Homomorphisms · 28 Oct 2026',
     '100 · Review of Groups · 2 Nov 2026',
   ])
+})
+
+test('opens a lecture in the dock preview with its session file address', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  lectureEntry(tree, 'algebra', '02').props.onClick()
+
+  assert.deepEqual(view.opened, [[
+    'dsh-resource://file/session/session-1/study/algebra/lectures/02-groups.md',
+    { preferNewPane: true },
+  ]])
+})
+
+test('opens an archived lecture from its archive path', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  lectureFold(tree, 'algebra').props.onClick()
+  const opened = await view.settle()
+  lectureEntry(opened, 'algebra', '04').props.onClick()
+
+  assert.deepEqual(view.opened, [[
+    'dsh-resource://file/session/session-1/study/algebra/lectures/archive/04-old-sets.md',
+    { preferNewPane: true },
+  ]])
+})
+
+test('encodes a lecture file name with a space in the address', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra/lectures': ['05-a b.md'] },
+    files: { 'study/algebra/lectures/05-a b.md': '# A Spaced Title\n' },
+  })
+  const tree = await view.settle()
+
+  lectureEntry(tree, 'algebra', '05').props.onClick()
+
+  assert.equal(encodeURIComponent('05-a b.md'), '05-a%20b.md', 'the pinned literal is the encoder output')
+  assert.deepEqual(view.opened, [[
+    'dsh-resource://file/session/session-1/study/algebra/lectures/05-a%20b.md',
+    { preferNewPane: true },
+  ]])
 })
 
 test('names the searched folder and the command when the workspace has no study folder', async () => {

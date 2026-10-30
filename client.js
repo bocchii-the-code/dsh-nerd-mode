@@ -1145,6 +1145,7 @@ window.__ModuleLoader__.load({
               concept: parsed.concept,
               state: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'taught' : null,
               date: parsed.date,
+              path: `${folder}/${item.name}`,
             });
             seen.add(match[1]);
           }
@@ -1200,25 +1201,43 @@ window.__ModuleLoader__.load({
       return null;
     }
 
+    // Copied verbatim from `@deepseek-ai/dsh-util-workspace-path`, which a client
+    // plugin cannot load from the browser module table.
+    const FILE_ADDRESS_PREFIX = 'dsh-resource://file/';
+    /** Component-encode one id or path segment, keeping `:` literal for drive letters. */
+    function encodeSegment(segment) {
+      return encodeURIComponent(segment).replace(/%3A/gi, ':');
+    }
+    /** Encode a `/`-separated path segment by segment. */
+    function encodePath(path) {
+      return path.split('/').map(encodeSegment).join('/');
+    }
+    /** Build the address of a file read through one Session. */
+    function sessionFileAddress(sessionId, path) {
+      const normalized = path.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '');
+      return `${FILE_ADDRESS_PREFIX}session/${encodeSegment(sessionId)}/${encodePath(normalized)}`;
+    }
+
     // The whole row is the button, so its text is also its accessible name.
-    function lectureRow(entry) {
+    function lectureRow(entry, onOpen) {
       const mark = lectureMark(entry);
       return React.createElement('li', { key: entry.number },
         React.createElement('button', {
           type: 'button',
           className: 'lectures-entry',
+          onClick: () => onOpen(entry),
           style: lectureRowStyle,
         }, `${entry.number} · ${entry.title}${mark === null ? '' : ` · ${mark}`}`));
     }
 
-    function lectureTopic(group, open, onToggle) {
+    function lectureTopic(group, open, onToggle, onOpen) {
       const main = group.entries.filter((entry) => entry.state !== 'archived');
       const archived = group.entries.filter((entry) => entry.state === 'archived');
       const nodes = [
         React.createElement('h2', { key: 'heading', style: panelHeadingStyle }, group.topic),
         main.length === 0
           ? React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.')
-          : React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map(lectureRow)),
+          : React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))),
       ];
       if (archived.length > 0) {
         nodes.push(React.createElement('button', {
@@ -1230,13 +1249,14 @@ window.__ModuleLoader__.load({
           style: lectureFoldStyle,
         }, `Archived lectures (${archived.length})`));
         if (open) {
-          nodes.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map(lectureRow)));
+          nodes.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map((entry) => lectureRow(entry, onOpen))));
         }
       }
       return React.createElement('section', { key: group.topic, style: panelSectionStyle }, ...nodes);
     }
 
-    function LecturesPage({ sessionId, workspaceFiles }) {
+    function LecturesPage({ useTabInfo, sessionId, workspaceFiles }) {
+      const { tab } = useTabInfo();
       const [content, setContent] = React.useState({ status: 'loading' });
       const [openTopics, setOpenTopics] = React.useState({});
 
@@ -1256,6 +1276,11 @@ window.__ModuleLoader__.load({
         [topic]: previous[topic] !== true,
       }));
 
+      const open = (entry) => tab.actions.openResource(
+        sessionFileAddress(sessionId, entry.path),
+        { preferNewPane: true },
+      );
+
       let nodes;
       if (content.status === 'loading') {
         nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the lectures…')];
@@ -1265,7 +1290,7 @@ window.__ModuleLoader__.load({
         nodes = content.error === null
           ? []
           : [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The lecture library could not be read: ${content.error}.`)];
-        nodes.push(...content.topics.map((group) => lectureTopic(group, openTopics[group.topic] === true, toggle)));
+        nodes.push(...content.topics.map((group) => lectureTopic(group, openTopics[group.topic] === true, toggle, open)));
       }
       return React.createElement('div', {
         role: 'region',
