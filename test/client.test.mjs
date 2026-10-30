@@ -203,8 +203,13 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
     effect(fn) {
       return fn()
     },
+    inject(deps, callback) {
+      const has = (name) => name.split('.').reduce((value, key) => value?.[key], ctx) !== undefined
+      if (!deps.every(has)) return () => {}
+      callback(ctx)
+      return () => {}
+    },
     ...(configOptions.dock === false ? {} : {
-      sidebarRight: {},
       sidebarRightTabs: {
         register(definition) {
           dockTypes.push(definition)
@@ -239,9 +244,8 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
       describe: () => description,
     },
   }
-  // Cordis runs apply only when every service in the plugin's inject list exists.
-  const hasService = (name) => name.split('.').reduce((value, key) => value?.[key], ctx) !== undefined
-  if (client.inject.every(hasService)) client.apply(ctx)
+  // Cordis has a scoped inject, but apply itself always runs.
+  client.apply(ctx)
   return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description }
 }
 
@@ -367,7 +371,7 @@ test('registers a standalone Nerd Mode settings section', () => {
   assert.equal(settings[0].options.id, 'dsh-nerd-mode')
   assert.equal(settings[0].options.label, 'Nerd Mode')
   assert.equal(settings[0].options.order, 30)
-  assert.deepEqual(client.inject, ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms', 'sidebarRightTabs', 'sidebarRight'])
+  assert.deepEqual(client.inject, ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'])
 })
 
 test('uses the settings section close prop and subscribes with useSyncExternalStore', () => {
@@ -1066,7 +1070,10 @@ test('renders one placeholder line in a region named Lectures', () => {
 
 test('registers no Lectures seat when the dock registry is absent', () => {
   const { dockTypes, registers } = mount(undefined, {}, { dock: false })
+  const has = (name, id) => registers.some(({ options }) => options.name === name && options.id === id)
 
   assert.deepEqual(dockTypes, [])
-  assert.equal(registers.some(({ options }) => options.name === 'sidebar.right.pane.tab'), false)
+  assert.equal(has('conversation.input.left', 'nerd-mode'), true)
+  assert.equal(has('settings.section', 'dsh-nerd-mode'), true)
+  assert.equal(has('conversation.view', 'study'), true)
 })

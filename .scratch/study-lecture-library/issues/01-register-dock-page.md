@@ -48,6 +48,8 @@ The implementer runs `npm test` and `npm run lint`. The merger checks that `clie
 
 ## Answer
 
+Correction: the Lectures tab type registers inside `ctx.inject(['sidebarRightTabs'], ...)`, not in the module-level `inject` array, so a host without the dock still registers the toggle, the settings section, and the Study tab.
+
 The installed host has the dock registry. Evidence roots: `C:\Users\zhang\AppData\Local\Temp\opencode\dsh-asar\dsh\node_modules\@deepseek-ai\`. All line numbers below refer to those installed files.
 
 ### 1. A page tab type accepts no resource pattern
@@ -94,7 +96,7 @@ The key is the tab type's `id`, not its `kind`. This ticket uses `dsh-nerd-mode/
 
 `dsh.client.inject` is load-order metadata, not the service handshake. `dsh-client-modules/lib/client.js:776-793` (`arriveGraphRow`) walks each `row.inject` entry and loads that package's bundle before the consumer. The service handshake is the plugin's own exported `inject` array: cordis holds `apply` until every named service exists. The working example lists `sidebarRightTabs` and `sidebarRight` in its module `inject` array (`sidebar-files/lib/client.js:934-941`), and the dock provides them with `ctx.reflect.provide("sidebarRightTabs", tabs)` and `ctx.reflect.provide("sidebarRight", controller)` (`sidebar-right/lib/client.js:4965-4966`).
 
-Therefore `package.json` stays untouched. `client.js` gains `'sidebarRightTabs'` and `'sidebarRight'`, and the pinned assertion at `test/client.test.mjs:355` is updated to the new list. On a host without the dock the plugin waits and registers nothing, so the page cannot throw.
+Therefore `package.json` stays untouched. The tab type registers inside `ctx.inject(['sidebarRightTabs'], ...)`, so only that registration waits. The module `inject` array keeps its five original services, and the pinned assertion at `test/client.test.mjs:355` stays unchanged. On a host without the dock the page registers nothing. The toggle, the settings section, and the Study tab keep working.
 
 ### 5. Session on screen, and opening a resource
 

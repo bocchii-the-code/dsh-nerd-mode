@@ -1085,7 +1085,7 @@ window.__ModuleLoader__.load({
     };
 
     return {
-      inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms', 'sidebarRightTabs', 'sidebarRight'],
+      inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'],
       apply(ctx) {
         ctx.slots.inject(SLOT, () =>
           ctx.slots.register({
@@ -1121,12 +1121,14 @@ window.__ModuleLoader__.load({
             }),
           }, StudyView),
         );
-        // A host without the right Sidebar never provides the registry, so the
-        // plugin waits for it and registers nothing.
-        ctx.effect(
-          () => ctx.sidebarRightTabs.register(LECTURES_DEFINITION),
-          'dsh-nerd-mode: lectures tab type',
-        );
+        // A host without the right Sidebar never provides the registry, so this
+        // one seat waits. The rest of the plugin keeps working.
+        ctx.inject(['sidebarRightTabs'], (dock) => {
+          dock.effect(
+            () => dock.sidebarRightTabs.register(LECTURES_DEFINITION),
+            'dsh-nerd-mode: lectures tab type',
+          );
+        });
         ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
           name: 'sidebar.right.pane.tab',
           key: LECTURES_ID,
