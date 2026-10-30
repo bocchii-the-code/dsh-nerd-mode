@@ -60,7 +60,7 @@ _Avoid_: syllabus, curriculum, outline
 The one-time question round for a new topic. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
 _Avoid_: onboarding, interview, survey
 
-**Teaching level**:
+**Teaching level** (教学深度):
 A self-reported pitch for one topic, with three values: `beginner`, `standard`, and `advanced`. It sets both step size and explanation detail. It says nothing about mastery, never changes a state, and never counts as evidence.
 _Avoid_: learner level, proficiency, difficulty
 

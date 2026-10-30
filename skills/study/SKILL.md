@@ -29,7 +29,7 @@ The upper layer selects the path for multiple independent concepts. Follow that 
 
 ## Teach at the given level
 
-The upper layer may give a teaching brief of three lines: `Goal`, `Background`, and `Teaching level`. Treat it as context for writing, and never read `graph.md` or any other tracker file to obtain it.
+The upper layer may give a teaching brief of up to three lines: `Goal`, `Background`, and `Teaching level`. Treat it as context for writing, and never read `graph.md` or any other tracker file to obtain it.
 
 `standard` uses every rule in this file unchanged. A missing `Teaching level` line means `standard`.
 
@@ -38,7 +38,7 @@ For `beginner`:
 - Split the lecture into 3 to 7 numbered steps when the concept takes more than one move.
 - Explain each term at first use, including terms that `standard` assumes, such as a prerequisite idea or a notation convention.
 - Add one worked example per step when an example helps.
-- Never add a prerequisite recap block. The recap rule for a skipped prerequisite stays the only recap.
+- Never add a prerequisite recap block. No level adds one.
 
 For `advanced`:
 
