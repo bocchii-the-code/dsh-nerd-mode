@@ -105,7 +105,8 @@ function build() {
 
   let run;
   try {
-    run = spawnSync(process.execPath, [AM, 'render', draftPath, '-o', tmpPath, '--no-open', '--template', 'doc', '--theme', 'shadcn', '--mode', 'light', '--style', 'off'], { stdio: 'inherit' });
+    // Book builds stay offline: without this the renderer may start a weekly update check.
+    run = spawnSync(process.execPath, [AM, 'render', draftPath, '-o', tmpPath, '--no-open', '--template', 'doc', '--theme', 'shadcn', '--mode', 'light', '--style', 'off'], { stdio: 'inherit', env: { ...process.env, AM_NO_UPDATE_CHECK: '1' } });
   } finally {
     if (existsSync(draftPath)) unlinkSync(draftPath);
   }
