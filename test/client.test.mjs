@@ -797,6 +797,9 @@ test('places a legacy graph in chapter one and keeps row order', async () => {
     { label: 'Current', value: 'legacy · Section 1 · Alpha' },
     { label: 'Next', value: 'legacy · Section 2 · Beta' },
   ])
+  const values = allOfType(tree, 'dd')
+  assert.equal(values[0].props.style.color, 'var(--dsw-alias-label-tertiary)')
+  assert.equal(values[1].props.style.color, undefined)
 })
 
 test('shows a dash when every Concept is skipped', async () => {

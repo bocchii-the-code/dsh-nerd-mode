@@ -814,6 +814,10 @@ window.__ModuleLoader__.load({
       }
       const text = `${snapshot.percentage}% of the Book`;
       return React.createElement('div', { style: panelProgressStyle },
+        React.createElement('p', { style: panelFigureRowStyle },
+          React.createElement('span', { style: panelFigureStyle }, `${snapshot.percentage}%`),
+          ' ',
+          React.createElement('span', { style: panelFigureUnitStyle }, 'of the Book')),
         React.createElement('div', {
           role: 'progressbar',
           'aria-label': 'Book progress',
@@ -825,7 +829,6 @@ window.__ModuleLoader__.load({
         }, React.createElement('div', {
           style: { ...panelFillStyle, width: `${snapshot.percentage}%` },
         })),
-        React.createElement('p', { style: panelMutedStyle }, text),
         snapshot.current === null
           ? React.createElement('p', { style: panelMutedStyle }, 'No evidence yet')
           : null);
@@ -833,16 +836,25 @@ window.__ModuleLoader__.load({
 
     function stripBlock(snapshot) {
       const slots = [
-        ['Previous', snapshot.previous === null ? DASH : conceptLabel(snapshot.previous)],
-        ['Current', snapshot.current === null ? 'No lesson recorded yet' : conceptLabel(snapshot.current)],
-        ['Next', snapshot.next !== null
-          ? conceptLabel(snapshot.next)
-          : snapshot.nextState === 'all-skipped' ? 'Everything left is skipped' : 'End of Book'],
+        { label: 'Previous', value: snapshot.previous === null ? DASH : conceptLabel(snapshot.previous), muted: snapshot.previous === null },
+        { label: 'Current', value: snapshot.current === null ? 'No lesson recorded yet' : conceptLabel(snapshot.current), muted: snapshot.current === null, current: true },
+        {
+          label: 'Next',
+          value: snapshot.next !== null
+            ? conceptLabel(snapshot.next)
+            : snapshot.nextState === 'all-skipped' ? 'Everything left is skipped' : 'End of Book',
+          muted: snapshot.next === null,
+        },
       ];
       return React.createElement('dl', { style: panelStripStyle },
-        ...slots.map(([label, value]) => React.createElement('div', { key: label, style: panelStripCellStyle },
-          React.createElement('dt', { style: panelStripLabelStyle }, label),
-          React.createElement('dd', { style: panelStripValueStyle }, value))));
+        ...slots.map((slot) => React.createElement('div', {
+          key: slot.label,
+          style: slot.current ? panelStripCellCurrentStyle : panelStripCellStyle,
+        },
+          React.createElement('dt', { style: panelStripLabelStyle }, slot.label),
+          React.createElement('dd', {
+            style: slot.muted ? panelStripMutedValueStyle : panelStripValueStyle,
+          }, slot.value))));
     }
 
     function topicPicker(topics, value, onTopic) {
@@ -951,38 +963,68 @@ window.__ModuleLoader__.load({
       display: 'flex',
       flexDirection: 'column',
       fontFamily: 'var(--dsw-font-family, inherit)',
-      gap: 20,
+      gap: 28,
       maxWidth: 720,
-      paddingBottom: 24,
+      // The conversation view area carries no padding of its own.
+      padding: '24px 16px 40px',
       width: '100%',
     };
     const panelHeaderStyle = { alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' };
     const panelTitleStyle = { fontSize: 16, fontWeight: 600, lineHeight: '24px', margin: 0 };
     const panelMutedStyle = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 13, lineHeight: '20px', margin: 0 };
     const panelHeadingStyle = { fontSize: 14, fontWeight: 600, lineHeight: '22px', margin: 0 };
-    const panelSectionStyle = { display: 'flex', flexDirection: 'column', gap: 8 };
-    const panelListStyle = { display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', margin: 0, padding: 0 };
-    const panelProgressStyle = { display: 'flex', flexDirection: 'column', gap: 8 };
-    const panelTrackStyle = { background: 'var(--dsw-alias-bg-layer-2)', borderRadius: 999, height: 8, overflow: 'hidden', width: '100%' };
+    const panelSectionStyle = { display: 'flex', flexDirection: 'column', gap: 10 };
+    const panelListStyle = { display: 'flex', flexDirection: 'column', gap: 8, listStyle: 'none', margin: 0, padding: 0 };
+    const panelProgressStyle = { display: 'flex', flexDirection: 'column', gap: 10 };
+    const panelFigureRowStyle = { lineHeight: '34px', margin: 0 };
+    const panelFigureUnitStyle = {
+      color: 'var(--dsw-alias-label-tertiary)',
+      fontSize: 13,
+      lineHeight: '20px',
+      marginLeft: 2,
+    };
+    const panelTrackStyle = {
+      background: 'var(--dsw-alias-fill-tsp-secondary)',
+      borderRadius: 999,
+      height: 6,
+      overflow: 'hidden',
+      width: '100%',
+    };
     const panelFillStyle = { background: 'var(--dsw-alias-state-business-primary)', height: '100%' };
     const panelStripStyle = {
+      alignItems: 'start',
       display: 'grid',
       gap: 12,
       gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
       margin: 0,
     };
     const panelStripCellStyle = {
-      background: 'var(--dsw-alias-bg-layer-1)',
       border: '1px solid var(--dsw-alias-border-l2)',
       borderRadius: 'var(--dsw-radius-sm)',
       display: 'flex',
       flexDirection: 'column',
-      gap: 4,
-      padding: 12,
+      gap: 6,
+      padding: '12px 14px',
+    };
+    // The Current cell is the answer to "where am I", so it is the only filled cell.
+    const panelStripCellCurrentStyle = {
+      ...panelStripCellStyle,
+      background: 'var(--dsw-alias-bg-layer-1)',
+      borderColor: 'var(--dsw-alias-border-l3)',
     };
     const panelStripLabelStyle = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 12, lineHeight: '18px', margin: 0 };
     const panelStripValueStyle = { fontSize: 13, lineHeight: '20px', margin: 0 };
-    const panelFigureStyle = { fontSize: 28, fontWeight: 600, lineHeight: '36px', margin: 0 };
+    const panelStripMutedValueStyle = {
+      ...panelStripValueStyle,
+      color: 'var(--dsw-alias-label-tertiary)',
+    };
+    const panelFigureStyle = {
+      fontSize: 28,
+      fontWeight: 600,
+      fontVariantNumeric: 'tabular-nums',
+      lineHeight: '34px',
+      margin: 0,
+    };
     const panelFieldStyle = { alignItems: 'center', display: 'flex', fontSize: 13, gap: 8 };
     const panelSelectStyle = {
       background: 'var(--dsw-alias-bg-layer-1)',
