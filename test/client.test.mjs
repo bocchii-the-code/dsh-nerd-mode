@@ -1055,17 +1055,159 @@ test('registers one Lectures dock page with a guide entry and one body', () => {
   const bodies = registers.filter(({ options }) => options.name === 'sidebar.right.pane.tab')
   assert.equal(bodies.length, 1)
   assert.equal(bodies[0].options.key, definition.id)
+
+  const injected = bodies[0].options.inject('session-9')
+  assert.equal(injected.sessionId, 'session-9')
+  assert.equal(typeof injected.workspaceFiles.list, 'function')
+  assert.equal(typeof injected.workspaceFiles.read, 'function')
 })
 
-test('renders one placeholder line in a region named Lectures', () => {
-  const { registers } = mount()
-  const body = registers.find(({ options }) => options.name === 'sidebar.right.pane.tab')
+function renderLectures(fixture) {
+  const files = fileRemote(fixture)
+  const mounted = mount(undefined, {}, { files })
+  const registration = mounted.registers.find(({ options }) => options.name === 'sidebar.right.pane.tab')
+  assert.ok(registration, 'the client registers a Lectures body')
+  const injected = registration.options.inject('session-1')
   resetHooks()
-  const tree = createRenderer(body.component, () => ({ sessionId: 'session-1' })).tree
+  const renderer = createRenderer(registration.component, () => injected)
+  return {
+    ...mounted,
+    files,
+    registration,
+    get tree() { return renderer.tree },
+    async settle() {
+      for (let turn = 0; turn < 60; turn += 1) {
+        await new Promise((resolve) => queueMicrotask(resolve))
+      }
+      return renderer.tree
+    },
+  }
+}
 
-  assert.equal(allOfType(tree, 'p').length, 1)
-  assert.match(textOf(tree), /Saved lectures will appear here/)
+const headingOf = (section) => textOf(section.props.children.find((child) => child?.type === 'h2'))
+const lectureTopics = (tree) => allOfType(tree, 'section').map(headingOf)
+const lectureRows = (tree, topic) => allOfType(
+  allOfType(tree, 'section').find((section) => headingOf(section) === topic),
+  'li',
+).map(textOf)
+
+const lectureFixture = (overrides = {}) => ({
+  dirs: {
+    study: ['algebra', 'calculus'],
+    'study/algebra': ['book.html', 'diagrams', 'graph.md', 'lectures', 'log.md', 'state.md'],
+    'study/algebra/lectures': ['01-sets.md', '02-groups.md', '100-review.md', 'book.html'],
+    'study/calculus': ['lectures'],
+    'study/calculus/lectures': ['10-limits.md'],
+  },
+  files: {
+    'study/algebra/book.html': '<h1>Book</h1>',
+    'study/algebra/graph.md': '# Topic: algebra',
+    'study/algebra/log.md': '## 2026-10-20\nConcept: Sets',
+    'study/algebra/state.md': '| # | Concept |',
+    'study/algebra/lectures/book.html': '<h1>Book</h1>',
+    'study/algebra/lectures/01-sets.md': [
+      '---', 'status: draft', 'concept: 1', '---', '# Sets and Their Laws', '',
+    ].join('\n'),
+    'study/algebra/lectures/02-groups.md': [
+      '---', 'date: 2026-10-28', 'concept: 2', '---', '# Groups and Homomorphisms', '',
+    ].join('\n'),
+    'study/algebra/lectures/100-review.md': [
+      '---', 'date: 2026-11-02', 'concept: 100', '---', '# Review of Groups', '',
+    ].join('\n'),
+    'study/calculus/lectures/10-limits.md': '# Limits\n',
+  },
+  ...overrides,
+})
+
+test('lists topics by name and their lectures by Concept number', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
   assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures'), true)
+  assert.deepEqual(lectureTopics(tree), ['algebra', 'calculus'])
+  assert.deepEqual(lectureRows(tree, 'algebra'), [
+    '01 · Sets and Their Laws',
+    '02 · Groups and Homomorphisms',
+    '100 · Review of Groups',
+  ])
+  assert.deepEqual(lectureRows(tree, 'calculus'), ['10 · Limits'])
+})
+
+test('treats a missing study folder as an empty library', async () => {
+  const view = renderLectures({ dirs: {}, files: {} })
+  const tree = await view.settle()
+
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures'), true)
+  assert.deepEqual(allOfType(tree, 'section'), [])
+  assert.deepEqual(allOfType(tree, 'li'), [])
+  assert.deepEqual(view.files.calls, [['list', 'session-1', 'study']])
+})
+
+test('treats a topic without a lectures folder as empty', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra': [] },
+    files: {},
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureTopics(tree), ['algebra'])
+  assert.deepEqual(lectureRows(tree, 'algebra'), [])
+})
+
+test('keeps a lecture whose frontmatter will not parse', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra/lectures': ['03-broken.md'] },
+    files: {
+      'study/algebra/lectures/03-broken.md': '---\nthis line is not a field\n---\n# Broken but Listed\n',
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureRows(tree, 'algebra'), ['03 · Broken but Listed'])
+})
+
+test('leaves the Book and tracker files out of the list', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  assert.doesNotMatch(textOf(tree), /Book/)
+  assert.doesNotMatch(textOf(tree), /Topic: algebra/)
+  assert.equal(view.files.calls.some(([, , path]) => /book\.html$|\/(graph|log|state)\.md$/.test(path)), false)
+})
+
+test('reads only the lecture folders and each file once', async () => {
+  const view = renderLectures(lectureFixture())
+  await view.settle()
+
+  const listPaths = view.files.calls.filter(([method]) => method === 'list').map(([, , path]) => path)
+  assert.deepEqual(listPaths, [
+    'study',
+    'study/algebra/lectures',
+    'study/algebra/lectures/archive',
+    'study/calculus/lectures',
+    'study/calculus/lectures/archive',
+  ])
+  const reads = view.files.calls.filter(([method]) => method === 'read')
+  assert.equal(reads.every(([, , path]) => /^study\/[^/]+\/lectures\/(archive\/)?\d{2,}-.+\.md$/.test(path)), true)
+  assert.equal(new Set(reads.map(([, , path]) => path)).size, reads.length)
+  assert.equal(view.files.calls.every(([, sessionId]) => sessionId === 'session-1'), true)
+})
+
+test('keeps the entries it built when a read fails', async () => {
+  const view = renderLectures(lectureFixture({
+    failures: {
+      'study/algebra/lectures/02-groups.md': { code: 'workspace-file/too-large', message: 'the file is too large' },
+      'study/calculus/lectures': { code: 'workspace-file/not-directory', message: 'not a folder' },
+    },
+  }))
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureTopics(tree), ['algebra', 'calculus'])
+  assert.deepEqual(lectureRows(tree, 'algebra'), [
+    '01 · Sets and Their Laws',
+    '100 · Review of Groups',
+  ])
+  assert.deepEqual(lectureRows(tree, 'calculus'), [])
 })
 
 test('registers no Lectures seat when the dock registry is absent', () => {

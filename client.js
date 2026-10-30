@@ -1036,7 +1036,6 @@ window.__ModuleLoader__.load({
     };
 
     // --- Lectures dock page --------------------------------------------------
-    // The seat only. The list and its reads arrive in a later ticket.
     const LECTURES_ID = 'dsh-nerd-mode/lectures';
     const LECTURES_KIND = 'lectures';
     const LECTURES_LABEL = 'Lectures';
@@ -1061,12 +1060,132 @@ window.__ModuleLoader__.load({
       );
     }
 
-    function LecturesPage() {
-      return React.createElement(
-        'div',
-        { role: 'region', 'aria-label': LECTURES_LABEL, style: panelStyle },
-        React.createElement('p', { style: panelMutedStyle }, 'Saved lectures will appear here.'),
-      );
+    // The leading block only; a `---` rule later in the file stays content.
+    // A block without a closing fence, or with a line that is not `key: value`,
+    // returns null so the caller can leave the state empty.
+    function lectureFrontmatter(lines) {
+      if (lines[0]?.trim() !== '---') return {};
+      const end = lines.findIndex((line, at) => at > 0 && line.trim() === '---');
+      if (end === -1) return null;
+      const fields = {};
+      for (const line of lines.slice(1, end)) {
+        if (line.trim() === '') continue;
+        const match = /^([A-Za-z][\w-]*):\s*(.*)$/.exec(line.trim());
+        if (match === null) return null;
+        fields[match[1]] = match[2].trim();
+      }
+      return fields;
+    }
+
+    function parseLecture(text, slug) {
+      const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
+      const fields = lectureFrontmatter(lines);
+      const heading = lines.find((line) => /^#\s+\S/.test(line));
+      return {
+        title: heading === undefined ? slug : heading.replace(/^#\s+/, '').trim(),
+        concept: fields !== null && /^\d+$/.test(fields.concept ?? '') ? Number(fields.concept) : null,
+        date: fields !== null && /^\d{4}-\d{2}-\d{2}$/.test(fields.date ?? '') ? fields.date : null,
+        draft: fields !== null && fields.status === 'draft',
+      };
+    }
+
+    // A missing folder is an empty listing. Any other failure becomes data.
+    async function listFolder(files, sessionId, path) {
+      try {
+        const listing = await files.list(sessionId, path);
+        if (listing.ok) return { entries: listing.value?.entries ?? [], error: null };
+        if (listing.error?.code === 'workspace-file/not-found') return { entries: [], error: null };
+        return { entries: [], error: listing.error?.message ?? `${path} could not be read` };
+      } catch (error) {
+        return { entries: [], error: error?.message ?? `${path} could not be read` };
+      }
+    }
+
+    async function loadLectures(files, sessionId) {
+      const model = { topics: [], error: null };
+      const root = await listFolder(files, sessionId, TRACKER_ROOT);
+      if (root.error !== null) {
+        model.error = root.error;
+        return model;
+      }
+      const names = root.entries
+        .filter((entry) => entry.type === 'directory')
+        .map((entry) => entry.name)
+        .sort((left, right) => left.localeCompare(right));
+      for (const topic of names) {
+        const entries = [];
+        const seen = new Set();
+        const folders = [
+          [`${TRACKER_ROOT}/${topic}/lectures`, false],
+          [`${TRACKER_ROOT}/${topic}/lectures/archive`, true],
+        ];
+        for (const [folder, archived] of folders) {
+          const listing = await listFolder(files, sessionId, folder);
+          if (listing.error !== null && model.error === null) model.error = listing.error;
+          for (const item of listing.entries) {
+            if (item.type !== 'file') continue;
+            const match = /^(\d{2,})-(.+)\.md$/.exec(item.name);
+            // One lecture per number: a stale copy in the archive never repeats it.
+            if (match === null || seen.has(match[1])) continue;
+            let text;
+            try {
+              text = await readText(files, sessionId, `${folder}/${item.name}`);
+            } catch (error) {
+              if (model.error === null) model.error = error?.message ?? `${folder}/${item.name} could not be read`;
+              continue;
+            }
+            const parsed = parseLecture(text, match[2]);
+            entries.push({
+              number: match[1],
+              topic,
+              title: parsed.title,
+              concept: parsed.concept,
+              state: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'taught' : null,
+              date: parsed.date,
+            });
+            seen.add(match[1]);
+          }
+        }
+        entries.sort((left, right) => Number(left.number) - Number(right.number));
+        model.topics.push({ topic, entries });
+      }
+      return model;
+    }
+
+    function LecturesPage({ sessionId, workspaceFiles }) {
+      const [content, setContent] = React.useState({ status: 'loading' });
+
+      React.useEffect(() => {
+        let live = true;
+        const run = async () => {
+          const model = await loadLectures(workspaceFiles, sessionId);
+          if (!live) return;
+          // `error` is model data for the failure line in the next ticket.
+          setContent({ status: 'ready', ...model });
+        };
+        run();
+        return () => { live = false; };
+      }, [sessionId, workspaceFiles]);
+
+      let nodes;
+      if (content.status === 'loading') {
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the lectures…')];
+      } else {
+        nodes = content.topics.map((group) => React.createElement('section', {
+          key: group.topic,
+          style: panelSectionStyle,
+        },
+          React.createElement('h2', { style: panelHeadingStyle }, group.topic),
+          React.createElement('ul', { style: panelListStyle },
+            ...group.entries.map((entry) => React.createElement('li', {
+              key: entry.number,
+            }, `${entry.number} · ${entry.title}`)))));
+      }
+      return React.createElement('div', {
+        role: 'region',
+        'aria-label': LECTURES_LABEL,
+        style: panelStyle,
+      }, ...nodes);
     }
 
     // A page type names no resource pattern and no `multiple`, so the host
@@ -1132,6 +1251,7 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
           name: 'sidebar.right.pane.tab',
           key: LECTURES_ID,
+          inject: (sessionId) => ({ sessionId, workspaceFiles: ctx.remote.workspaceFiles }),
         }, LecturesPage));
       },
     };
