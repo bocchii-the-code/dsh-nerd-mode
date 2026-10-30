@@ -1,6 +1,6 @@
 # 04 - Domain docs and READMEs
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: none
 
 ## Question
@@ -27,4 +27,4 @@ Do not add a settings row, a screenshot, or a table. Do not promise anything the
 
 ## Answer
 
-Pending.
+Resolved, commit 54c56b2, tightened in ca97750. `GLOSSARY.md` gains Calibration (开课校准), Teaching level (教学深度), and Teaching brief after Concept graph. `docs/adr/0014-teaching-level-in-the-topic-file.md` records the decision, names the rejected alternatives, and links ADR 0003, 0005, and 0008. Both READMEs carry one short paragraph and the same calibration figure in the `/study-plus` section.

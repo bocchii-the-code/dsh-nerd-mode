@@ -1,6 +1,6 @@
 # 02 - Calibration and brief handoff
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: none
 
 ## Question
@@ -33,4 +33,4 @@ Do not edit `lib/index.js`, `client.js`, `state.md`, `log.md`, or `book-data.mjs
 
 ## Answer
 
-Pending.
+Resolved in `skills/study-plus/SKILL.md`, commit b553502, tightened in ca97750. Section 2 step 5 runs calibration as one three-item call, followed by the mapping table, the conflict escape, the decline path, the existing-topic rule, and the override rule. Section 3 and section 5 pass the brief verbatim. Section 8 shows the three lines in order and states that they are optional and lowercase.

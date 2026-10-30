@@ -1,6 +1,6 @@
 # 03 - Nerd Mode section text
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 02
 
 ## Question
@@ -30,4 +30,4 @@ Read the spec at `.scratch/teaching-level/spec.md`, sections **Behavior** and **
 
 ## Answer
 
-Pending.
+Resolved in `cordis.patch.yml`, commit b553502, rewritten in ca97750. One paragraph carries calibration, the conditional items, the three level answers, the adjacent-level escape, the decline path, the verbatim handoff, the missing-line default, the no-recalibration rule, and the session-only override. The routing paragraph, the ownership rules, and the tracker-file rule are unchanged.

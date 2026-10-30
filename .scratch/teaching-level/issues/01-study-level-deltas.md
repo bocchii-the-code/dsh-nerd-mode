@@ -1,6 +1,6 @@
 # 01 - Study level deltas
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: none
 
 ## Question
@@ -32,4 +32,4 @@ Do not mention states, passes, misses, question counts, or the log in a level ru
 
 ## Answer
 
-Pending.
+Resolved in `skills/study/SKILL.md`, commit b553502, tightened in ca97750. A new section "Teach at the given level" carries the `standard` no-change rule, the `beginner` deltas, the `advanced` deltas, the precedence paragraph, and the one-off path. The draft section now accepts the brief and says "at the given level". `study` still reads no tracker file.
