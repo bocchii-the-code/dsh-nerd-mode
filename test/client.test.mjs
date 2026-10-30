@@ -1157,7 +1157,7 @@ test('lists topics by name and their lectures by Concept number', async () => {
   assert.deepEqual(lectureRows(tree, 'calculus'), ['10 · Limits'])
 })
 
-test('marks a draft as a draft without a date and a taught lecture with its date', async () => {
+test('marks a draft as a draft without a date and a dated lecture with its date', async () => {
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
 
@@ -1165,8 +1165,8 @@ test('marks a draft as a draft without a date and a taught lecture with its date
   assert.equal(draft, '01 · Sets and Their Laws · Draft')
   assert.doesNotMatch(draft, /\d{4}-\d{2}-\d{2}/)
 
-  const taught = textOf(lectureEntry(tree, 'algebra', '02'))
-  assert.equal(taught, '02 · Groups and Homomorphisms · 28 Oct 2026')
+  const dated = textOf(lectureEntry(tree, 'algebra', '02'))
+  assert.equal(dated, '02 · Groups and Homomorphisms · 28 Oct 2026')
 
   const plain = textOf(lectureEntry(tree, 'calculus', '10'))
   assert.equal(plain, '10 · Limits')
@@ -1188,8 +1188,8 @@ test('folds archived lectures into a collapsed group that opens on click', async
 
   assert.equal(lectureFold(opened, 'algebra').props['aria-expanded'], true)
   assert.deepEqual(lectureArchiveRows(opened, 'algebra'), [
-    '04 · Old Sets',
-    '50 · Retired Group Theory',
+    '04 · Old Sets · Archived',
+    '50 · Retired Group Theory · Archived',
   ])
   assert.deepEqual(lectureRows(opened, 'algebra'), [
     '01 · Sets and Their Laws · Draft',
@@ -1276,6 +1276,31 @@ test('gives a topic without lectures its own empty line and no empty list', asyn
   assert.deepEqual(allOfType(section, 'li'), [])
 })
 
+test('keeps the empty line off a topic whose only lectures are archived', async () => {
+  const view = renderLectures({
+    dirs: {
+      study: ['algebra'],
+      'study/algebra/lectures': ['archive'],
+      'study/algebra/lectures/archive': ['04-old-sets.md'],
+    },
+    files: {
+      'study/algebra/lectures/archive/04-old-sets.md': [
+        '---', 'date: 2026-08-01', 'concept: 4', '---', '# Old Sets', '',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  const section = lectureSection(tree, 'algebra')
+  assert.doesNotMatch(textOf(section), /No lectures yet/)
+  assert.doesNotMatch(textOf(section), /Old Sets/)
+  assert.equal(textOf(lectureFold(tree, 'algebra')), 'Archived lectures (1)')
+
+  lectureFold(tree, 'algebra').props.onClick()
+  const opened = await view.settle()
+  assert.deepEqual(allOfType(lectureSection(opened, 'algebra'), 'li').map(textOf), ['04 · Old Sets · Archived'])
+})
+
 test('keeps a lecture whose frontmatter will not parse, with no mark', async () => {
   const view = renderLectures({
     dirs: { study: ['algebra'], 'study/algebra/lectures': ['03-broken.md'] },
@@ -1289,6 +1314,20 @@ test('keeps a lecture whose frontmatter will not parse, with no mark', async () 
   assert.equal(textOf(lectureEntry(tree, 'algebra', '03')), '03 · Broken but Listed')
 })
 
+test('treats a draft that also carries a teaching date as malformed', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra/lectures': ['03-mixed.md'] },
+    files: {
+      'study/algebra/lectures/03-mixed.md': [
+        '---', 'status: draft', 'date: 2026-10-28', 'concept: 3', '---', '# Mixed Signals', '',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureRows(tree, 'algebra'), ['03 · Mixed Signals'])
+})
+
 test('renders one Lectures region with a button inside a list for each entry', async () => {
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
@@ -1296,6 +1335,7 @@ test('renders one Lectures region with a button inside a list for each entry', a
   const regions = allOfType(tree, 'div')
     .filter(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures')
   assert.equal(regions.length, 1)
+  assert.match(textOf(allOfType(regions[0], 'style')[0]), /outline:2px solid var\(--dsw-alias-state-business-primary, currentColor\)/)
 
   const rows = allOfType(lectureLists(tree, 'algebra')[0], 'li')
   assert.equal(rows.length, 3)

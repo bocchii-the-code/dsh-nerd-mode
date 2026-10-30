@@ -1081,11 +1081,15 @@ window.__ModuleLoader__.load({
       const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
       const fields = lectureFrontmatter(lines);
       const heading = lines.find((line) => /^#\s+\S/.test(line));
+      const draft = fields !== null && fields.status === 'draft';
+      const date = fields !== null && /^\d{4}-\d{2}-\d{2}$/.test(fields.date ?? '') ? fields.date : null;
+      // A draft that also carries a teaching date is malformed, so the block reads as unparsable.
+      const valid = fields !== null && !(draft && date !== null);
       return {
         title: heading === undefined ? slug : heading.replace(/^#\s+/, '').trim(),
-        concept: fields !== null && /^\d+$/.test(fields.concept ?? '') ? Number(fields.concept) : null,
-        date: fields !== null && /^\d{4}-\d{2}-\d{2}$/.test(fields.date ?? '') ? fields.date : null,
-        draft: fields !== null && fields.status === 'draft',
+        concept: valid && /^\d+$/.test(fields.concept ?? '') ? Number(fields.concept) : null,
+        date: valid ? date : null,
+        draft: valid && draft,
       };
     }
 
@@ -1103,6 +1107,7 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /** Return `{ topics, error, rootFound }`. `rootFound` is false only when `study/` is missing, and `error` is the first read failure or null. */
     async function loadLectures(files, sessionId) {
       const model = { topics: [], error: null, rootFound: false };
       const root = await listFolder(files, sessionId, TRACKER_ROOT);
@@ -1143,7 +1148,7 @@ window.__ModuleLoader__.load({
               topic,
               title: parsed.title,
               concept: parsed.concept,
-              state: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'taught' : null,
+              mark: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'dated' : null,
               date: parsed.date,
               path: `${folder}/${item.name}`,
             });
@@ -1157,7 +1162,7 @@ window.__ModuleLoader__.load({
     }
 
     // One column, titles wrap, no fixed height. The outline is the focus ring.
-    const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}';
+    const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary, currentColor);outline-offset:2px}';
     const lectureRowStyle = {
       background: 'none',
       border: 'none',
@@ -1194,10 +1199,10 @@ window.__ModuleLoader__.load({
       return name === undefined ? value : `${Number(day)} ${name} ${year}`;
     }
 
-    // One mark per entry: a draft says Draft, a taught Lecture says when it was taught.
     function lectureMark(entry) {
-      if (entry.state === 'draft') return 'Draft';
-      if (entry.state === 'taught' && entry.date !== null) return lectureDate(entry.date);
+      if (entry.mark === 'archived') return 'Archived';
+      if (entry.mark === 'draft') return 'Draft';
+      if (entry.mark === 'dated' && entry.date !== null) return lectureDate(entry.date);
       return null;
     }
 
@@ -1231,14 +1236,14 @@ window.__ModuleLoader__.load({
     }
 
     function lectureTopic(group, open, onToggle, onOpen) {
-      const main = group.entries.filter((entry) => entry.state !== 'archived');
-      const archived = group.entries.filter((entry) => entry.state === 'archived');
-      const nodes = [
-        React.createElement('h2', { key: 'heading', style: panelHeadingStyle }, group.topic),
-        main.length === 0
-          ? React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.')
-          : React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))),
-      ];
+      const main = group.entries.filter((entry) => entry.mark !== 'archived');
+      const archived = group.entries.filter((entry) => entry.mark === 'archived');
+      const nodes = [React.createElement('h2', { key: 'heading', style: panelHeadingStyle }, group.topic)];
+      if (group.entries.length === 0) {
+        nodes.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.'));
+      } else if (main.length > 0) {
+        nodes.push(React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))));
+      }
       if (archived.length > 0) {
         nodes.push(React.createElement('button', {
           key: 'fold',
