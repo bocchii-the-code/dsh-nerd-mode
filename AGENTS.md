@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and specs live as GitHub issues in `bocchii-the-code/dsh-nerd-mode`, handled with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and specs live as markdown files under `.scratch/` in this repo. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
