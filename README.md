@@ -12,7 +12,7 @@
   <a href="./README.zh.md"><img src="https://img.shields.io/badge/%E4%B8%AD%E6%96%87-switch-d0d7de" alt="中文"></a>
 </p>
 
-Learning in a chat usually ends when the answer arrives: nothing is checked, and nothing survives the conversation. Nerd Mode changes what dsh does with a question. It teaches in steps, it stops where the choice matters, and it can keep a dated record, so a subject lasts weeks instead of one sitting.
+A chat lesson usually ends when the answer arrives. Nothing checks that you understood it, and nothing survives the tab closing. Nerd Mode makes dsh teach in steps, stop where the choice changes the result, and keep a dated record when a subject deserves one. A topic can then last weeks instead of one sitting.
 
 ## Requirements
 
@@ -40,24 +40,28 @@ From a local folder or tarball:
 dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 ```
 
-Restart dsh. Every mode gains the `/nerd-mode` command and a `Nerd Mode` pill in the composer bar. The mode picker gains no new entry: the plugin mounts at profile level, not as a preset.
+Restart dsh. Every mode gains the `/nerd-mode` command and a `Nerd Mode` pill in the composer bar. The mode picker gains no new entry, because the plugin mounts at profile level rather than as a preset.
 
 ## Usage
 
-Two skills, two sizes. Both teach in steps and both stop to ask. They differ in what they keep.
+Ask a question and Nerd Mode takes one of two paths. Both teach in steps and stop at the fork, the point where the choice changes the result. They differ in what they keep.
+
+```text
+a question
+├── one sitting            /study       answers in chat, saves nothing unless you name a path
+└── a subject for weeks    /study-plus  builds study/<topic>/ and keeps a dated record
+```
 
 ### Quick lesson: `/study`
 
-**What it does.** Walks one concept or one task from the first step to the last, and stops once at the fork: the point where the choice changes the result. For a concept it explains in layers, from intuition to terms to formal detail. For a task it produces the artifact and writes one line of reason beside each step. It keeps no learner record and grades nothing. It saves a lecture or artifact only when you name a path, and it may draw an SVG figure when a picture helps. It is also the single source for the lecture-writing rules that `/study-plus` follows.
+It walks one concept or one task from the first step to the last and stops once at the fork. A concept comes in layers, from intuition to terms to formal detail. A task comes as the finished artifact, with one line of reason beside each step. It keeps no learner record and grades nothing. It saves a lecture or artifact only when you name a path, and it may draw an SVG figure when a picture helps. The lecture-writing rules that `/study-plus` follows are the ones in this skill.
 
-**When to use it.** A question you want to understand now and will probably not return to.
+Use it for a question you want to understand now and will probably not return to.
 
 - Reading a paper and a term stops you.
 - A homework problem you have to finish tonight.
 - A file whose logic you need to follow before you change it.
 - A small decision where you want the trade-off spelled out before you pick.
-
-**How to use it.**
 
 ```text
 /study why does Adam divide by 1 - beta^t
@@ -69,15 +73,15 @@ Type the command, or turn the switch on and just ask. With the switch on, a lear
 
 An explicit `/study-plus` goes straight to tracked study, even when the request names several concepts. An explicit `/study`, or a request that arrives through Nerd Mode without a command, asks one question when it names two or more independent concepts: a one-off book-style answer in chat, or a tracked `/study-plus` session. The one-off answer uses a title, chapter headings, and section headings in plain Markdown.
 
-**What you get.** A title, the central idea, numbered steps, one line of symbols above each formula, and a short table only when four or more symbols keep coming back. One worked example, the common mistake, and the single stop at the fork. For a task, the finished artifact with its reasoning.
+You get a title, the central idea, numbered steps, one line of symbols above each formula, and a short table only when four or more symbols keep coming back. Then one worked example, the common mistake, and the single stop at the fork. For a task, you get the finished artifact with its reasoning.
 
-**What it does not do.** It does not score, keep a learner record, or continue a topic across sessions. It saves a lecture or other requested artifact only when you ask, and then at the path you name.
+It does not score, keep a learner record, or continue a topic across sessions. A saved lecture or artifact goes only where you ask, at the path you name.
 
 ### Long lesson: `/study-plus`
 
-**What it does.** Organizes one topic as a Book of Chapters and Sections. Each Section holds one concept. It builds a concept graph in prerequisite order, groups the concepts into Chapters, and teaches and assesses one concept per Concept cycle. The graph also carries Chapter and Section columns, so one file records the reading order beside the prerequisite order. It keeps three tracker files and saves one Markdown file per concept under `study/<slug>/lectures/`. After you approve the graph it prepares a complete draft for every concept, so a lesson starts without waiting. It builds an HTML book from the saved material and refreshes that page whenever the material changes.
+It organizes one topic as a Book of Chapters and Sections, with one concept per Section. It builds a concept graph in prerequisite order, groups the concepts into Chapters, and teaches and assesses one concept in each Concept cycle. The graph carries Chapter and Section columns, so one file records the reading order beside the prerequisite order. It keeps three tracker files and saves one Markdown file per concept under `study/<slug>/lectures/`. Once you approve the graph it prepares a complete draft for every concept, so a lesson starts without waiting. It builds an HTML book from the saved material and refreshes that page whenever the material changes.
 
-**When to use it.** A subject you will still be learning next month.
+Use it for a subject you will still be learning next month.
 
 - You are working through a textbook, a course, or a paper properly.
 - You want the textbook's chapters to organize what you reread.
@@ -85,9 +89,7 @@ An explicit `/study-plus` goes straight to tracked study, even when the request 
 - You want evidence of progress, not an impression of it.
 - You keep looking things up and forgetting them.
 
-**How to use it.** First session, later sessions, and your choice of what to study.
-
-An explicit `/study-plus` starts tracked study directly. It does not ask the one-off book question, even when the topic covers several concepts.
+An explicit `/study-plus` starts tracked study directly and does not ask the one-off book question, even when the topic covers several concepts.
 
 ```text
 /study-plus Shampoo and Adam optimizers              # first session builds the graph
@@ -96,17 +98,29 @@ An explicit `/study-plus` starts tracked study directly. It does not ask the one
 /study-plus the matrix square root                   # jump straight to one concept
 ```
 
-First session: it proposes 15 to 30 concepts in prerequisite order and groups them into Chapters. It shows the chapter list and the concept table together and waits. You approve, edit, or rebuild. After that, you name what you already know well enough to skip. It then writes one complete draft per concept, including the concepts you skipped, so no later lesson waits on preparation. Drafts count as preparation, not learning. It follows the `/study` writing standard before it teaches. Then it teaches one concept in five steps: an optional Recall Session, teach to completion, the configured number of unseen questions, a teach-back, and a dated record. The lecture is saved before it is shown.
+The first session runs in a fixed order.
 
-An older graph opens with a migration preview. Nothing is rewritten until you confirm. A concept the graph removes has its lecture file moved to `lectures/archive/`, not deleted.
+```text
+/study-plus <topic>
+  propose 15 to 30 concepts in prerequisite order, grouped into Chapters
+  show the chapter list and the concept table together, then wait
+  you approve, edit, or rebuild the graph
+  you name the concepts you can skip
+  write one complete draft per concept, skipped concepts included
+  teach each concept: recall (optional) → lecture → configured unseen questions → teach-back → dated record
+```
+
+Drafts count as preparation, not learning. Every lecture follows the `/study` writing standard and is saved before it is shown.
+
+An older graph opens with a migration preview, and nothing is rewritten until you confirm. A concept the graph removes has its lecture file moved to `lectures/archive/`, not deleted.
 
 Later sessions read the tracker files first. You pick a Chapter or a Concept, and it names that Concept, its state, and the state of its prerequisites in one line. Nothing forces a prerequisite order.
 
-**Profile defaults.** Settings -> Nerd Mode stores this profile's defaults for tracked sessions: whether each session opens with a Recall Session, and how many unseen questions follow a lecture, in which form (short answer, four-option multiple choice, or mixed). Save applies to the next session; Cancel discards a draft; Restore defaults returns to recall off, 3, short answer. An explicit preference inside one `/study-plus` request wins for that session only.
+Profile defaults live under Settings -> Nerd Mode. They cover whether each tracked session opens with a Recall Session, and how many unseen questions follow a lecture, in which form (short answer, four-option multiple choice, or mixed). Save applies to the next session, Cancel discards a draft, and Restore defaults returns to recall off, 3 questions, short answer. A preference stated inside one `/study-plus` request wins for that session only.
 
-**What you get.** A reading order and a prerequisite order, any concept you choose, a graded check for that concept, a saved lecture, and a record that survives restarts. An HTML book refreshes after each draft batch and each lesson, with one page per saved Section in its original order, full text search, and a draft label on unprepared reading.
+You get a reading order and a prerequisite order, any concept you choose, a graded check for that concept, a saved lecture, and a record that survives restarts. The HTML book refreshes after each draft batch and each lesson, with one page per saved Section in its original order, full text search, and a draft label on unprepared reading.
 
-**What it does not do.** It schedules no reviews and never guesses that you know something. Only an answer you produced changes the record. It never blocks a concept because a prerequisite is open. It explains or recommends the prerequisite, and the choice stays yours.
+It schedules no reviews and never guesses that you know something. Only an answer you produced changes the record. An open prerequisite never blocks a concept. It explains or recommends the prerequisite, and the choice stays yours.
 
 ### What each one leaves behind
 
@@ -126,9 +140,9 @@ Later sessions read the tracker files first. You pick a Chapter or a Concept, an
 - A question you will not return to: `/study`.
 - A subject you will return to for weeks: `/study-plus`.
 - A textbook whose chapters should shape the reading order: `/study-plus`, which mirrors them as Chapters.
-- Started with `/study` and keep coming back? Move up. Build the graph once, and the earlier conversation still informs it.
+- Started with `/study` and keep coming back? Build the graph once with `/study-plus`, and the earlier conversation still informs it.
 
-An example. You are reading the Shampoo paper and hit the preconditioner. `/study what does the Shampoo preconditioner actually do` settles it in one sitting. If you decide to read the paper properly over a month, open `/study-plus Shampoo and Adam optimizers` and let it order the concepts first.
+One example. You are reading the Shampoo paper and hit the preconditioner. `/study what does the Shampoo preconditioner actually do` settles it in one sitting. If you decide to read the paper properly over a month, open `/study-plus Shampoo and Adam optimizers` and let it order the concepts first.
 
 ### Commands
 
