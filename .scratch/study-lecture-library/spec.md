@@ -1,6 +1,6 @@
 # Spec: Lecture library panel
 
-Status: ready-for-agent
+Status: resolved
 
 ## Problem Statement
 

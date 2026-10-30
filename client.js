@@ -1161,7 +1161,7 @@ window.__ModuleLoader__.load({
       return model;
     }
 
-    // One column, titles wrap, no fixed height. The outline is the focus ring.
+    // The rows and the fold are the only elements the host cannot style for us.
     const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary, currentColor);outline-offset:2px}';
     const lectureRowStyle = {
       background: 'none',
