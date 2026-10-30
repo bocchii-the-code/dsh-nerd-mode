@@ -46,11 +46,9 @@ Restart dsh. Every mode gains the `/nerd-mode` command and a `Nerd Mode` pill in
 
 Ask a question and Nerd Mode takes one of two paths. Both teach in steps and stop at the fork, the point where the choice changes the result. They differ in what they keep.
 
-```text
-a question
-├── one sitting            /study       answers in chat, saves nothing unless you name a path
-└── a subject for weeks    /study-plus  builds study/<topic>/ and keeps a dated record
-```
+<p align="center">
+  <img src="assets/two-paths.svg" width="720" alt="Two panels side by side. On the left, /study takes one question and one answer, then ends. On the right, /study-plus builds a concept graph, Book, Chapters, and Sections, keeps one lecture per concept, and records each lesson across weeks.">
+</p>
 
 ### Quick lesson: `/study`
 
@@ -112,7 +110,7 @@ The first session runs in a fixed order.
 
 Drafts count as preparation, not learning. Every lecture follows the `/study` writing standard and is saved before it is shown.
 
-An older graph opens with a migration preview, and nothing is rewritten until you confirm. A concept the graph removes has its lecture file moved to `lectures/archive/`, not deleted.
+A concept the graph removes has its lecture file moved to `lectures/archive/`, not deleted.
 
 Later sessions read the tracker files first. You pick a Chapter or a Concept, and it names that Concept, its state, and the state of its prerequisites in one line. Nothing forces a prerequisite order.
 
@@ -136,6 +134,10 @@ It schedules no reviews and never guesses that you know something. Only an answe
 `/study` does not create a `study/` folder by itself. A saved lecture or artifact goes where you name it, including a path under `study/<topic>/lectures/`. A figure goes to `diagrams/<topic>/` unless you name another path. It must not read or write `graph.md`, `state.md`, `log.md`, or `plan.md`.
 
 ### Which one
+
+<p align="center">
+  <img src="assets/choose-a-mode.svg" width="720" alt="A question, will you come back to this subject, forks into No and Yes. No leads to /study for one sitting with no record kept. Yes leads to /study-plus for weeks of lessons with a dated record. A curved arrow marked still coming back points from /study to /study-plus.">
+</p>
 
 - A question you will not return to: `/study`.
 - A subject you will return to for weeks: `/study-plus`.

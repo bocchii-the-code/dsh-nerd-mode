@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">Choose a mode: /study or /study-plus</title>
+  <desc id="desc">A question, "Will you come back to this subject?", forks into No and Yes. No leads to /study, with one sitting and no record kept. Yes leads to /study-plus, with weeks of lessons and a dated record. A curved arrow labelled "still coming back?" shows the upgrade path from /study to /study-plus.</desc>
+
+  <rect x="8" y="8" width="944" height="404" rx="20" fill="#FFFFFF" stroke="#D8D2C6" stroke-width="2"/>
+
+  <g fill="none" stroke="#141414" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M224 102 C 292 98, 386 105, 480 101 C 566 98, 650 104, 736 100" stroke-width="2.5"/>
+    <path d="M480 106 C 482 118, 478 132, 480 146" stroke-width="2.8"/>
+    <path d="M250 148 C 320 144, 400 151, 470 147 C 540 144, 640 151, 710 148" stroke-width="2.8"/>
+    <path d="M250 147 C 249 164, 251 182, 250 204" stroke-width="2.8"/>
+    <path d="M710 148 C 711 165, 709 182, 710 204" stroke-width="2.8"/>
+  </g>
+  <circle cx="480" cy="148" r="3" fill="#141414"/>
+
+  <g transform="rotate(-2 350 148)">
+    <path d="M315 149 C 313 135, 329 126, 349 127 C 368 126, 386 134, 385 147 C 386 161, 370 170, 349 169 C 330 169, 315 162, 315 149 Z" fill="#FFFFFF" stroke="#141414" stroke-width="2.2" stroke-linejoin="round"/>
+    <text x="350" y="156" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.4" fill="#141414">No</text>
+  </g>
+  <g transform="rotate(1.5 610 148)">
+    <path d="M575 147 C 574 133, 590 126, 610 127 C 630 126, 647 134, 646 148 C 647 162, 631 170, 610 169 C 590 169, 575 161, 575 147 Z" fill="#FFFFFF" stroke="#141414" stroke-width="2.2" stroke-linejoin="round"/>
+    <text x="610" y="156" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.4" fill="#141414">Yes</text>
+  </g>
+
+  <g fill="#FFFFFF" stroke="#141414" stroke-width="3.4" stroke-linejoin="round">
+    <path d="M143 200 C 210 196, 300 203, 356 199 C 368 198, 376 207, 374 218 C 376 238, 372 252, 374 267 C 375 278, 368 285, 357 283 C 300 287, 230 281, 180 285 C 150 287, 128 285, 127 276 C 125 264, 128 250, 126 238 C 124 224, 127 212, 126 207 C 125 200, 133 201, 143 200 Z"/>
+    <path d="M601 201 C 668 197, 758 204, 814 200 C 826 199, 834 207, 832 218 C 834 238, 830 252, 832 267 C 833 278, 826 285, 815 283 C 758 287, 688 281, 638 285 C 608 287, 586 285, 585 276 C 583 264, 586 250, 584 238 C 582 224, 585 212, 584 207 C 583 200, 591 202, 601 201 Z"/>
+  </g>
+
+  <g fill="none" stroke="#141414" stroke-linecap="round">
+    <path d="M375 242 C 408 280, 440 297, 480 298 C 520 299, 552 282, 582 244" stroke-width="2.5"/>
+    <path d="M582 244 L579 259 M582 244 L568 250" stroke-width="2.5"/>
+  </g>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" fill="#141414">
+    <text x="480" y="84" text-anchor="middle" font-size="27" font-weight="600">Will you come back to this subject?</text>
+
+    <g text-anchor="middle">
+      <text x="250" y="254" font-size="34" font-weight="700" letter-spacing="0.2">/study</text>
+      <text x="710" y="254" font-size="34" font-weight="700" letter-spacing="0.2">/study-plus</text>
+      <text x="250" y="318" font-size="20">one sitting</text>
+      <text x="250" y="344" font-size="20">no record kept</text>
+      <text x="710" y="318" font-size="20">weeks of lessons</text>
+      <text x="710" y="344" font-size="20">dated record</text>
+      <text x="480" y="234" font-size="20">still coming back?</text>
+    </g>
+  </g>
+</svg>

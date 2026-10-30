@@ -46,11 +46,9 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 
 问一个问题，Nerd Mode 会走两条路中的一条。两条都分步骤讲，都会在分叉点停下来问一次。区别在于它们留下什么。
 
-```text
-一个问题
-├── 一次坐完          /study       在聊天里讲完，不指定路径就不留文件
-└── 要跟几周          /study-plus  建 study/<topic>/，留下带日期的记录
-```
+<p align="center">
+  <img src="assets/two-paths.svg" width="720" alt="左右两栏对照。左边 /study 只处理一个问题和一个答案，讲完就结束。右边 /study-plus 先建概念图，再分 Book、Chapter、Section，每个概念一份讲义，并跨周记录每节课。">
+</p>
 
 ### 快速课程：`/study`
 
@@ -112,7 +110,7 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 
 讲稿只是准备，不算学过。每份讲义都按 `/study` 的写作规则写，并且先保存再显示。
 
-旧格式的概念图会先给你看迁移预览，你确认之前不会改写。概念图删掉的概念，它的讲义文件会移到 `lectures/archive/`，不会被删除。
+概念图删掉的概念，它的讲义文件会移到 `lectures/archive/`，不会被删除。
 
 之后的会话先读记录文件。你挑一章或一个概念，它用一句说明这个概念的现状和它先修概念的现状。先修不会强制你按顺序走。
 
@@ -138,6 +136,10 @@ HTML 书页保留每个 Section 在概念图里的原编号，也就是教材里
 `/study` 自己不会建 `study/` 文件夹。讲稿和成品只会存到你指定的路径，包括 `study/<主题>/lectures/` 下的普通文件。图默认放在 `diagrams/<topic>/`，除非你另指路径。它不得读写 `graph.md`、`state.md`、`log.md` 或 `plan.md`。
 
 ### 怎么选
+
+<p align="center">
+  <img src="assets/choose-a-mode.svg" width="720" alt="一个问题，这个主题你还会再回来吗，分成是和否两支。否走 /study，一次坐完，不留记录。是走 /study-plus，连着几周上课，留下带日期的记录。一条标着「还会回来」的弧线箭头从 /study 指向 /study-plus。">
+</p>
 
 - 问完就不会再回来的问题，用 `/study`。
 - 要连着几周的东西，用 `/study-plus`。

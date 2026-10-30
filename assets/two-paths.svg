@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" role="img" aria-labelledby="title desc">
+  <title id="title">Two paths: /study and /study-plus</title>
+  <desc id="desc">Left panel: /study holds one question card and one answer card, then a full stop and a dashed line, captioned "one question, one answer". Right panel: /study-plus builds a structure, from a concept graph with three linked dots, through Book, Chapters, Sections, and one lecture per concept, to record + book.html, above a dotted weeks band, captioned "a structure that remembers".</desc>
+
+  <rect x="8" y="8" width="984" height="504" rx="22" fill="#FFFFFF" stroke="#D8D2C6" stroke-width="2"/>
+
+  <g fill="none" stroke="#141414" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M46 26 C 300 23, 700 29, 954 26 C 966 26, 974 35, 974 46 L974 474 C 974 485, 966 493, 954 493 C 700 496, 300 490, 46 493 C 34 493, 26 485, 26 474 L26 46 C 26 35, 34 26, 46 26 Z" stroke-width="2.5"/>
+    <path d="M500 46 C 497 160, 503 300, 499 474" stroke-width="2" stroke-opacity="0.55"/>
+  </g>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" fill="#141414">
+    <g text-anchor="middle" font-size="32" font-weight="700" letter-spacing="0.3">
+      <text x="263" y="78">/study</text>
+      <text x="737" y="78">/study-plus</text>
+    </g>
+    <g fill="none" stroke="#141414" stroke-width="2.4" stroke-linecap="round">
+      <path d="M198 92 C 232 89, 294 94, 328 91"/>
+      <path d="M640 92 C 690 88, 790 94, 834 90"/>
+    </g>
+  </g>
+
+  <g fill="#FFFFFF" stroke="#141414" stroke-width="3.4" stroke-linejoin="round">
+    <path d="M110 109 C 180 106, 290 113, 420 110 C 430 109, 434 116, 432 126 C 434 146, 431 162, 433 175 C 434 184, 427 189, 417 187 C 340 191, 220 185, 105 189 C 96 190, 92 182, 94 173 C 92 156, 95 140, 93 127 C 92 116, 100 109, 110 109 Z"/>
+    <path d="M104 207 C 180 204, 290 211, 421 208 C 430 207, 434 214, 432 224 C 434 244, 431 260, 433 273 C 434 282, 426 288, 417 286 C 340 290, 215 284, 102 288 C 94 289, 92 281, 94 272 C 92 255, 95 239, 93 226 C 92 215, 96 208, 104 207 Z"/>
+    <path d="M548 103 C 650 100, 820 108, 928 104 C 938 103, 945 110, 943 120 C 945 136, 942 150, 944 159 C 945 168, 937 173, 927 171 C 820 175, 650 169, 544 173 C 534 174, 529 166, 531 157 C 529 140, 532 126, 530 117 C 529 107, 538 103, 548 103 Z"/>
+  </g>
+
+  <text x="263" y="165" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="46" font-weight="600" fill="#141414">?</text>
+  <g fill="none" stroke="#141414" stroke-linecap="round" stroke-width="2.2">
+    <path d="M126 234 C 190 231, 310 237, 398 233"/>
+    <path d="M126 250 C 180 248, 290 253, 372 249"/>
+    <path d="M126 266 C 170 263, 250 269, 322 265"/>
+  </g>
+
+  <path d="M263 300 C 271 300, 276 305, 276 310 C 276 317, 271 321, 263 321 C 255 321, 250 317, 250 310 C 250 305, 255 300, 263 300 Z" fill="#141414"/>
+  <path d="M193 334 C 232 332, 294 336, 333 333" fill="none" stroke="#141414" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="6 8"/>
+
+  <g fill="#141414">
+    <circle cx="560" cy="154" r="6"/>
+    <circle cx="700" cy="149" r="6"/>
+    <circle cx="840" cy="155" r="6"/>
+  </g>
+  <g fill="none" stroke="#141414" stroke-width="2.4" stroke-linecap="round">
+    <path d="M568 153 C 600 151, 660 152, 690 150"/>
+    <path d="M690 150 L679 145 M690 150 L679 155"/>
+    <path d="M708 150 C 740 150, 800 154, 830 154"/>
+    <path d="M830 154 L819 149 M830 154 L819 159"/>
+  </g>
+
+  <g fill="none" stroke="#141414" stroke-linecap="round">
+    <path d="M536 172 C 537 185, 538 194, 540 201 C 565 250, 590 295, 636 369" stroke-width="2.2"/>
+    <path d="M540 201 C 546 201, 554 201, 560 201" stroke-width="2"/>
+    <path d="M561 243 C 568 243, 577 243, 584 243" stroke-width="2"/>
+    <path d="M584 285 C 591 285, 601 285, 608 285" stroke-width="2"/>
+    <path d="M611 327 C 617 327, 625 327, 632 327" stroke-width="2"/>
+    <path d="M636 369 C 642 369, 650 369, 656 369" stroke-width="2"/>
+  </g>
+
+  <g fill="#FFFFFF" stroke="#141414" stroke-width="2.8" stroke-linejoin="round">
+    <path d="M574 184 C 640 182, 780 187, 837 184 C 844 184, 848 189, 848 196 L848 206 C 848 213, 844 218, 836 218 C 770 220, 640 216, 572 219 C 565 219, 560 213, 560 206 L560 196 C 560 189, 565 184, 574 184 Z"/>
+    <path d="M597 226 C 666 223, 806 229, 861 226 C 868 226, 872 231, 872 238 L872 248 C 872 255, 867 260, 860 260 C 796 262, 664 258, 595 261 C 588 261, 584 255, 584 248 L584 238 C 584 231, 589 226, 597 226 Z"/>
+    <path d="M623 268 C 686 266, 830 271, 885 268 C 892 268, 896 273, 896 280 L896 290 C 896 297, 891 302, 884 302 C 816 304, 686 300, 619 303 C 612 303, 608 297, 608 290 L608 280 C 608 273, 614 268, 623 268 Z"/>
+    <path d="M645 310 C 714 307, 854 313, 909 310 C 916 310, 920 315, 920 322 L920 332 C 920 339, 915 344, 908 344 C 840 346, 710 342, 643 345 C 636 345, 632 339, 632 332 L632 322 C 632 315, 638 310, 645 310 Z"/>
+    <path d="M669 352 C 738 350, 878 355, 933 352 C 940 352, 944 357, 944 364 L944 374 C 944 381, 939 386, 932 386 C 864 388, 734 384, 667 387 C 660 387, 656 381, 656 374 L656 364 C 656 357, 662 352, 669 352 Z"/>
+  </g>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" fill="#141414" font-size="21" font-weight="600">
+    <text x="548" y="130">Concept graph</text>
+    <text x="574" y="208">Book</text>
+    <text x="598" y="250">Chapters</text>
+    <text x="622" y="292">Sections</text>
+    <text x="646" y="334">one lecture per concept</text>
+    <text x="670" y="376">record + book.html</text>
+  </g>
+
+  <g fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 9">
+    <path d="M530 402 C 660 399, 810 404, 944 401"/>
+    <path d="M530 430 C 660 432, 810 428, 944 431"/>
+  </g>
+  <g fill="none" stroke="#141414" stroke-width="1.8" stroke-linecap="round">
+    <path d="M700 404 C 701 412, 699 420, 700 427"/>
+    <path d="M760 405 C 761 412, 759 420, 760 428"/>
+    <path d="M820 404 C 821 411, 819 420, 820 427"/>
+    <path d="M880 405 C 881 413, 879 420, 880 428"/>
+  </g>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" fill="#141414" text-anchor="middle" font-size="21">
+    <text x="263" y="462">one question, one answer</text>
+    <text x="737" y="462">a structure that remembers</text>
+  </g>
+  <text x="542" y="421" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" fill="#141414" font-size="21">weeks</text>
+</svg>
