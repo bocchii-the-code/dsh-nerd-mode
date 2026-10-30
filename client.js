@@ -1035,8 +1035,57 @@ window.__ModuleLoader__.load({
       padding: '0 8px',
     };
 
+    // --- Lectures dock page --------------------------------------------------
+    // The seat only. The list and its reads arrive in a later ticket.
+    const LECTURES_ID = 'dsh-nerd-mode/lectures';
+    const LECTURES_KIND = 'lectures';
+    const LECTURES_LABEL = 'Lectures';
+    const LECTURES_GUIDE_ORDER = 40;
+
+    // Same 16px book as the composer pill, drawn at the size the guide asks for.
+    function LecturesGlyph({ size = 16 }) {
+      return React.createElement(
+        'svg',
+        {
+          'aria-hidden': 'true',
+          fill: 'none',
+          height: size,
+          stroke: 'currentColor',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          strokeWidth: 1.6,
+          viewBox: '0 0 16 16',
+          width: size,
+        },
+        ...BOOK.props.children,
+      );
+    }
+
+    function LecturesPage() {
+      return React.createElement(
+        'div',
+        { role: 'region', 'aria-label': LECTURES_LABEL, style: panelStyle },
+        React.createElement('p', { style: panelMutedStyle }, 'Saved lectures will appear here.'),
+      );
+    }
+
+    // A page type names no resource pattern and no `multiple`, so the host
+    // records it at one fixed page address and a reopen focuses that tab.
+    const LECTURES_DEFINITION = {
+      id: LECTURES_ID,
+      kind: LECTURES_KIND,
+      title: () => LECTURES_LABEL,
+      guide: [{
+        id: 'lectures',
+        order: LECTURES_GUIDE_ORDER,
+        title: () => LECTURES_LABEL,
+        description: () => 'Read the lectures saved in this workspace.',
+        icon: LecturesGlyph,
+      }],
+    };
+
     return {
-      inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'],
+      inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms', 'sidebarRightTabs', 'sidebarRight'],
       apply(ctx) {
         ctx.slots.inject(SLOT, () =>
           ctx.slots.register({
@@ -1072,6 +1121,16 @@ window.__ModuleLoader__.load({
             }),
           }, StudyView),
         );
+        // A host without the right Sidebar never provides the registry, so the
+        // plugin waits for it and registers nothing.
+        ctx.effect(
+          () => ctx.sidebarRightTabs.register(LECTURES_DEFINITION),
+          'dsh-nerd-mode: lectures tab type',
+        );
+        ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+          name: 'sidebar.right.pane.tab',
+          key: LECTURES_ID,
+        }, LecturesPage));
       },
     };
   },
