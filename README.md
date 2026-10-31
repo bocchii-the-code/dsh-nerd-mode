@@ -12,18 +12,18 @@
   <a href="./README.zh.md"><img src="https://img.shields.io/badge/%E4%B8%AD%E6%96%87-switch-d0d7de" alt="中文"></a>
 </p>
 
-A chat lesson usually ends when the answer arrives. Nothing checks that you understood it, and nothing survives the tab closing. Nerd Mode makes dsh teach in steps, stop where the choice changes the result, and keep a dated record when a subject deserves one. A topic can then last weeks instead of one sitting.
+A chat lesson usually ends when the answer arrives. Nothing checks that you understood it, and nothing survives the tab closing. Nerd Mode makes dsh teach in steps, stop where the choice changes the result, and keep a dated record when a subject deserves one. A Course can then last weeks instead of one sitting.
 
 ## Key features
 
 - One switch for the whole conversation. `/nerd-mode on` teaches every learning-shaped request and leaves feature work, searches, and commands alone.
-- Two ways to learn. `/study` answers one concept or one task in chat and keeps nothing. `/study-plus` runs one topic over weeks with a dated record.
+- Two ways to learn. `/study` answers one concept or one task in chat and keeps nothing. `/study-plus` runs one Course over weeks with a dated record.
 - A map before the first lesson. A concept graph in prerequisite order, grouped into a Book of Chapters and Sections, approved by you before any file is written.
-- One question round before teaching. It asks your goal, your background, and whether you want one complete answer or a tracked topic; a tracked topic adds the concepts you can skip. The answers set a teaching level that every lecture follows.
+- One question round before teaching. It asks your goal, your background, and whether you want one complete answer or a tracked Course; a tracked Course adds the concepts you can skip. The answers set a teaching level that every lecture follows.
 - Teaching that stops at the fork. The guide explains in steps and stops where the choice changes the result, instead of handing over a finished answer.
 - Evidence, not impressions. Unseen questions and a graded teach-back, with the rubric written before the question. Only an answer you produced changes the record.
 - A record that outlives the chat. The graph, the states, and the dated log survive restarts, and the HTML Book rebuilds after each batch and each lesson, with full-text search.
-- Lectures you can find again. The Lectures card lists every saved lecture in the workspace, grouped by topic.
+- Lectures you can find again. The Lectures card lists every saved lecture in the workspace, grouped by Course.
 
 ## Requirements
 
@@ -84,11 +84,11 @@ An explicit `/study-plus` goes straight to tracked study, even when the request 
 
 You get a title, the central idea, numbered steps, one line of symbols above each formula, and a short table only when four or more symbols keep coming back. Then one worked example, the common mistake, and the single stop at the fork. For a task, you get the finished artifact with its reasoning.
 
-It does not score, keep a learner record, or continue a topic across sessions. A saved lecture or artifact goes only where you ask, at the path you name.
+It does not score, keep a learner record, or continue a Course across sessions. A saved lecture or artifact goes only where you ask, at the path you name.
 
 ### Long lesson: `/study-plus`
 
-It organizes one topic as a Book of Chapters and Sections, with one concept per Section. It builds a concept graph in prerequisite order, groups the concepts into Chapters, and teaches and assesses one concept in each Concept cycle. The graph carries Chapter and Section columns, so one file records the reading order beside the prerequisite order. It keeps three tracker files and saves one Markdown file per concept under `study/<slug>/lectures/`. Once you approve the graph it prepares a complete draft for every concept, so a lesson starts without waiting. It builds an HTML book from the saved material and refreshes that page whenever the material changes.
+It organizes one Course as a Book of Chapters and Sections, with one concept per Section. It builds a concept graph in prerequisite order, groups the concepts into Chapters, and teaches and assesses one concept in each Concept cycle. The graph carries Chapter and Section columns, so one file records the reading order beside the prerequisite order. It keeps three tracker files and saves one Markdown file per concept under `study/<course>/lectures/`. Once you approve the graph it prepares a complete draft for every concept, so a lesson starts without waiting. It builds an HTML book from the saved material and refreshes that page whenever the material changes.
 
 Use it for a subject you will still be learning next month.
 
@@ -98,11 +98,13 @@ Use it for a subject you will still be learning next month.
 - You want evidence of progress, not an impression of it.
 - You keep looking things up and forgetting them.
 
-An explicit `/study-plus` starts tracked study directly and does not ask the one-off book question, even when the topic covers several concepts.
+An explicit `/study-plus` starts tracked study directly and does not ask the one-off book question, even when the request covers several concepts.
+
+A Course is one folder under `study/`: one concept graph, one state file, one log, its lectures, its figures, and its Book. The first tracked study in a conversation settles it once. When the workspace holds one Course, `/study-plus` uses it and names it in one line, with no question. When it holds several, one question lists them and offers a new Course. A request about a second subject gets one question: add these concepts to the current Course, or start a new Course.
 
 ```text
 /study-plus Shampoo and Adam optimizers              # first session builds the graph
-/study-plus                                          # later sessions continue the topic
+/study-plus                                          # later sessions continue the Course
 /study-plus chapter 2                                # read that chapter in Book order
 /study-plus the matrix square root                   # jump straight to one concept
 ```
@@ -110,7 +112,7 @@ An explicit `/study-plus` starts tracked study directly and does not ask the one
 The first session runs in a fixed order.
 
 ```text
-/study-plus <topic>
+/study-plus <course>
   propose 15 to 30 concepts in prerequisite order, grouped into Chapters
   show the chapter list and the concept table together, then wait
   you approve, edit, or rebuild the graph
@@ -119,10 +121,10 @@ The first session runs in a fixed order.
   teach each concept: recall (optional) → lecture → configured unseen questions → teach-back → dated record
 ```
 
-Approval also asks the remaining calibration items: what you want to do with the topic, what you have already read or used, and the concepts you can skip. When the opening question already answered your goal and background, it asks only the concepts you can skip. The answers set `Teaching level` in `graph.md`, beside `Goal` and `Background`, and every lecture follows that level. It shapes the lecture only, never the questions, the teach-back, or the record. A mid-topic change lasts for that session unless you say to keep it.
+Approval also asks the remaining calibration items: what you want to do with the Course, what you have already read or used, and the concepts you can skip. When the opening question already answered your goal and background, it asks only the concepts you can skip. The answers set `Teaching level` in `graph.md`, beside `Goal` and `Background`, and every lecture follows that level. It shapes the lecture only, never the questions, the teach-back, or the record. A mid-Course change lasts for that session unless you say to keep it.
 
 <p align="center">
-  <img src="assets/calibration.svg" width="720" alt="The pre-course flow. You approve 15 to 30 concepts grouped by chapter, then answer one question round, once per topic: what you want to do with the topic, what you have read or used, and which concepts you can skip. The answers set a teaching level in graph.md, and every lecture follows it. A beginner lecture uses numbered steps, explains every term, and gives an example per step. A standard lecture gives the intuition first, then the formal detail, with examples where they help. An advanced lecture goes in one pass with no numbered steps, starts from the formal statement, and uses at most one example per idea.">
+  <img src="assets/calibration.svg" width="720" alt="The pre-course flow. You approve 15 to 30 concepts grouped by chapter, then answer one question round for the Course: what you want to do with it, what you have read or used, and which concepts you can skip. The answers set a teaching level in graph.md, and every lecture follows it. A beginner lecture uses numbered steps, explains every term, and gives an example per step. A standard lecture gives the intuition first, then the formal detail, with examples where they help. An advanced lecture goes in one pass with no numbered steps, starts from the formal statement, and uses at most one example per idea.">
 </p>
 
 Drafts count as preparation, not learning. Every lecture follows the `/study` writing standard and is saved before it is shown.
@@ -141,14 +143,14 @@ It schedules no reviews and never guesses that you know something. Only an answe
 
 | | `/study`, quick lesson | `/study-plus`, long lesson |
 |---|---|---|
-| Writes files | saves a lecture or artifact at the path you name, and an SVG when a picture helps | `study/<topic>/`: `graph.md`, `state.md`, `log.md`, one file per concept, `book.html` refreshed automatically |
+| Writes files | saves a lecture or artifact at the path you name, and an SVG when a picture helps | `study/<course>/`: `graph.md`, `state.md`, `log.md`, one file per concept, `book.html` refreshed automatically |
 | Reads files | no reads by default, but reads or writes a requested artifact path | the three tracker files, before the first line |
 | Remembered next session | no | yes, with dates |
 | Graded | no | each concept, rubric written first |
 | Organized as | one concept, one task, or a one-off book | Book, Chapter, Section |
 | Typical span | one sitting, one idea | 15 to 30 concepts over weeks |
 
-`/study` does not create a `study/` folder by itself. A saved lecture or artifact goes where you name it, including a path under `study/<topic>/lectures/`. A figure goes to `diagrams/<topic>/` unless you name another path. It must not read or write `graph.md`, `state.md`, `log.md`, or `plan.md`.
+`/study` does not create a `study/` folder by itself. A saved lecture or artifact goes where you name it, including a path under `study/<course>/lectures/`. A figure goes to `diagrams/<name>.svg` when the guide runs alone, and to `study/<course>/diagrams/<name>.svg` inside a tracked Course. It must not read or write `graph.md`, `state.md`, `log.md`, or `plan.md`.
 
 ### Which one
 
@@ -169,7 +171,7 @@ One example. You are reading the Shampoo paper and hit the preconditioner. `/stu
 /nerd-mode on           teaching posture for this conversation
 /nerd-mode off
 /study <concept or task>
-/study-plus <topic>     recorded session with the three tracker files
+/study-plus <course>    recorded session with the three tracker files
 ```
 
 The book page is not a command. `/study-plus` refreshes it after each draft batch and each lesson, and keeps the previous copy as `book.html.bak`.
