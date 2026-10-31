@@ -14,6 +14,17 @@
 
 A chat lesson usually ends when the answer arrives. Nothing checks that you understood it, and nothing survives the tab closing. Nerd Mode makes dsh teach in steps, stop where the choice changes the result, and keep a dated record when a subject deserves one. A topic can then last weeks instead of one sitting.
 
+## Key features
+
+- One switch for the whole conversation. `/nerd-mode on` teaches every learning-shaped request and leaves feature work, searches, and commands alone.
+- Two ways to learn. `/study` answers one concept or one task in chat and keeps nothing. `/study-plus` runs one topic over weeks with a dated record.
+- A map before the first lesson. A concept graph in prerequisite order, grouped into a Book of Chapters and Sections, approved by you before any file is written.
+- One calibration round per topic. It asks your goal, your background, and the concepts you can skip, then sets a teaching level that every lecture follows.
+- Teaching that stops at the fork. The guide explains in steps and stops where the choice changes the result, instead of handing over a finished answer.
+- Evidence, not impressions. Unseen questions and a graded teach-back, with the rubric written before the question. Only an answer you produced changes the record.
+- A record that outlives the chat. The graph, the states, and the dated log survive restarts, and the HTML Book rebuilds after each batch and each lesson, with full-text search.
+- Lectures you can find again. The Lectures card lists every saved lecture in the workspace, grouped by topic.
+
 ## Requirements
 
 - DeepSeek Harness with a profile.
