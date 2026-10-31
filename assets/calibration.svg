@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
   <title id="title">Calibration sets one teaching level for every lecture</title>
-  <desc id="desc">You approve the concept graph, then answer one question round, once per topic: your goal, what you have already read or used, and the concepts you can skip. The answers fan out to three teaching levels. Beginner uses numbered steps and explains every term. Standard is today's writing standard. Advanced takes one pass with at most one example per idea. The level is written to graph.md, and every lecture follows that level. The questions, the teach-back, and the record stay the same.</desc>
+  <desc id="desc">You approve the concept graph, then answer one question round, once per topic: your goal, what you have already read or used, and the concepts you can skip. The answers fan out to three teaching levels. Beginner uses numbered steps and explains every term. Standard is today's writing standard. Advanced takes one pass with at most one example per idea. The level is written to graph.md, and every lecture follows it. The questions, the teach-back, and the record stay the same.</desc>
 
   <rect x="8" y="8" width="944" height="544" rx="20" fill="#FFFFFF" stroke="#D8D2C6" stroke-width="2"/>
 
@@ -9,31 +9,31 @@
   </g>
 
   <g fill="#FFFFFF" stroke="#141414" stroke-width="3.4" stroke-linejoin="round">
-    <path d="M103 196 C 160 194, 230 199, 273 195 C 279 195, 283 200, 282 207 L282 306 C 282 312, 278 316, 271 315 C 210 317, 150 313, 103 316 C 96 316, 93 312, 94 305 L94 206 C 93 200, 97 196, 103 196 Z"/>
-    <path d="M327 152 C 390 150, 480 155, 543 151 C 550 151, 555 156, 554 164 L554 348 C 554 355, 550 360, 542 359 C 480 361, 390 357, 327 360 C 319 360, 315 355, 316 347 L316 164 C 315 157, 319 152, 327 152 Z"/>
-    <path d="M599 88 C 660 86, 790 90, 855 87 C 862 87, 867 92, 866 99 L866 184 C 866 190, 862 194, 855 193 C 790 195, 660 191, 599 194 C 592 194, 587 190, 588 183 L588 98 C 587 92, 591 88, 599 88 Z"/>
-    <path d="M599 202 C 665 200, 785 204, 855 201 C 862 201, 867 206, 866 213 L866 298 C 866 304, 862 308, 855 307 C 790 309, 660 305, 599 308 C 592 308, 587 304, 588 297 L588 212 C 587 206, 591 202, 599 202 Z"/>
-    <path d="M599 316 C 660 314, 790 318, 855 315 C 862 315, 867 320, 866 327 L866 412 C 866 418, 862 422, 855 421 C 790 423, 660 419, 599 422 C 592 422, 587 418, 588 411 L588 326 C 587 320, 591 316, 599 316 Z"/>
+    <path d="M99 196 C 156 194, 226 199, 269 195 C 275 195, 279 200, 278 207 L278 306 C 278 312, 274 316, 267 315 C 206 317, 146 313, 99 316 C 92 316, 89 312, 90 305 L90 206 C 89 200, 93 196, 99 196 Z"/>
+    <path d="M323 152 C 386 150, 476 155, 547 151 C 554 151, 559 156, 558 164 L558 348 C 558 355, 554 360, 546 359 C 484 361, 394 357, 323 360 C 315 360, 311 355, 312 347 L312 164 C 311 157, 315 152, 323 152 Z"/>
+    <path d="M603 88 C 664 86, 794 90, 859 87 C 866 87, 871 92, 870 99 L870 184 C 870 190, 866 194, 859 193 C 794 195, 664 191, 603 194 C 596 194, 591 190, 592 183 L592 98 C 591 92, 595 88, 603 88 Z"/>
+    <path d="M603 202 C 669 200, 789 204, 859 201 C 866 201, 871 206, 870 213 L870 298 C 870 304, 866 308, 859 307 C 794 309, 664 305, 603 308 C 596 308, 591 304, 592 297 L592 212 C 591 206, 595 202, 603 202 Z"/>
+    <path d="M603 316 C 664 314, 794 318, 859 315 C 866 315, 871 320, 870 327 L870 412 C 870 418, 866 422, 859 421 C 794 423, 664 419, 603 422 C 596 422, 591 418, 592 411 L592 326 C 591 320, 595 316, 603 316 Z"/>
   </g>
 
   <g fill="none" stroke="#141414" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M283 256 C 292 255, 302 257, 310 256" stroke-width="2.6"/>
-    <path d="M315 256 L306 251 M315 256 L306 261" stroke-width="2.4"/>
+    <path d="M279 256 C 288 255, 298 257, 306 256" stroke-width="2.6"/>
+    <path d="M311 256 L302 251 M311 256 L302 261" stroke-width="2.4"/>
 
-    <path d="M554 256 C 560 255, 565 257, 571 256" stroke-width="2.6"/>
-    <path d="M571 142 C 570 200, 572 315, 571 370" stroke-width="2.6"/>
-    <path d="M571 142 C 577 141, 581 143, 587 142" stroke-width="2.6"/>
-    <path d="M571 256 C 577 255, 581 257, 587 256" stroke-width="2.6"/>
-    <path d="M571 370 C 577 369, 581 371, 587 370" stroke-width="2.6"/>
-    <path d="M587 142 L578 137 M587 142 L578 147" stroke-width="2.4"/>
-    <path d="M587 256 L578 251 M587 256 L578 261" stroke-width="2.4"/>
-    <path d="M587 370 L578 365 M587 370 L578 375" stroke-width="2.4"/>
+    <path d="M559 256 C 565 255, 570 257, 575 256" stroke-width="2.6"/>
+    <path d="M575 142 C 574 200, 576 315, 575 370" stroke-width="2.6"/>
+    <path d="M575 142 C 581 141, 585 143, 591 142" stroke-width="2.6"/>
+    <path d="M575 256 C 581 255, 585 257, 591 256" stroke-width="2.6"/>
+    <path d="M575 370 C 581 369, 585 371, 591 370" stroke-width="2.6"/>
+    <path d="M591 142 L582 137 M591 142 L582 147" stroke-width="2.4"/>
+    <path d="M591 256 L582 251 M591 256 L582 261" stroke-width="2.4"/>
+    <path d="M591 370 L582 365 M591 370 L582 375" stroke-width="2.4"/>
   </g>
-  <circle cx="571" cy="256" r="3" fill="#141414"/>
+  <circle cx="575" cy="256" r="3" fill="#141414"/>
 
   <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" text-anchor="middle" fill="#141414">
-    <text x="188" y="244" font-size="21" font-weight="700" letter-spacing="0.2">You approve</text>
-    <text x="188" y="270" font-size="18">the graph</text>
+    <text x="184" y="244" font-size="21" font-weight="700" letter-spacing="0.2">You approve</text>
+    <text x="184" y="270" font-size="18">the graph</text>
 
     <text x="435" y="190" font-size="21" font-weight="700" letter-spacing="0.2">One question round</text>
     <text x="435" y="212" font-size="17">once per topic</text>
@@ -42,22 +42,24 @@
     <text x="435" y="299" font-size="18">read or used</text>
     <text x="435" y="330" font-size="18">concepts you can skip</text>
 
-    <text x="727" y="118" font-size="21" font-weight="700" letter-spacing="0.2">beginner</text>
-    <text x="727" y="143" font-size="18">numbered steps</text>
-    <text x="727" y="162" font-size="18">every term explained</text>
+    <text x="731" y="118" font-size="21" font-weight="700" letter-spacing="0.2">beginner</text>
+    <text x="731" y="143" font-size="18">numbered steps</text>
+    <text x="731" y="162" font-size="18">every term explained</text>
 
-    <text x="727" y="232" font-size="21" font-weight="700" letter-spacing="0.2">standard</text>
-    <text x="727" y="262" font-size="18">today's writing standard</text>
+    <text x="731" y="232" font-size="21" font-weight="700" letter-spacing="0.2">standard</text>
+    <text x="731" y="262" font-size="18">today's writing standard</text>
 
-    <text x="727" y="346" font-size="21" font-weight="700" letter-spacing="0.2">advanced</text>
-    <text x="727" y="371" font-size="18">one pass</text>
-    <text x="727" y="390" font-size="18">at most one example</text>
-    <text x="727" y="409" font-size="18">per idea</text>
+    <text x="731" y="346" font-size="21" font-weight="700" letter-spacing="0.2">advanced</text>
+    <text x="731" y="371" font-size="18">one pass</text>
+    <text x="731" y="390" font-size="18">at most one example</text>
+    <text x="731" y="409" font-size="18">per idea</text>
   </g>
 
+  <path d="M644 442 C 704 440, 764 444, 818 441" fill="none" stroke="#D8D2C6" stroke-width="2" stroke-linecap="round"/>
+
   <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" text-anchor="middle" fill="#141414">
-    <text x="727" y="466" font-size="18">Written to <tspan font-weight="600">graph.md</tspan>.</text>
-    <text x="727" y="488" font-size="18">Every lecture follows that level.</text>
+    <text x="731" y="466" font-size="18">Written to <tspan font-weight="600">graph.md</tspan>.</text>
+    <text x="731" y="488" font-size="18">Every lecture follows it.</text>
 
     <text x="480" y="522" font-size="18">The questions, the teach-back, and the record stay the same.</text>
   </g>
