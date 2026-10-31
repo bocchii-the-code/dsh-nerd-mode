@@ -204,6 +204,7 @@ HTML 书页保留每个 Section 在概念图里的原编号，也就是教材里
 - 如果你改了包名，记得同步 `cordis.patch.yml` 里的 `resolve('dsh-nerd-mode/package.json')`。
 - 随包的第三方技能各自保留许可，见 [NOTICE.md](./NOTICE.md)。
 - 设计记录：[SPEC v3](./docs/specs/2026-10-28-study-plus-v3.md)、[v2，历史版本](./docs/specs/2026-10-27-study-plus-v2.md)、[会话默认值](./docs/specs/2026-10-28-nerd-mode-settings.md)、[GLOSSARY.md](./GLOSSARY.md)、`docs/adr/`。文档结构见 [docs/README.md](./docs/README.md)。
+- 版本变更记录：[CHANGELOG.md](https://github.com/bocchii-the-code/dsh-nerd-mode/blob/main/CHANGELOG.md)。
 - 在 `@deepseek-ai/dsh` 0.2.1-rc.3 和 Node 22 上测过。
 
 ## 卸载

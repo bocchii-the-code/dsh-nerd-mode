@@ -202,6 +202,7 @@ The pill in the composer bar sends `/nerd-mode`. It sits left of Full Throttle, 
 - If you rename the package, update the `resolve('dsh-nerd-mode/package.json')` string in `cordis.patch.yml`.
 - Bundled third-party skills keep their own licenses. See [NOTICE.md](./NOTICE.md).
 - Design notes: [SPEC v3](./docs/specs/2026-10-28-study-plus-v3.md), [v2, historical](./docs/specs/2026-10-27-study-plus-v2.md), [session defaults spec](./docs/specs/2026-10-28-nerd-mode-settings.md), [GLOSSARY.md](./GLOSSARY.md), `docs/adr/`. Doc layout: [docs/README.md](./docs/README.md).
+- Version history: [CHANGELOG.md](https://github.com/bocchii-the-code/dsh-nerd-mode/blob/main/CHANGELOG.md).
 - Tested with `@deepseek-ai/dsh` 0.2.1-rc.3 on Node 22.
 
 ## Uninstall
