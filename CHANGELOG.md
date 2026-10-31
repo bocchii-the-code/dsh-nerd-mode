@@ -7,11 +7,14 @@ Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Kee
 ### Added
 
 - Lectures dock page: a card lists every lecture saved in the workspace, marks read, unread, and archived rows, and opens a lecture in the preview.
-- Opening calibration for each topic: one question round sets the teaching level, and every later lecture follows it.
+- Opening calibration for each Course: one question round sets the teaching level, and every later lecture follows it.
 - Checks for the prompt text and for every README image.
 
 ### Changed
 
+- The record for one subject is now called a Course. Both READMEs, the glossary, and every panel label use the word, and an existing `study/<slug>/` folder is already a Course.
+- The Study tab and the Lectures tab share one Course picker and show only the selected Course.
+- `/study-plus <course>` settles the Course with no question, and the Course question never repeats in a conversation.
 - `study` and `study-plus` teach at the calibrated level.
 - READMEs gained a key features section and drawn figures for the mode choice, the two learning paths, and calibration.
 - The tracker panel stays visible before settings arrive.
