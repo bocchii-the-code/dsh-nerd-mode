@@ -97,7 +97,7 @@ function readChapterList(text, heading, errors) {
 function graphMetadata(text, topicFallback) {
   const firstHeading = text.match(/^#\s+(.+?)\s*$/m)?.[1]?.trim() || '';
   const headingTopic = firstHeading.replace(/^(?:Topic|Course):\s*/i, '');
-  const topic = (headingTopic.toLowerCase() === 'topic' || headingTopic.toLowerCase() === 'course' ? '' : headingTopic || topicFallback || 'Topic').trim();
+  const topic = (headingTopic.toLowerCase() === 'topic' || headingTopic.toLowerCase() === 'course' ? '' : headingTopic || topicFallback || 'Course').trim();
   const book = (text.match(/^Book:\s*(.+?)\s*$/mi)?.[1] || '').trim();
   const goal = (text.match(/^Goal:\s*(.*?)\s*$/mi)?.[1] || '').trim();
   return { topic, title: book || topic, goal };

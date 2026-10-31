@@ -13,7 +13,7 @@ const sections = changelog
   .split(/^## /m)
   .slice(1)
   .map((block) => {
-    const [heading, ...body] = block.split('\n')
+    const [heading, ...body] = block.split(/\r?\n/)
     const parsed = HEADING.exec(`## ${heading}`)
     if (!parsed) throw new Error(`unparseable changelog heading: ${heading}`)
     return { heading: `## ${heading}`, version: parsed.slice(1, 4).join('.'), body: body.join('\n') }
