@@ -1,6 +1,6 @@
 # 02 — Guide figure path and vocabulary
 
-Status: ready-for-agent
+Status: resolved
 
 ## Question
 
@@ -29,3 +29,13 @@ Edit only `skills/study/SKILL.md`.
 
 - A standalone `/study` session writes figures at `diagrams/<name>.svg` and creates no folder under `study/`.
 - A scoped figure lands in `study/<course>/diagrams/`, never inside `lectures/`.
+
+## Answer
+
+Resolved on `feat/course-folders`, commit 299b0d5.
+
+`skills/study/SKILL.md` now has two figure rules. A scoped Course writes `study/<course>/diagrams/<name>.svg`. The guide alone writes `diagrams/<name>.svg` and creates no folder under `study/`. Both `course` and `name` are sanitized as one lowercase kebab-case segment, and the fallback and containment check stay. The two forbidden-path sentences name the same four tracker files under `study/<course>/`. The draft section is unchanged.
+
+The calibration sentence keeps "bare topic" and "met the topic before": `test/prompt-consistency.test.mjs` pins the first, and both name the subject matter, not the record folder.
+
+Verified: `node --test test/prompt-consistency.test.mjs` 6 pass, `git grep 'diagrams/<topic>'` returns nothing.

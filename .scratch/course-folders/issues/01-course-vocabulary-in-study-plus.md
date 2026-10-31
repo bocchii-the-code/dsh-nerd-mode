@@ -1,6 +1,6 @@
 # 01 — Course vocabulary and selection in study-plus
 
-Status: ready-for-agent
+Status: resolved
 
 ## Question
 
@@ -39,3 +39,15 @@ Edit only `skills/study-plus/SKILL.md`, `cordis.patch.yml`, `skills/study-plus/s
 - A reader of `cordis.patch.yml` can state when the Course question is asked and when it is skipped.
 - No skill sentence calls the record a topic.
 - An old `graph.md` with `# Topic:` keeps its title in the Book.
+
+## Answer
+
+Resolved on `feat/course-folders`, commit 9013582, merged at aee7912.
+
+`skills/study-plus/SKILL.md` now calls the record a Course everywhere it means the folder, and holds the selection rules: no Course asks for a name, one Course is used and named in one line, several get one question that lists them and offers a new Course. It settles once per conversation, carries the Course in the opening question's path item, and asks one two-option question for a second subject. `argument-hint` shows `<course-slug>`, `/study-plus <course>` settles the Course, and a missing folder gets one creation confirmation. New graphs open with `# Course: <name>`, a reader still accepts `# Topic:`, and no existing heading is rewritten.
+
+`cordis.patch.yml` routes with the Course word and gains the Course settlement paragraph. `book-data.mjs` accepts either heading and keeps the folder-slug fallback. `build-book.mjs` changes only its messages.
+
+Two phrases keep the old word on purpose: `learn the topic from zero` and `bare topic`. `test/prompt-consistency.test.mjs` pins both, and in each the word names the subject matter, not the record folder.
+
+Verified: `node --test test/book.test.mjs` 21 pass, `node --test test/prompt-consistency.test.mjs` 6 pass, `git grep 'study/<topic>'` returns nothing.

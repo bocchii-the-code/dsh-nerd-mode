@@ -1,6 +1,6 @@
 # 03 — Course picker in both tabs
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -37,3 +37,15 @@ Edit only `client.js` and `test/client.test.mjs`.
 - Both tabs show the same Course.
 - A workspace with one Course shows no picker and behaves as today.
 - No read leaves the selected Course folder.
+
+## Answer
+
+Resolved on `feat/course-folders`, commit bcdab8c, merged at c8cae88.
+
+`client.js` holds one module-level `activeCourse` beside `TRACKER_ROOT`, sorted Course lists, and one `pickCourse` helper. The Study tab's picker is the Course picker, labelled Course with `aria-label` Course, and the Lectures tab gains the same picker above its list. Both write the shared binding and both read it on render, so a pick in one tab drives the other. The initial selection is `activeCourse` while it names a live Course, otherwise the only Course, otherwise the first by name. Each tab lists the selected Course only, and a no-lecture Course keeps its "No lectures yet" line. The graph reader accepts `# Course:` and `# Topic:`, with the folder slug as fallback. Internal names stay: `TRACKER_ROOT`, `loadTopic`, `discoverTopics`, `topicPicker`, `snapshot.topic`.
+
+The Study tab's previous "newest evidence wins" default is gone, as the spec's Panel section requires.
+
+Known limit: the shared binding is read at render time. A tab that stays mounted does not repaint on its own, so the host unmounting hidden views is what carries the selection across.
+
+Verified: `node --test test/client.test.mjs` 55 pass, including five new tests for the two-Course picker, the shared selection, the unread second Course, both headings, and the empty Course.

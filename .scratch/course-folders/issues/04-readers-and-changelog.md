@@ -1,6 +1,6 @@
 # 04 — Readers and changelog carry the Course word
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01, 02, 03
 
 ## Question
@@ -27,3 +27,13 @@ Edit only `README.md`, `README.zh.md`, and `CHANGELOG.md`. The glossary entry an
 
 - A reader of `README.md` alone can say what a Course is and when they are asked for one.
 - The changelog entry states the Course word and the picker.
+
+## Answer
+
+Resolved on `feat/course-folders`, commit a950385, merged at 6963116. The figure label was corrected in 3a3bc7a.
+
+`README.md` and `README.zh.md` call the record a Course, show `/study-plus <course>`, and gain one paragraph on the Course question: asked once, skipped when the workspace holds one Course, and a second subject offers the current Course or a new one. The `/study` figure sentence now names both real paths instead of `diagrams/<topic>/`. `CHANGELOG.md` carries three Course lines under the existing `0.4.0` Changed group, and its Added line says Course too. No `Unreleased` heading.
+
+`assets/calibration.svg` still drew "once per topic" in its visible text and its description, so both now say Course.
+
+Verified: `node --test test/changelog.test.mjs` 4 pass, `node --test test/prompt-consistency.test.mjs` 6 pass, `git grep -i 'topic' README.md README.zh.md` returns nothing.
