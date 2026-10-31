@@ -9,7 +9,7 @@ The no-grading guide. Teaches one concept or one task in steps, stops once at a 
 _Avoid_: quick class, mini lesson, tutorial, study mode
 
 **study-plus** (大课):
-The recorded learning skill. Organizes one topic as a Book of Chapters and Sections, teaches and assesses one concept at a time, and keeps the learner model and saved teaching material. It follows the study writing standard before it teaches.
+The recorded learning skill. Organizes one Course as a Book of Chapters and Sections, teaches and assesses one concept at a time, and keeps the learner model and saved teaching material. It follows the study writing standard before it teaches.
 _Avoid_: study, lesson, mentor, tutor
 
 **Nerd Mode**:
@@ -24,9 +24,13 @@ _Avoid_: recall step, retrieval quiz
 A point in a guided explanation where more than one route changes the result. The guide stops, states the choice, and asks one question. No rubric, no grade.
 _Avoid_: checkpoint, quiz, test
 
+**Course** (课程):
+The record for one subject: its concept graph, one state per concept, its Concept cycle log, its lectures, and its figures. One conversation works inside one Course at a time.
+_Avoid_: topic, class, semester, module
+
 **Book**:
-The chapter and section organization of one topic. It follows the learner's textbook when one is provided, and otherwise follows a proposed grouping. A Book can be rendered as one HTML page.
-_Avoid_: course, syllabus, curriculum
+The chapter and section organization of one Course. It follows the learner's textbook when one is provided, and otherwise follows a proposed grouping. A Book can be rendered as one HTML page.
+_Avoid_: syllabus, curriculum
 
 **Chapter**:
 A group of related Sections inside a Book. The source's chapter structure sets the grouping and order when the learner provides one.
@@ -53,19 +57,19 @@ The recall, teaching, assessment, teach-back, and recording for one Concept. One
 _Avoid_: session (when referring to one Concept's teaching and assessment)
 
 **Concept graph**:
-The set of concepts for one topic, their prerequisite links, and their Chapter and Section placement. It is also called the chapter graph when it carries that placement.
+The set of concepts for one Course, their prerequisite links, and their Chapter and Section placement. It is also called the chapter graph when it carries that placement.
 _Avoid_: syllabus, curriculum, outline
 
 **Calibration** (开课校准):
-The one-time question round for a new topic. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. The opening question may already answer the first two. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
+The one-time question round for a new Course. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. The opening question may already answer the first two. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
 _Avoid_: onboarding, interview, survey
 
 **Opening question** (开课提问):
-The single question round before either learning skill loads, for a learning request with no explicit command. It asks for the goal, the prior exposure, and the path: one complete answer in this conversation or tracked study. A tracked topic carries its answers into calibration and does not ask them again.
+The single question round before either learning skill loads, for a learning request with no explicit command. It asks for the goal, the prior exposure, and the path: one complete answer in this conversation or tracked study. A tracked Course carries its answers into calibration and does not ask them again.
 _Avoid_: calibration, onboarding, interview
 
 **Teaching level** (教学深度):
-A self-reported pitch for one topic, with three values: `beginner`, `standard`, and `advanced`. It sets both step size and explanation detail. It says nothing about mastery, never changes a state, and never counts as evidence.
+A self-reported pitch for one Course, with three values: `beginner`, `standard`, and `advanced`. It sets both step size and explanation detail. It says nothing about mastery, never changes a state, and never counts as evidence.
 _Avoid_: learner level, proficiency, difficulty
 
 **Teaching brief**:
@@ -77,7 +81,7 @@ A durable record of what one learner has demonstrated, one state per concept, us
 _Avoid_: learner profile, memory, progress tracker
 
 **Tracker**:
-The working record for one topic: its concept graph, concept states, and Concept cycle log. study-plus owns it.
+The working record for one Course: its concept graph, concept states, and Concept cycle log. study-plus owns it.
 _Avoid_: database, progress file
 
 **Evidence**:
@@ -138,7 +142,7 @@ Complete teaching material prepared from an approved concept graph before a Conc
 _Avoid_: Lecture, taught lecture
 
 **Archive**:
-The folder `lectures/archive/` inside a topic. It holds the lecture file of a Concept that a graph change removed. The HTML Book never includes it.
+The folder `lectures/archive/` inside a Course. It holds the lecture file of a Concept that a graph change removed. The HTML Book never includes it.
 _Avoid_: trash, backup
 
 **Lecture**:
@@ -146,7 +150,7 @@ The teaching explanation for one Concept during a Concept cycle. It is not a Boo
 _Avoid_: lesson, chapter, section, content dump
 
 **Lecture library** (讲义库):
-The read-only list of saved lecture copies in one workspace, grouped by topic. It exists to find teaching material. It is not a Book, not a Tracker, and not evidence that a Concept was taught.
+The read-only list of saved lecture copies in one workspace, grouped by Course. It exists to find teaching material. It is not a Book, not a Tracker, and not evidence that a Concept was taught.
 _Avoid_: notes panel, docs browser, file manager
 
 **Figure**:
