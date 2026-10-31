@@ -96,8 +96,8 @@ function readChapterList(text, heading, errors) {
 
 function graphMetadata(text, topicFallback) {
   const firstHeading = text.match(/^#\s+(.+?)\s*$/m)?.[1]?.trim() || '';
-  const headingTopic = firstHeading.replace(/^Topic:\s*/i, '');
-  const topic = (headingTopic.toLowerCase() === 'topic' ? '' : headingTopic || topicFallback || 'Topic').trim();
+  const headingTopic = firstHeading.replace(/^(?:Topic|Course):\s*/i, '');
+  const topic = (headingTopic.toLowerCase() === 'topic' || headingTopic.toLowerCase() === 'course' ? '' : headingTopic || topicFallback || 'Topic').trim();
   const book = (text.match(/^Book:\s*(.+?)\s*$/mi)?.[1] || '').trim();
   const goal = (text.match(/^Goal:\s*(.*?)\s*$/mi)?.[1] || '').trim();
   return { topic, title: book || topic, goal };
@@ -237,7 +237,7 @@ function demote(body) {
 /** Parse a graph and its lecture files into ordered book chapters and sections. */
 export function parseBookData(graphText, lectureFiles, { topicFallback = '' } = {}) {
   const graph = parseGraph(graphText, topicFallback);
-  if (!lectureFiles.length) throw new Error('No lecture files found. Add Markdown lectures under the topic lectures/ folder.');
+  if (!lectureFiles.length) throw new Error('No lecture files found. Add Markdown lectures under the Course lectures/ folder.');
 
   const lectures = lectureFiles.map(parseLecture);
   const byConcept = new Map();
