@@ -571,7 +571,15 @@ window.__ModuleLoader__.load({
     const VIEW_LABEL = 'Study';
     const VIEW_ORDER = 100;
     const TRACKER_ROOT = 'study';
+    // One selection shared by the Study tab and the Lectures tab. This is a
+    // classic script, so a module-level binding is the whole mechanism.
+    let activeCourse = null;
     const DASH = '—';
+
+    /** Return the Course both tabs show: `activeCourse` while it exists, otherwise the first of the name-sorted `courses`. */
+    function pickCourse(courses) {
+      return activeCourse !== null && courses.includes(activeCourse) ? activeCourse : courses[0] ?? null;
+    }
 
     // --- Tracker parsing -----------------------------------------------------
     // Parsing lives here because the client bundle is a classic script: a
@@ -617,7 +625,8 @@ window.__ModuleLoader__.load({
       let inChapters = false;
       for (const line of lines) {
         const trimmed = line.trim();
-        const topicMatch = /^#\s*Topic:\s*(.+)$/i.exec(trimmed);
+        // A new graph says Course and an older graph says Topic; both keep their title.
+        const topicMatch = /^#\s*(?:Course|Topic):\s*(.+)$/i.exec(trimmed);
         if (topicMatch) topic = topicMatch[1].trim();
         const bookMatch = /^Book:\s*(.+)$/i.exec(trimmed);
         if (bookMatch) book = bookMatch[1].trim();
@@ -695,11 +704,6 @@ window.__ModuleLoader__.load({
       }
       return blocks.filter((block) => block.concept !== null || block.result !== null);
     }
-
-    const latestEvidence = (text) => {
-      const dates = [...parseState(text).states.values()].map((row) => row.date ?? '');
-      return dates.sort().pop() ?? '';
-    };
 
     function buildSnapshot(topic, graphText, stateText, logText) {
       const graph = parseGraph(graphText);
@@ -780,25 +784,19 @@ window.__ModuleLoader__.load({
       return snapshot.total === 0 ? { status: 'empty', topic } : { status: 'ready', snapshot };
     }
 
-    // "Changed most recently" is read from the newest dated Evidence, because
-    // the file surface exposes no modification time.
+    // Both tabs open on the shared Course, then on the first Course by name.
     async function discoverTopics(files, sessionId) {
       const listing = await files.list(sessionId, TRACKER_ROOT);
       if (!listing.ok) {
         if (listing.error?.code === 'workspace-file/not-found') return { topics: [], content: { status: 'empty' } };
-        throw new Error(listing.error?.message ?? 'the Tracker folder could not be read');
+        throw new Error(listing.error?.message ?? 'the Course folder could not be read');
       }
       const topics = (listing.value?.entries ?? [])
         .filter((entry) => entry.type === 'directory')
-        .map((entry) => entry.name);
+        .map((entry) => entry.name)
+        .sort((left, right) => left.localeCompare(right));
       if (topics.length === 0) return { topics, content: { status: 'empty' } };
-      const states = [];
-      for (const topic of topics) {
-        states.push({ topic, text: await readText(files, sessionId, `${TRACKER_ROOT}/${topic}/state.md`) });
-      }
-      states.sort((left, right) => latestEvidence(right.text).localeCompare(latestEvidence(left.text)));
-      const chosen = states[0];
-      return { topics, content: await loadTopic(files, sessionId, chosen.topic, chosen.text) };
+      return { topics, content: await loadTopic(files, sessionId, pickCourse(topics)) };
     }
 
     // --- Study view ----------------------------------------------------------
@@ -859,9 +857,9 @@ window.__ModuleLoader__.load({
     function topicPicker(topics, value, onTopic) {
       if (topics.length < 2) return null;
       return React.createElement('label', { style: panelFieldStyle },
-        React.createElement('span', null, 'Topic'),
+        React.createElement('span', null, 'Course'),
         React.createElement('select', {
-          'aria-label': 'Topic',
+          'aria-label': 'Course',
           value,
           onChange: (event) => onTopic(event.target.value),
           style: panelSelectStyle,
@@ -876,7 +874,7 @@ window.__ModuleLoader__.load({
       ];
       if (error) {
         nodes.push(React.createElement('p', { role: 'alert', style: panelMutedStyle },
-          `The Tracker could not be read: ${error}.`));
+          `The Course could not be read: ${error}.`));
       }
       nodes.push(progressBlock(snapshot), stripBlock(snapshot));
 
@@ -910,20 +908,20 @@ window.__ModuleLoader__.load({
       const [topics, setTopics] = React.useState([]);
       const [selected, setSelected] = React.useState(null);
       const [content, setContent] = React.useState({ status: 'loading' });
+      // Read on every render so a selection made in the Lectures tab wins.
+      const shared = activeCourse;
 
       React.useEffect(() => {
         let live = true;
         const run = async () => {
           try {
-            const found = selected === null
-              ? await discoverTopics(workspaceFiles, sessionId)
-              : { topics: null, content: await loadTopic(workspaceFiles, sessionId, selected) };
+            const found = await discoverTopics(workspaceFiles, sessionId);
             if (!live) return;
-            if (found.topics !== null) setTopics(found.topics);
+            setTopics(found.topics);
             setContent(found.content);
           } catch (error) {
             if (!live) return;
-            const message = error?.message ?? 'the Tracker could not be read';
+            const message = error?.message ?? 'the Course could not be read';
             // Keep the last good snapshot so a failed reload does not blank the page.
             setContent((previous) => previous.status === 'ready' || previous.status === 'empty'
               ? { ...previous, error: message }
@@ -932,22 +930,27 @@ window.__ModuleLoader__.load({
         };
         run();
         return () => { live = false; };
-      }, [selected, sessionId, workspaceFiles]);
+      }, [selected, shared, sessionId, workspaceFiles]);
+
+      const choose = (topic) => {
+        activeCourse = topic;
+        setSelected(topic);
+      };
 
       let nodes;
       if (content.status === 'loading') {
-        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the Tracker…')];
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the Course…')];
       } else if (content.status === 'failed') {
-        nodes = [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The Tracker could not be read: ${content.error}.`)];
+        nodes = [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The Course could not be read: ${content.error}.`)];
       } else if (content.status === 'empty') {
         const searched = content.topic ? `${TRACKER_ROOT}/${content.topic}` : `${TRACKER_ROOT}/`;
-        const picker = topicPicker(topics, content.topic ?? selected, setSelected);
+        const picker = topicPicker(topics, content.topic ?? selected, choose);
         nodes = [
           picker === null ? null : React.createElement('div', { style: panelHeaderStyle }, picker),
-          React.createElement('p', { style: panelMutedStyle }, `No Tracker in ${searched}. Run /study-plus to create one.`),
+          React.createElement('p', { style: panelMutedStyle }, `No Course in ${searched}. Run /study-plus to create one.`),
         ];
       } else {
-        nodes = readyBody(content.snapshot, content.error, topics, setSelected);
+        nodes = readyBody(content.snapshot, content.error, topics, choose);
       }
       return React.createElement('div', {
         role: 'region',
@@ -1107,57 +1110,57 @@ window.__ModuleLoader__.load({
       }
     }
 
-    /** Return `{ topics, error, rootFound }`. `rootFound` is false only when `study/` is missing, and `error` is the first read failure or null. */
+    /** Return `{ courses, course, entries, error, rootFound }`. `rootFound` is false only when `study/` is missing, `course` is null when the workspace holds none, and `error` is the first read failure or null. */
     async function loadLectures(files, sessionId) {
-      const model = { topics: [], error: null, rootFound: false };
+      const model = { courses: [], course: null, entries: [], error: null, rootFound: false };
       const root = await listFolder(files, sessionId, TRACKER_ROOT);
       model.rootFound = root.found;
       if (root.error !== null) {
         model.error = root.error;
         return model;
       }
-      const names = root.entries
+      model.courses = root.entries
         .filter((entry) => entry.type === 'directory')
         .map((entry) => entry.name)
         .sort((left, right) => left.localeCompare(right));
-      for (const topic of names) {
-        const entries = [];
-        const seen = new Set();
-        const folders = [
-          [`${TRACKER_ROOT}/${topic}/lectures`, false],
-          [`${TRACKER_ROOT}/${topic}/lectures/archive`, true],
-        ];
-        for (const [folder, archived] of folders) {
-          const listing = await listFolder(files, sessionId, folder);
-          if (listing.error !== null && model.error === null) model.error = listing.error;
-          for (const item of listing.entries) {
-            if (item.type !== 'file') continue;
-            const match = /^(\d{2,})-(.+)\.md$/.exec(item.name);
-            // One lecture per number: a stale copy in the archive never repeats it.
-            if (match === null || seen.has(match[1])) continue;
-            let text;
-            try {
-              text = await readText(files, sessionId, `${folder}/${item.name}`);
-            } catch (error) {
-              if (model.error === null) model.error = error?.message ?? `${folder}/${item.name} could not be read`;
-              continue;
-            }
-            const parsed = parseLecture(text, match[2]);
-            entries.push({
-              number: match[1],
-              topic,
-              title: parsed.title,
-              concept: parsed.concept,
-              mark: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'dated' : null,
-              date: parsed.date,
-              path: `${folder}/${item.name}`,
-            });
-            seen.add(match[1]);
+      model.course = pickCourse(model.courses);
+      if (model.course === null) return model;
+      const entries = [];
+      const seen = new Set();
+      const folders = [
+        [`${TRACKER_ROOT}/${model.course}/lectures`, false],
+        [`${TRACKER_ROOT}/${model.course}/lectures/archive`, true],
+      ];
+      for (const [folder, archived] of folders) {
+        const listing = await listFolder(files, sessionId, folder);
+        if (listing.error !== null && model.error === null) model.error = listing.error;
+        for (const item of listing.entries) {
+          if (item.type !== 'file') continue;
+          const match = /^(\d{2,})-(.+)\.md$/.exec(item.name);
+          // One lecture per number: a stale copy in the archive never repeats it.
+          if (match === null || seen.has(match[1])) continue;
+          let text;
+          try {
+            text = await readText(files, sessionId, `${folder}/${item.name}`);
+          } catch (error) {
+            if (model.error === null) model.error = error?.message ?? `${folder}/${item.name} could not be read`;
+            continue;
           }
+          const parsed = parseLecture(text, match[2]);
+          entries.push({
+            number: match[1],
+            topic: model.course,
+            title: parsed.title,
+            concept: parsed.concept,
+            mark: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'dated' : null,
+            date: parsed.date,
+            path: `${folder}/${item.name}`,
+          });
+          seen.add(match[1]);
         }
-        entries.sort((left, right) => Number(left.number) - Number(right.number));
-        model.topics.push({ topic, entries });
       }
+      entries.sort((left, right) => Number(left.number) - Number(right.number));
+      model.entries = entries;
       return model;
     }
 
@@ -1263,7 +1266,10 @@ window.__ModuleLoader__.load({
     function LecturesPage({ useTabInfo, sessionId, workspaceFiles }) {
       const { tab } = useTabInfo();
       const [content, setContent] = React.useState({ status: 'loading' });
-      const [openTopics, setOpenTopics] = React.useState({});
+      const [selected, setSelected] = React.useState(null);
+      const [foldOpen, setFoldOpen] = React.useState(false);
+      // Read on every render so a selection made in the Study tab wins.
+      const shared = activeCourse;
 
       React.useEffect(() => {
         let live = true;
@@ -1274,12 +1280,13 @@ window.__ModuleLoader__.load({
         };
         run();
         return () => { live = false; };
-      }, [sessionId, workspaceFiles]);
+      }, [selected, shared, sessionId, workspaceFiles]);
 
-      const toggle = (topic) => setOpenTopics((previous) => ({
-        ...previous,
-        [topic]: previous[topic] !== true,
-      }));
+      const choose = (course) => {
+        activeCourse = course;
+        setFoldOpen(false);
+        setSelected(course);
+      };
 
       const open = (entry) => tab.actions.openResource(
         sessionFileAddress(sessionId, entry.path),
@@ -1290,12 +1297,21 @@ window.__ModuleLoader__.load({
       if (content.status === 'loading') {
         nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the lectures…')];
       } else if (content.error === null && !content.rootFound) {
-        nodes = [React.createElement('p', { style: panelMutedStyle }, `No Tracker in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
+        nodes = [React.createElement('p', { style: panelMutedStyle }, `No Course in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
       } else {
         nodes = content.error === null
           ? []
           : [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The lecture library could not be read: ${content.error}.`)];
-        nodes.push(...content.topics.map((group) => lectureTopic(group, openTopics[group.topic] === true, toggle, open)));
+        const picker = topicPicker(content.courses, content.course ?? selected, choose);
+        if (picker !== null) nodes.push(React.createElement('div', { style: panelHeaderStyle }, picker));
+        if (content.course !== null) {
+          nodes.push(lectureTopic(
+            { topic: content.course, entries: content.entries },
+            foldOpen,
+            () => setFoldOpen((previous) => !previous),
+            open,
+          ));
+        }
       }
       return React.createElement('div', {
         role: 'region',
