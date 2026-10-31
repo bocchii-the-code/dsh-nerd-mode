@@ -56,6 +56,18 @@ _Avoid_: session (when referring to one Concept's teaching and assessment)
 The set of concepts for one topic, their prerequisite links, and their Chapter and Section placement. It is also called the chapter graph when it carries that placement.
 _Avoid_: syllabus, curriculum, outline
 
+**Calibration** (开课校准):
+The one-time question round for a new topic. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
+_Avoid_: onboarding, interview, survey
+
+**Teaching level** (教学深度):
+A self-reported pitch for one topic, with three values: `beginner`, `standard`, and `advanced`. It sets both step size and explanation detail. It says nothing about mastery, never changes a state, and never counts as evidence.
+_Avoid_: learner level, proficiency, difficulty
+
+**Teaching brief**:
+The three `graph.md` lines passed verbatim to `study`: `Goal`, `Background`, and `Teaching level`. It is context for writing a lecture, not a record of what the learner knows.
+_Avoid_: learner profile, learner model, settings
+
 **Learner model**:
 A durable record of what one learner has demonstrated, one state per concept, used to decide what to teach next.
 _Avoid_: learner profile, memory, progress tracker
@@ -128,6 +140,10 @@ _Avoid_: trash, backup
 **Lecture**:
 The teaching explanation for one Concept during a Concept cycle. It is not a Book, a Chapter, a Section, or a file. A saved Markdown copy records the explanation, and that copy carries the teaching date.
 _Avoid_: lesson, chapter, section, content dump
+
+**Lecture library** (讲义库):
+The read-only list of saved lecture copies in one workspace, grouped by topic. It exists to find teaching material. It is not a Book, not a Tracker, and not evidence that a Concept was taught.
+_Avoid_: notes panel, docs browser, file manager
 
 **Figure**:
 One SVG image that shows one idea, used in a lesson or lecture.

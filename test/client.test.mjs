@@ -198,7 +198,25 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
       return true
     },
   }
+  const dockTypes = []
   const ctx = {
+    effect(fn) {
+      return fn()
+    },
+    inject(deps, callback) {
+      const has = (name) => name.split('.').reduce((value, key) => value?.[key], ctx) !== undefined
+      if (!deps.every(has)) return () => {}
+      callback(ctx)
+      return () => {}
+    },
+    ...(configOptions.dock === false ? {} : {
+      sidebarRightTabs: {
+        register(definition) {
+          dockTypes.push(definition)
+          return () => {}
+        },
+      },
+    }),
     slots: {
       inject(_name, fn) {
         return fn()
@@ -226,8 +244,9 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
       describe: () => description,
     },
   }
+  // Cordis has a scoped inject, but apply itself always runs.
   client.apply(ctx)
-  return { registers, executed, mutations, scope, getCalls: () => getCalls, description }
+  return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description }
 }
 
 function render(active, executeImpl) {
@@ -1013,4 +1032,381 @@ test('keeps the topic selector when the chosen topic has no graph', async () => 
 
   assert.match(textOf(switched), /No Tracker in study\/notes/)
   assert.equal(allOfType(switched, 'select')[0].props.value, 'notes')
+})
+
+// --- Lectures dock page ------------------------------------------------------
+
+test('registers one Lectures dock page with a guide entry and one body', () => {
+  const { dockTypes, registers } = mount()
+
+  assert.equal(dockTypes.length, 1)
+  const [definition] = dockTypes
+  assert.equal(definition.id, 'dsh-nerd-mode/lectures')
+  assert.equal(definition.kind, 'lectures')
+  assert.equal(definition.patterns, undefined)
+  assert.equal(definition.multiple, undefined)
+
+  assert.equal(definition.guide.length, 1)
+  const [entry] = definition.guide
+  assert.equal(entry.title(), 'Lectures')
+  assert.match(entry.description(), /lectures/i)
+  assert.equal(typeof entry.icon, 'function')
+
+  const bodies = registers.filter(({ options }) => options.name === 'sidebar.right.pane.tab')
+  assert.equal(bodies.length, 1)
+  assert.equal(bodies[0].options.key, definition.id)
+
+  const injected = bodies[0].options.inject('session-9')
+  assert.equal(injected.sessionId, 'session-9')
+  assert.equal(typeof injected.workspaceFiles.list, 'function')
+  assert.equal(typeof injected.workspaceFiles.read, 'function')
+})
+
+function renderLectures(fixture) {
+  const files = fileRemote(fixture)
+  const opened = []
+  const mounted = mount(undefined, {}, { files })
+  const registration = mounted.registers.find(({ options }) => options.name === 'sidebar.right.pane.tab')
+  assert.ok(registration, 'the client registers a Lectures body')
+  const injected = {
+    ...registration.options.inject('session-1'),
+    useTabInfo: () => ({
+      tab: { actions: { openResource: (address, options) => opened.push([address, options]) } },
+    }),
+  }
+  resetHooks()
+  const renderer = createRenderer(registration.component, () => injected)
+  return {
+    ...mounted,
+    files,
+    registration,
+    opened,
+    get tree() { return renderer.tree },
+    async settle() {
+      for (let turn = 0; turn < 60; turn += 1) {
+        await new Promise((resolve) => queueMicrotask(resolve))
+      }
+      return renderer.tree
+    },
+  }
+}
+
+const headingOf = (section) => textOf(section.props.children.find((child) => child?.type === 'h2'))
+const lectureTopics = (tree) => allOfType(tree, 'section').map(headingOf)
+const lectureSection = (tree, topic) => allOfType(tree, 'section').find((section) => headingOf(section) === topic)
+const lectureLists = (tree, topic) => allOfType(lectureSection(tree, topic), 'ul')
+const lectureRows = (tree, topic) => {
+  const main = lectureLists(tree, topic)[0]
+  return main === undefined ? [] : allOfType(main, 'li').map(textOf)
+}
+const lectureArchiveRows = (tree, topic) => {
+  const archived = lectureLists(tree, topic)[1]
+  return archived === undefined ? [] : allOfType(archived, 'li').map(textOf)
+}
+const lectureFold = (tree, topic) => allOfType(lectureSection(tree, topic), 'button')
+  .find(({ props }) => props['aria-expanded'] !== undefined)
+const lectureEntry = (tree, topic, number) => allOfType(lectureSection(tree, topic), 'button')
+  .find((node) => textOf(node).startsWith(`${number} · `))
+
+const lectureFixture = (overrides = {}) => ({
+  dirs: {
+    study: ['algebra', 'calculus'],
+    'study/algebra': ['book.html', 'diagrams', 'graph.md', 'lectures', 'log.md', 'state.md'],
+    'study/algebra/lectures': ['01-sets.md', '02-groups.md', '100-review.md', 'archive', 'book.html'],
+    'study/algebra/lectures/archive': ['04-old-sets.md', '50-retired.md'],
+    'study/calculus': ['lectures'],
+    'study/calculus/lectures': ['10-limits.md'],
+  },
+  files: {
+    'study/algebra/book.html': '<h1>Book</h1>',
+    'study/algebra/graph.md': '# Topic: algebra',
+    'study/algebra/log.md': '## 2026-10-20\nConcept: Sets',
+    'study/algebra/state.md': '| # | Concept |',
+    'study/algebra/lectures/book.html': '<h1>Book</h1>',
+    'study/algebra/lectures/01-sets.md': [
+      '---', 'status: draft', 'concept: 1', '---', '# Sets and Their Laws', '',
+    ].join('\n'),
+    'study/algebra/lectures/02-groups.md': [
+      '---', 'date: 2026-10-28', 'concept: 2', '---', '# Groups and Homomorphisms', '',
+    ].join('\n'),
+    'study/algebra/lectures/100-review.md': [
+      '---', 'date: 2026-11-02', 'concept: 100', '---', '# Review of Groups', '',
+    ].join('\n'),
+    'study/algebra/lectures/archive/04-old-sets.md': [
+      '---', 'date: 2026-08-01', 'concept: 4', '---', '# Old Sets', '',
+    ].join('\n'),
+    'study/algebra/lectures/archive/50-retired.md': [
+      '---', 'date: 2026-09-15', 'concept: 50', '---', '# Retired Group Theory', '',
+    ].join('\n'),
+    'study/calculus/lectures/10-limits.md': '# Limits\n',
+  },
+  ...overrides,
+})
+
+test('lists topics by name and their lectures by Concept number', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures'), true)
+  assert.deepEqual(lectureTopics(tree), ['algebra', 'calculus'])
+  assert.deepEqual(lectureRows(tree, 'algebra'), [
+    '01 · Sets and Their Laws · Draft',
+    '02 · Groups and Homomorphisms · 28 Oct 2026',
+    '100 · Review of Groups · 2 Nov 2026',
+  ])
+  assert.deepEqual(lectureRows(tree, 'calculus'), ['10 · Limits'])
+})
+
+test('marks a draft as a draft without a date and a dated lecture with its date', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  const draft = textOf(lectureEntry(tree, 'algebra', '01'))
+  assert.equal(draft, '01 · Sets and Their Laws · Draft')
+  assert.doesNotMatch(draft, /\d{4}-\d{2}-\d{2}/)
+
+  const dated = textOf(lectureEntry(tree, 'algebra', '02'))
+  assert.equal(dated, '02 · Groups and Homomorphisms · 28 Oct 2026')
+
+  const plain = textOf(lectureEntry(tree, 'calculus', '10'))
+  assert.equal(plain, '10 · Limits')
+})
+
+test('folds archived lectures into a collapsed group that opens on click', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureArchiveRows(tree, 'algebra'), [])
+  assert.doesNotMatch(textOf(lectureSection(tree, 'algebra')), /Old Sets|Retired Group Theory/)
+  const fold = lectureFold(tree, 'algebra')
+  assert.equal(fold.props.type, 'button')
+  assert.equal(fold.props['aria-expanded'], false)
+  assert.equal(textOf(fold), 'Archived lectures (2)')
+
+  fold.props.onClick()
+  const opened = await view.settle()
+
+  assert.equal(lectureFold(opened, 'algebra').props['aria-expanded'], true)
+  assert.deepEqual(lectureArchiveRows(opened, 'algebra'), [
+    '04 · Old Sets · Archived',
+    '50 · Retired Group Theory · Archived',
+  ])
+  assert.deepEqual(lectureRows(opened, 'algebra'), [
+    '01 · Sets and Their Laws · Draft',
+    '02 · Groups and Homomorphisms · 28 Oct 2026',
+    '100 · Review of Groups · 2 Nov 2026',
+  ])
+})
+
+test('opens a lecture in the dock preview with its session file address', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  lectureEntry(tree, 'algebra', '02').props.onClick()
+
+  assert.deepEqual(view.opened, [[
+    'dsh-resource://file/session/session-1/study/algebra/lectures/02-groups.md',
+    { preferNewPane: true },
+  ]])
+})
+
+test('opens an archived lecture from its archive path', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  lectureFold(tree, 'algebra').props.onClick()
+  const opened = await view.settle()
+  lectureEntry(opened, 'algebra', '04').props.onClick()
+
+  assert.deepEqual(view.opened, [[
+    'dsh-resource://file/session/session-1/study/algebra/lectures/archive/04-old-sets.md',
+    { preferNewPane: true },
+  ]])
+})
+
+test('encodes a lecture file name with a space in the address', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra/lectures': ['05-a b.md'] },
+    files: { 'study/algebra/lectures/05-a b.md': '# A Spaced Title\n' },
+  })
+  const tree = await view.settle()
+
+  lectureEntry(tree, 'algebra', '05').props.onClick()
+
+  assert.equal(encodeURIComponent('05-a b.md'), '05-a%20b.md', 'the pinned literal is the encoder output')
+  assert.deepEqual(view.opened, [[
+    'dsh-resource://file/session/session-1/study/algebra/lectures/05-a%20b.md',
+    { preferNewPane: true },
+  ]])
+})
+
+test('names the searched folder and the command when the workspace has no study folder', async () => {
+  const view = renderLectures({ dirs: {}, files: {} })
+  const tree = await view.settle()
+
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures'), true)
+  assert.deepEqual(allOfType(tree, 'section'), [])
+  const lines = allOfType(tree, 'p').map(textOf)
+  assert.equal(lines.length, 1)
+  assert.match(lines[0], /study\//)
+  assert.match(lines[0], /\/study-plus/)
+  assert.deepEqual(view.files.calls, [['list', 'session-1', 'study']])
+})
+
+test('treats an empty study folder as a different page from a missing one', async () => {
+  const view = renderLectures({ dirs: { study: [] }, files: {} })
+  const tree = await view.settle()
+
+  assert.deepEqual(allOfType(tree, 'section'), [])
+  assert.deepEqual(allOfType(tree, 'li'), [])
+  assert.equal(allOfType(tree, 'p').some(({ props }) => /No Tracker in study\//.test(textOf(props))), false)
+})
+
+test('gives a topic without lectures its own empty line and no empty list', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra': [] },
+    files: {},
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureTopics(tree), ['algebra'])
+  const section = lectureSection(tree, 'algebra')
+  assert.match(textOf(section), /No lectures yet/)
+  assert.deepEqual(allOfType(section, 'ul'), [])
+  assert.deepEqual(allOfType(section, 'li'), [])
+})
+
+test('keeps the empty line off a topic whose only lectures are archived', async () => {
+  const view = renderLectures({
+    dirs: {
+      study: ['algebra'],
+      'study/algebra/lectures': ['archive'],
+      'study/algebra/lectures/archive': ['04-old-sets.md'],
+    },
+    files: {
+      'study/algebra/lectures/archive/04-old-sets.md': [
+        '---', 'date: 2026-08-01', 'concept: 4', '---', '# Old Sets', '',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  const section = lectureSection(tree, 'algebra')
+  assert.doesNotMatch(textOf(section), /No lectures yet/)
+  assert.doesNotMatch(textOf(section), /Old Sets/)
+  assert.equal(textOf(lectureFold(tree, 'algebra')), 'Archived lectures (1)')
+
+  lectureFold(tree, 'algebra').props.onClick()
+  const opened = await view.settle()
+  assert.deepEqual(allOfType(lectureSection(opened, 'algebra'), 'li').map(textOf), ['04 · Old Sets · Archived'])
+})
+
+test('keeps a lecture whose frontmatter will not parse, with no mark', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra/lectures': ['03-broken.md'] },
+    files: {
+      'study/algebra/lectures/03-broken.md': '---\nthis line is not a field\n---\n# Broken but Listed\n',
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureRows(tree, 'algebra'), ['03 · Broken but Listed'])
+  assert.equal(textOf(lectureEntry(tree, 'algebra', '03')), '03 · Broken but Listed')
+})
+
+test('treats a draft that also carries a teaching date as malformed', async () => {
+  const view = renderLectures({
+    dirs: { study: ['algebra'], 'study/algebra/lectures': ['03-mixed.md'] },
+    files: {
+      'study/algebra/lectures/03-mixed.md': [
+        '---', 'status: draft', 'date: 2026-10-28', 'concept: 3', '---', '# Mixed Signals', '',
+      ].join('\n'),
+    },
+  })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureRows(tree, 'algebra'), ['03 · Mixed Signals'])
+})
+
+test('renders one Lectures region with a button inside a list for each entry', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  const regions = allOfType(tree, 'div')
+    .filter(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures')
+  assert.equal(regions.length, 1)
+  assert.match(textOf(allOfType(regions[0], 'style')[0]), /outline:2px solid var\(--dsw-alias-state-business-primary, currentColor\)/)
+
+  const rows = allOfType(lectureLists(tree, 'algebra')[0], 'li')
+  assert.equal(rows.length, 3)
+  for (const row of rows) {
+    const buttons = allOfType(row, 'button')
+    assert.equal(buttons.length, 1)
+    assert.equal(buttons[0].props.type, 'button')
+    assert.equal(textOf(buttons[0]), textOf(row))
+  }
+  assert.equal(textOf(rows[0]), '01 · Sets and Their Laws · Draft')
+})
+
+test('leaves the Book and tracker files out of the list', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  assert.doesNotMatch(textOf(tree), /Book/)
+  assert.doesNotMatch(textOf(tree), /Topic: algebra/)
+  assert.equal(view.files.calls.some(([, , path]) => /book\.html$|\/(graph|log|state)\.md$/.test(path)), false)
+})
+
+test('reads only the lecture folders and each file once', async () => {
+  const view = renderLectures(lectureFixture())
+  await view.settle()
+
+  const listPaths = view.files.calls.filter(([method]) => method === 'list').map(([, , path]) => path)
+  assert.deepEqual(listPaths, [
+    'study',
+    'study/algebra/lectures',
+    'study/algebra/lectures/archive',
+    'study/calculus/lectures',
+    'study/calculus/lectures/archive',
+  ])
+  const reads = view.files.calls.filter(([method]) => method === 'read')
+  assert.equal(reads.every(([, , path]) => /^study\/[^/]+\/lectures\/(archive\/)?\d{2,}-.+\.md$/.test(path)), true)
+  assert.equal(new Set(reads.map(([, , path]) => path)).size, reads.length)
+  assert.equal(view.files.calls.every(([, sessionId]) => sessionId === 'session-1'), true)
+})
+
+test('keeps the entries it built when a read fails and names the failure', async () => {
+  const view = renderLectures(lectureFixture({
+    failures: {
+      'study/algebra/lectures/02-groups.md': { code: 'workspace-file/too-large', message: 'the file is too large' },
+      'study/calculus/lectures': { code: 'workspace-file/not-directory', message: 'not a folder' },
+    },
+  }))
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureTopics(tree), ['algebra', 'calculus'])
+  assert.deepEqual(lectureRows(tree, 'algebra'), [
+    '01 · Sets and Their Laws · Draft',
+    '100 · Review of Groups · 2 Nov 2026',
+  ])
+  assert.deepEqual(lectureRows(tree, 'calculus'), [])
+
+  const alerts = allOfType(tree, 'p').filter(({ props }) => props.role === 'alert')
+  assert.equal(alerts.length, 1)
+  assert.match(textOf(alerts[0]), /the file is too large/)
+  const region = allOfType(tree, 'div')
+    .find(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures')
+  const at = region.props.children.indexOf(alerts[0])
+  const firstSection = region.props.children.findIndex((child) => child?.type === 'section')
+  assert.equal(at >= 0 && at < firstSection, true)
+})
+
+test('registers no Lectures seat when the dock registry is absent', () => {
+  const { dockTypes, registers } = mount(undefined, {}, { dock: false })
+  const has = (name, id) => registers.some(({ options }) => options.name === name && options.id === id)
+
+  assert.deepEqual(dockTypes, [])
+  assert.equal(has('conversation.input.left', 'nerd-mode'), true)
+  assert.equal(has('settings.section', 'dsh-nerd-mode'), true)
+  assert.equal(has('conversation.view', 'study'), true)
 })

@@ -14,6 +14,17 @@
 
 A chat lesson usually ends when the answer arrives. Nothing checks that you understood it, and nothing survives the tab closing. Nerd Mode makes dsh teach in steps, stop where the choice changes the result, and keep a dated record when a subject deserves one. A topic can then last weeks instead of one sitting.
 
+## Key features
+
+- One switch for the whole conversation. `/nerd-mode on` teaches every learning-shaped request and leaves feature work, searches, and commands alone.
+- Two ways to learn. `/study` answers one concept or one task in chat and keeps nothing. `/study-plus` runs one topic over weeks with a dated record.
+- A map before the first lesson. A concept graph in prerequisite order, grouped into a Book of Chapters and Sections, approved by you before any file is written.
+- One calibration round per topic. It asks your goal, your background, and the concepts you can skip, then sets a teaching level that every lecture follows.
+- Teaching that stops at the fork. The guide explains in steps and stops where the choice changes the result, instead of handing over a finished answer.
+- Evidence, not impressions. Unseen questions and a graded teach-back, with the rubric written before the question. Only an answer you produced changes the record.
+- A record that outlives the chat. The graph, the states, and the dated log survive restarts, and the HTML Book rebuilds after each batch and each lesson, with full-text search.
+- Lectures you can find again. The Lectures card lists every saved lecture in the workspace, grouped by topic.
+
 ## Requirements
 
 - DeepSeek Harness with a profile.
@@ -103,10 +114,16 @@ The first session runs in a fixed order.
   propose 15 to 30 concepts in prerequisite order, grouped into Chapters
   show the chapter list and the concept table together, then wait
   you approve, edit, or rebuild the graph
-  you name the concepts you can skip
+  you answer one calibration round: goal, background, and concepts to skip
   write one complete draft per concept, skipped concepts included
   teach each concept: recall (optional) → lecture → configured unseen questions → teach-back → dated record
 ```
+
+Approval also runs one calibration round: what you want to do with the topic, what you have already read or used, and the concepts you can skip. The answers set `Teaching level` in `graph.md`, beside `Goal` and `Background`, and every lecture follows that level. It shapes the lecture only, never the questions, the teach-back, or the record. A mid-topic change lasts for that session unless you say to keep it.
+
+<p align="center">
+  <img src="assets/calibration.svg" width="720" alt="The pre-course flow. You approve 15 to 30 concepts grouped by chapter, then answer one question round, once per topic: what you want to do with the topic, what you have read or used, and which concepts you can skip. The answers set a teaching level in graph.md, and every lecture follows it. A beginner lecture uses numbered steps, explains every term, and gives an example per step. A standard lecture gives the intuition first, then the formal detail, with examples where they help. An advanced lecture goes in one pass with no numbered steps, starts from the formal statement, and uses at most one example per idea.">
+</p>
 
 Drafts count as preparation, not learning. Every lecture follows the `/study` writing standard and is saved before it is shown.
 

@@ -1035,6 +1035,290 @@ window.__ModuleLoader__.load({
       padding: '0 8px',
     };
 
+    // --- Lectures dock page --------------------------------------------------
+    const LECTURES_ID = 'dsh-nerd-mode/lectures';
+    const LECTURES_KIND = 'lectures';
+    const LECTURES_LABEL = 'Lectures';
+    const LECTURES_GUIDE_ORDER = 40;
+
+    // Same 16px book as the composer pill, drawn at the size the guide asks for.
+    function LecturesGlyph({ size = 16 }) {
+      return React.createElement(
+        'svg',
+        {
+          'aria-hidden': 'true',
+          fill: 'none',
+          height: size,
+          stroke: 'currentColor',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          strokeWidth: 1.6,
+          viewBox: '0 0 16 16',
+          width: size,
+        },
+        ...BOOK.props.children,
+      );
+    }
+
+    // The leading block only; a `---` rule later in the file stays content.
+    // A block without a closing fence, or with a line that is not `key: value`,
+    // returns null so the caller can leave the state empty.
+    function lectureFrontmatter(lines) {
+      if (lines[0]?.trim() !== '---') return {};
+      const end = lines.findIndex((line, at) => at > 0 && line.trim() === '---');
+      if (end === -1) return null;
+      const fields = {};
+      for (const line of lines.slice(1, end)) {
+        if (line.trim() === '') continue;
+        const match = /^([A-Za-z][\w-]*):\s*(.*)$/.exec(line.trim());
+        if (match === null) return null;
+        fields[match[1]] = match[2].trim();
+      }
+      return fields;
+    }
+
+    function parseLecture(text, slug) {
+      const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
+      const fields = lectureFrontmatter(lines);
+      const heading = lines.find((line) => /^#\s+\S/.test(line));
+      const draft = fields !== null && fields.status === 'draft';
+      const date = fields !== null && /^\d{4}-\d{2}-\d{2}$/.test(fields.date ?? '') ? fields.date : null;
+      // A draft that also carries a teaching date is malformed, so the block reads as unparsable.
+      const valid = fields !== null && !(draft && date !== null);
+      return {
+        title: heading === undefined ? slug : heading.replace(/^#\s+/, '').trim(),
+        concept: valid && /^\d+$/.test(fields.concept ?? '') ? Number(fields.concept) : null,
+        date: valid ? date : null,
+        draft: valid && draft,
+      };
+    }
+
+    // A missing folder is an empty listing. Any other failure becomes data.
+    // `found` tells the caller whether the folder exists, so a missing root and
+    // an empty root can render different pages.
+    async function listFolder(files, sessionId, path) {
+      try {
+        const listing = await files.list(sessionId, path);
+        if (listing.ok) return { entries: listing.value?.entries ?? [], error: null, found: true };
+        if (listing.error?.code === 'workspace-file/not-found') return { entries: [], error: null, found: false };
+        return { entries: [], error: listing.error?.message ?? `${path} could not be read`, found: false };
+      } catch (error) {
+        return { entries: [], error: error?.message ?? `${path} could not be read`, found: false };
+      }
+    }
+
+    /** Return `{ topics, error, rootFound }`. `rootFound` is false only when `study/` is missing, and `error` is the first read failure or null. */
+    async function loadLectures(files, sessionId) {
+      const model = { topics: [], error: null, rootFound: false };
+      const root = await listFolder(files, sessionId, TRACKER_ROOT);
+      model.rootFound = root.found;
+      if (root.error !== null) {
+        model.error = root.error;
+        return model;
+      }
+      const names = root.entries
+        .filter((entry) => entry.type === 'directory')
+        .map((entry) => entry.name)
+        .sort((left, right) => left.localeCompare(right));
+      for (const topic of names) {
+        const entries = [];
+        const seen = new Set();
+        const folders = [
+          [`${TRACKER_ROOT}/${topic}/lectures`, false],
+          [`${TRACKER_ROOT}/${topic}/lectures/archive`, true],
+        ];
+        for (const [folder, archived] of folders) {
+          const listing = await listFolder(files, sessionId, folder);
+          if (listing.error !== null && model.error === null) model.error = listing.error;
+          for (const item of listing.entries) {
+            if (item.type !== 'file') continue;
+            const match = /^(\d{2,})-(.+)\.md$/.exec(item.name);
+            // One lecture per number: a stale copy in the archive never repeats it.
+            if (match === null || seen.has(match[1])) continue;
+            let text;
+            try {
+              text = await readText(files, sessionId, `${folder}/${item.name}`);
+            } catch (error) {
+              if (model.error === null) model.error = error?.message ?? `${folder}/${item.name} could not be read`;
+              continue;
+            }
+            const parsed = parseLecture(text, match[2]);
+            entries.push({
+              number: match[1],
+              topic,
+              title: parsed.title,
+              concept: parsed.concept,
+              mark: archived ? 'archived' : parsed.draft ? 'draft' : parsed.date !== null ? 'dated' : null,
+              date: parsed.date,
+              path: `${folder}/${item.name}`,
+            });
+            seen.add(match[1]);
+          }
+        }
+        entries.sort((left, right) => Number(left.number) - Number(right.number));
+        model.topics.push({ topic, entries });
+      }
+      return model;
+    }
+
+    // The rows and the fold are the only elements the host cannot style for us.
+    const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary, currentColor);outline-offset:2px}';
+    const lectureRowStyle = {
+      background: 'none',
+      border: 'none',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'inherit',
+      cursor: 'pointer',
+      font: 'inherit',
+      lineHeight: '22px',
+      overflowWrap: 'anywhere',
+      padding: '2px 4px',
+      textAlign: 'left',
+      whiteSpace: 'normal',
+      width: '100%',
+    };
+    const lectureFoldStyle = {
+      background: 'none',
+      border: '1px solid var(--dsw-alias-border-l2)',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'var(--dsw-alias-label-tertiary)',
+      cursor: 'pointer',
+      font: 'inherit',
+      lineHeight: '22px',
+      padding: '6px 10px',
+      textAlign: 'left',
+      width: '100%',
+    };
+
+    const LECTURE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // `2026-10-28` reads as `28 Oct 2026`: shorter than the ISO form and still one date.
+    function lectureDate(value) {
+      const [year, month, day] = value.split('-');
+      const name = LECTURE_MONTHS[Number(month) - 1];
+      return name === undefined ? value : `${Number(day)} ${name} ${year}`;
+    }
+
+    function lectureMark(entry) {
+      if (entry.mark === 'archived') return 'Archived';
+      if (entry.mark === 'draft') return 'Draft';
+      if (entry.mark === 'dated' && entry.date !== null) return lectureDate(entry.date);
+      return null;
+    }
+
+    // Copied verbatim from `@deepseek-ai/dsh-util-workspace-path`, which a client
+    // plugin cannot load from the browser module table.
+    const FILE_ADDRESS_PREFIX = 'dsh-resource://file/';
+    /** Component-encode one id or path segment, keeping `:` literal for drive letters. */
+    function encodeSegment(segment) {
+      return encodeURIComponent(segment).replace(/%3A/gi, ':');
+    }
+    /** Encode a `/`-separated path segment by segment. */
+    function encodePath(path) {
+      return path.split('/').map(encodeSegment).join('/');
+    }
+    /** Build the address of a file read through one Session. */
+    function sessionFileAddress(sessionId, path) {
+      const normalized = path.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '');
+      return `${FILE_ADDRESS_PREFIX}session/${encodeSegment(sessionId)}/${encodePath(normalized)}`;
+    }
+
+    // The whole row is the button, so its text is also its accessible name.
+    function lectureRow(entry, onOpen) {
+      const mark = lectureMark(entry);
+      return React.createElement('li', { key: entry.number },
+        React.createElement('button', {
+          type: 'button',
+          className: 'lectures-entry',
+          onClick: () => onOpen(entry),
+          style: lectureRowStyle,
+        }, `${entry.number} · ${entry.title}${mark === null ? '' : ` · ${mark}`}`));
+    }
+
+    function lectureTopic(group, open, onToggle, onOpen) {
+      const main = group.entries.filter((entry) => entry.mark !== 'archived');
+      const archived = group.entries.filter((entry) => entry.mark === 'archived');
+      const nodes = [React.createElement('h2', { key: 'heading', style: panelHeadingStyle }, group.topic)];
+      if (group.entries.length === 0) {
+        nodes.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.'));
+      } else if (main.length > 0) {
+        nodes.push(React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))));
+      }
+      if (archived.length > 0) {
+        nodes.push(React.createElement('button', {
+          key: 'fold',
+          type: 'button',
+          className: 'lectures-fold',
+          'aria-expanded': open,
+          onClick: () => onToggle(group.topic),
+          style: lectureFoldStyle,
+        }, `Archived lectures (${archived.length})`));
+        if (open) {
+          nodes.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map((entry) => lectureRow(entry, onOpen))));
+        }
+      }
+      return React.createElement('section', { key: group.topic, style: panelSectionStyle }, ...nodes);
+    }
+
+    function LecturesPage({ useTabInfo, sessionId, workspaceFiles }) {
+      const { tab } = useTabInfo();
+      const [content, setContent] = React.useState({ status: 'loading' });
+      const [openTopics, setOpenTopics] = React.useState({});
+
+      React.useEffect(() => {
+        let live = true;
+        const run = async () => {
+          const model = await loadLectures(workspaceFiles, sessionId);
+          if (!live) return;
+          setContent({ status: 'ready', ...model });
+        };
+        run();
+        return () => { live = false; };
+      }, [sessionId, workspaceFiles]);
+
+      const toggle = (topic) => setOpenTopics((previous) => ({
+        ...previous,
+        [topic]: previous[topic] !== true,
+      }));
+
+      const open = (entry) => tab.actions.openResource(
+        sessionFileAddress(sessionId, entry.path),
+        { preferNewPane: true },
+      );
+
+      let nodes;
+      if (content.status === 'loading') {
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the lectures…')];
+      } else if (content.error === null && !content.rootFound) {
+        nodes = [React.createElement('p', { style: panelMutedStyle }, `No Tracker in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
+      } else {
+        nodes = content.error === null
+          ? []
+          : [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The lecture library could not be read: ${content.error}.`)];
+        nodes.push(...content.topics.map((group) => lectureTopic(group, openTopics[group.topic] === true, toggle, open)));
+      }
+      return React.createElement('div', {
+        role: 'region',
+        'aria-label': LECTURES_LABEL,
+        style: panelStyle,
+      }, React.createElement('style', null, LECTURES_CSS), ...nodes);
+    }
+
+    // A page type names no resource pattern and no `multiple`, so the host
+    // records it at one fixed page address and a reopen focuses that tab.
+    const LECTURES_DEFINITION = {
+      id: LECTURES_ID,
+      kind: LECTURES_KIND,
+      title: () => LECTURES_LABEL,
+      guide: [{
+        id: 'lectures',
+        order: LECTURES_GUIDE_ORDER,
+        title: () => LECTURES_LABEL,
+        description: () => 'Read the lectures saved in this workspace.',
+        icon: LecturesGlyph,
+      }],
+    };
+
     return {
       inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'],
       apply(ctx) {
@@ -1072,6 +1356,19 @@ window.__ModuleLoader__.load({
             }),
           }, StudyView),
         );
+        // A host without the right Sidebar never provides the registry, so this
+        // one seat waits. The rest of the plugin keeps working.
+        ctx.inject(['sidebarRightTabs'], (dock) => {
+          dock.effect(
+            () => dock.sidebarRightTabs.register(LECTURES_DEFINITION),
+            'dsh-nerd-mode: lectures tab type',
+          );
+        });
+        ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+          name: 'sidebar.right.pane.tab',
+          key: LECTURES_ID,
+          inject: (sessionId) => ({ sessionId, workspaceFiles: ctx.remote.workspaceFiles }),
+        }, LecturesPage));
       },
     };
   },

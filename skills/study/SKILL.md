@@ -27,6 +27,29 @@ The upper layer selects the path for multiple independent concepts. Follow that 
 - Name headings for their content. Number them only when useful.
 - For a task, produce the requested usable artifact and explain the important steps. Do not expand it into a project or return an avoidable partial result.
 
+## Teach at the given level
+
+The upper layer may give a teaching brief of up to three lines: `Goal`, `Background`, and `Teaching level`. Treat it as context for writing, and never read `graph.md` or any other tracker file to obtain it.
+
+`standard` uses every rule in this file unchanged. A missing `Teaching level` line means `standard`.
+
+For `beginner`:
+
+- Split the lecture into 3 to 7 numbered steps when the concept takes more than one move.
+- Explain each term at first use, including terms that `standard` assumes, such as a prerequisite idea or a notation convention.
+- Add one worked example per step when an example helps.
+- Never add a prerequisite recap block. No level adds one.
+
+For `advanced`:
+
+- Use one pass without numbered steps, unless the derivation needs them.
+- Skip the intuition for an idea only when the `Background` line names that idea as known. Start from the formal statement.
+- Use at most one example per idea. Keep the qualifications and edge cases that matter for the stated goal.
+
+Accuracy rules outrank the level. No level removes a symbol definition, a justification for a derivation step, a stated assumption or approximation, or a bound. No level adds filler, repeated explanation, or a section the concept does not need. The level affects the lecture only.
+
+For a one-off request with no graph, derive the level from the request and the supplied material. When neither states a goal or a background, ask one combined question before teaching: what the learner wants to reach and whether they have met the topic before. State the derived level in one line, then teach. Write no file.
+
 ## Format the answer
 
 - For one concept, use an H1 named for the concept.
@@ -37,9 +60,9 @@ The upper layer selects the path for multiple independent concepts. Follow that 
 
 ## Write lecture drafts
 
-The upper layer may hand you an approved concept graph, the relevant supplied material, and one destination file per concept. Then write one complete draft per concept, under the same writing standard. A draft is prepared teaching material, not teaching.
+The upper layer may hand you an approved concept graph, the relevant supplied material, the teaching brief, and one destination file per concept. Then write one complete draft per concept at the given level, under the same writing standard. A draft is prepared teaching material, not teaching.
 
-- Cover the concept completely: the teaching explanation, its relationships, and useful examples. Write no assessment questions, no answers, and no grading criteria. Actual questions stay unseen.
+- Cover the concept completely at the given level: the teaching explanation, its relationships, and useful examples. Write no assessment questions, no answers, and no grading criteria. Actual questions stay unseen.
 - Write only the destinations you are given, and one Chapter per batch when the upper layer splits the work. Never invent a path, and never read or write `graph.md`, `state.md`, `log.md`, `plan.md`, or any other tracker file.
 - Frontmatter is exactly `status: draft` and the concept number. Add no date. The body opens with an H1 named for the concept.
 - Preparation is not teaching. Change no learner state and append nothing to the log.

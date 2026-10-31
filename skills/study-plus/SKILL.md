@@ -46,11 +46,27 @@ For a new graph:
 2. Make a concept table in prerequisite order. Each row has a one-line definition and prerequisite numbers. Keep prerequisite order separate from textbook reading order.
 3. Use the source's book and chapter hierarchy when present. Otherwise, propose logical chapter groupings.
 4. Present the full graph and chapter layout together in the existing approve, edit, or rebuild question. Do not add another approval step. State in that question that approval starts draft generation for every concept, including any concept the learner then skips, and that drafts are not teaching.
-5. After approval, ask which concepts, if any, the learner knows well enough to skip. Then write `graph.md`, create `state.md` with every concept `new` and undated except dropped concepts set to `skipped`, create an empty `log.md`, and generate one draft per concept (section 3). Do not create `plan.md`.
+5. After approval, run calibration as one `question` call with three items: what the learner wants to be able to do after this topic, what they have already read, studied, or used in this area in their own words, and which concepts in the approved graph they know well enough to skip, as a multi-select list. Items 1 and 2 are free text. Ask the goal and background items only when the current request and the supplied material do not already state them. Derive the level. Then write `graph.md`, create `state.md` with every concept `new` and undated except the concepts selected to skip, which are `skipped`, create an empty `log.md`, and generate one draft per concept (section 3). Do not create `plan.md`.
+
+Calibration writes `Goal`, `Background`, and `Teaching level` to `graph.md`. Derive the level from the two answers:
+
+| Answers | Level |
+|---|---|
+| Most prerequisites are unknown, or the goal is to learn the topic from zero | `beginner` |
+| Some prerequisites are known, and the goal is to understand the principles or pass an exam | `standard` |
+| Most prerequisites are known, and the goal is review, reference, or use in a project | `advanced` |
+
+When the two answers clearly conflict, you may choose an adjacent level and state the reason in one line. When the learner declines or gives no usable answer, write `Teaching level: standard` and omit the `Goal` and `Background` lines. Each selected concept becomes `skipped`, with no date and no passes.
+
+Do not ask for calibration on a topic that already has a `graph.md`. A missing `Teaching level` line means `standard`. A graph rebuild keeps the existing `Goal`, `Background`, and `Teaching level` values and asks for nothing the previous graph already recorded.
+
+A mid-topic request such as "too detailed" or "give me the conclusion" changes the level for this session only. Write nothing to `graph.md` and add no log entry. A learner preference is not evidence. When the learner says to keep the change, rewrite the `Teaching level` line and keep the other two lines. This is the only path that changes an existing topic, and the only upgrade path for a topic with no `Teaching level` line.
+
+The level never changes the Recall Session, the skipped-prerequisite recap, the unseen questions, the Teach-back, the pass threshold, or any learner state. It affects the lecture only.
 
 The hierarchy is Book, Chapter, Section. A graph concept is one Section named after the concept. A lecture is the teaching explanation for one concept in one Concept cycle. It is not a book, chapter, or separate graph concept.
 
-`graph.md` keeps `# Topic` and `Goal`, and may add `Book: <title>`. If `Book` is absent, use the topic as the book title. A multi-chapter graph has `## Chapters` followed by numbered rows in book order: `1. <chapter title>: <scope>`. The concept table keeps prerequisite order and adds integer `Chapter` and `Section` columns. Each concept belongs to one chapter and one section. Number sections from 1 within each chapter in textbook order. A single-chapter graph still uses `Chapter = 1` and section numbers, but omits `## Chapters`; use the Book title, or topic fallback, as the displayed chapter title.
+`graph.md` keeps `# Topic`, `Goal`, `Background`, and `Teaching level`, and may add `Book: <title>`. The three brief lines are optional. If `Book` is absent, use the topic as the book title. A multi-chapter graph has `## Chapters` followed by numbered rows in book order: `1. <chapter title>: <scope>`. The concept table keeps prerequisite order and adds integer `Chapter` and `Section` columns. Each concept belongs to one chapter and one section. Number sections from 1 within each chapter in textbook order. A single-chapter graph still uses `Chapter = 1` and section numbers, but omits `## Chapters`; use the Book title, or topic fallback, as the displayed chapter title.
 
 A wrong order mis-teaches for weeks. Do not skip the approval.
 
@@ -59,7 +75,7 @@ A wrong order mis-teaches for weeks. Do not skip the approval.
 A Lecture draft is complete teaching material written before any Concept cycle. It is not teaching, it carries no teaching date, and it changes no learner state.
 
 1. Compute one destination per concept: `study/<slug>/lectures/<NN>-<concept-slug>.md`, where `NN` is the graph's concept number padded to at least two digits. The list covers every concept, including skipped concepts.
-2. Hand the approved graph, the relevant supplied material, and that explicit destination list to `study`. Pass one Chapter per request. `study` owns the draft content and its frontmatter, and it never reads tracker files or chooses paths.
+2. Hand the approved graph, the relevant supplied material, the three brief lines, and that explicit destination list to `study`. Copy `Goal`, `Background`, and `Teaching level` from `graph.md` verbatim: do not compress, summarize, or rewrite them. Pass one Chapter per request. `study` owns the draft content and its frontmatter, and it never reads tracker files or chooses paths.
 3. Split the Chapters across subagents when they are available. Give each one the `study` draft rules and keep each agent's destination list disjoint. Without subagents, write the Chapters yourself, one at a time.
 4. Check every returned file: path, `status: draft`, the `concept` number, one H1, coverage of every concept in the Chapter, prerequisite consistency, use of the supplied material, and any contradiction across Chapters. Report a contradiction in one line.
 5. Keep a valid existing draft or dated Lecture at a destination. Report an occupied or unrecognized target and ask the learner how to resolve it instead of overwriting.
@@ -100,13 +116,13 @@ If the selected Concept is `in_process`, say that the last Concept cycle stopped
 
 **Recall Session.** Follow the current `/study-plus` request's explicit preference when present. Otherwise, use the profile default in the top-level Nerd Mode instructions. When enabled, ask one question about a recently taught relevant concept, wait for the learner's answer, then give ungraded feedback and a brief recap. Skip this activity when no suitable concept exists. Do not change learner knowledge, tracker state, or the session log because of this activity. This setting also controls the one-line recap for a skipped prerequisite: when enabled, give that recap when applicable; when disabled, skip it. Outside `study-plus`, ignore this preference.
 
-**Teach.** Load `study` before writing the lecture and follow its writing standards. Before the first paragraph, write `state.md` and set the Concept's row to `in_process`, from `new` or `skipped` only. Never overwrite `shaky` or `fluent`. When the Concept has no draft, write it now with the draft rules.
+**Teach.** Load `study` before writing the lecture and follow its writing standards. Pass the three brief lines verbatim with the load. Before the first paragraph, write `state.md` and set the Concept's row to `in_process`, from `new` or `skipped` only. Never overwrite `shaky` or `fluent`. When the Concept has no draft, write it now with the draft rules.
 
 A tracked lecture belongs in `lectures/<NN>-<slug>.md`, with `date` and `concept` frontmatter, no `status` field, and one file per concept. Revise the draft for this learner and this material, then save it as the dated Lecture in the same file. Before updating it, read that exact file to detect manual edits. Preserve edits when they can be merged safely. If they cannot, ask before overwriting.
 
 Teach one concept according to `study`'s lecture rules. Write or update the Markdown file yourself, then show the same lecture content in the conversation. For long source material, give a roadmap and progress. Save the complete lecture file before displaying it in chunks if a platform limit requires chunking. Do not start assessment until the full lecture is displayed.
 
-The lecture has no length cap. Teach until the concept is complete. For visual authoring rules, load `diagram`, but save figures only under the scoped topic's `study/<slug>/diagrams/<name>.svg`, not its generic default. Sanitize the figure name to one lowercase kebab-case segment with no slashes or dot segments. If it is unclear, choose a safe fallback. Before writing, confirm the resolved parent stays within the scoped topic's `diagrams/` root and the target is not `graph.md`, `state.md`, or `log.md`. Compute every plotted point with the host shell. Use `pwsh` on Windows and `bash` on macOS or Linux. Never place a point by eye. Before replacing a same-name SVG, copy the old file to `<name>.svg.bak`, replacing any older backup.
+The lecture has no length cap. Teach until the concept is complete at the given level. For visual authoring rules, load `diagram`, but save figures only under the scoped topic's `study/<slug>/diagrams/<name>.svg`, not its generic default. Sanitize the figure name to one lowercase kebab-case segment with no slashes or dot segments. If it is unclear, choose a safe fallback. Before writing, confirm the resolved parent stays within the scoped topic's `diagrams/` root and the target is not `graph.md`, `state.md`, or `log.md`. Compute every plotted point with the host shell. Use `pwsh` on Windows and `bash` on macOS or Linux. Never place a point by eye. Before replacing a same-name SVG, copy the old file to `<name>.svg.bak`, replacing any older backup.
 
 If saving the lecture fails, continue the assessment and record produced evidence. Tell the learner which save path failed.
 
@@ -159,6 +175,8 @@ After a completed cycle, rebuild the Book (section 8) and offer three choices in
 ```md
 # Topic: <topic>
 Goal: <one line, optional>
+Background: <one line, optional>
+Teaching level: beginner | standard | advanced
 Book: <title, optional>
 
 ## Chapters
@@ -170,7 +188,7 @@ Book: <title, optional>
 | 2 | <name> | <one line> | 1 | 1 | 2 |
 ```
 
-Omit `Book` when the topic is the title. Omit `## Chapters` for one chapter. Use that chapter's table value `Chapter = 1` and section numbers within it.
+Omit `Book` when the topic is the title. Omit `## Chapters` for one chapter. Use that chapter's table value `Chapter = 1` and section numbers within it. `Goal`, `Background`, and `Teaching level` are optional, and the values are lowercase. A missing `Teaching level` means `standard`. The Book shows no `Background` or `Teaching level` line.
 
 A dated Lecture and a Lecture draft share one file per concept and differ in frontmatter:
 
