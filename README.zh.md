@@ -111,7 +111,7 @@ dsh plugin --profile <profile> add C:\path\to\dsh-nerd-mode
 批准概念图后先问一轮开课校准：这个主题你想学到能做什么，以前接触过什么，概念图里哪些概念可以直接跳过。答案决定 `graph.md` 里的 `Teaching level` 一行，`Goal` 和 `Background` 也一并写入，之后每份讲义都按这个教学深度来写。深度只管讲义，不管题目、复述和记录。中途改的深度只对这次会话有效，说「以后都这样」才会改写那一行。
 
 <p align="center">
-  <img src="assets/calibration.svg" width="720" alt="开课校准流程：你批准概念图，回答一轮关于目标、背景和可跳过概念的提问，答案定出教学深度。beginner 拆成编号步骤并解释每个术语，standard 沿用现在的写法，advanced 只讲一遍、每个想法最多一个例子。深度写进 graph.md，只管讲义。">
+  <img src="assets/calibration.svg" width="720" alt="开课校准流程：你批准按章节分组的 15 到 30 个概念，再回答一轮提问，说明你想用这个主题做什么、以前读过或用过什么、哪些概念可以直接跳过。答案定出 graph.md 里的教学深度，之后每份讲义都按它来写。beginner 的讲义分成编号步骤，解释每个术语，每一步配一个例子。standard 先讲直觉，再讲形式细节，需要时给例子。advanced 一遍讲完，不编号，从形式陈述开始，每个想法最多一个例子。">
 </p>
 
 讲稿只是准备，不算学过。每份讲义都按 `/study` 的写作规则写，并且先保存再显示。
