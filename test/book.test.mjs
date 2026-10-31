@@ -111,6 +111,17 @@ test('rejects legacy Structure entries with missing chapter scope', () => {
   )
 })
 
+test('reads the title from a Course heading or a legacy Topic heading', () => {
+  const graphFor = (heading) => [
+    heading,
+    '',
+    table(['#', 'Concept', 'Definition', 'Prerequisites'], [['1', 'Ratio', 'A comparison', '-']]),
+  ].join('\n')
+
+  assert.equal(parseBookData(graphFor('# Course: Ratios'), [lecture(1, 'Ratio')]).title, 'Ratios')
+  assert.equal(parseBookData(graphFor('# Topic: Ratios'), [lecture(1, 'Ratio')]).title, 'Ratios')
+})
+
 test('uses a default chapter and graph-row section order without grouping metadata', () => {
   const graph = [
     '# Topic: Probability',

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Build study/<topic>/book.html from the graph and its existing lecture files.
+// Build study/<course>/book.html from the graph and its existing lecture files.
 
 import { readFileSync, readdirSync, writeFileSync, existsSync, unlinkSync, realpathSync, statSync, lstatSync, copyFileSync, renameSync } from 'node:fs';
 import { join, resolve, dirname, relative, isAbsolute, sep } from 'node:path';
@@ -23,7 +23,7 @@ function findTopic(arg) {
   try {
     studyStat = lstatSync(studyPath);
   } catch (error) {
-    if (error.code === 'ENOENT') die('No study/ folder here. Pass a topic folder under workspace study/.');
+    if (error.code === 'ENOENT') die('No study/ folder here. Pass a Course folder under workspace study/.');
     die(`Cannot inspect workspace study/ folder: ${error.message}`);
   }
   if (studyStat.isSymbolicLink()) die(`Refusing to use symlink as workspace study/ folder: ${studyPath}`);
@@ -38,7 +38,7 @@ function findTopic(arg) {
   let topicPath = arg ? resolve(arg) : '';
   if (!arg) {
     const hits = readdirSync(studyRoot).filter((name) => existsSync(join(studyRoot, name, 'graph.md')));
-    if (hits.length !== 1) die(`Pass a topic folder under workspace study/. Found ${hits.length} topics under study/: ${hits.join(', ') || 'none'}.`);
+    if (hits.length !== 1) die(`Pass a Course folder under workspace study/. Found ${hits.length} Courses under study/: ${hits.join(', ') || 'none'}.`);
     topicPath = join(studyRoot, hits[0]);
   }
 
@@ -46,11 +46,11 @@ function findTopic(arg) {
   try {
     topicDir = realpathSync(topicPath);
   } catch (error) {
-    die(`Cannot resolve topic folder ${topicPath}: ${error.message}`);
+    die(`Cannot resolve Course folder ${topicPath}: ${error.message}`);
   }
   const topicRelative = relative(studyRoot, topicDir);
   if (!statSync(topicDir).isDirectory() || !topicRelative || topicRelative === '..' || topicRelative.startsWith(`..${sep}`) || isAbsolute(topicRelative)) {
-    die(`Topic folder must be a real directory at least one level below workspace study/: ${topicPath}`);
+    die(`Course folder must be a real directory at least one level below workspace study/: ${topicPath}`);
   }
   return topicDir;
 }
