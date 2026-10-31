@@ -64,6 +64,14 @@ test('both copies keep every calibration rule', () => {
   }
 })
 
+test('the opening question comes before the path choice', () => {
+  const patch = read('cordis.patch.yml')
+  assert.match(patch, /opening question/i)
+  assert.match(patch, /bare topic/i)
+  assert.match(read('skills/study/SKILL.md'), /bare topic/i)
+  assert.match(read('skills/study-plus/SKILL.md'), /opening question/i)
+})
+
 test('the graph format line names the three levels in order', () => {
   assert.match(read('skills/study-plus/SKILL.md'), /^Teaching level: beginner \| standard \| advanced$/m)
 })

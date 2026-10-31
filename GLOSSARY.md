@@ -57,8 +57,12 @@ The set of concepts for one topic, their prerequisite links, and their Chapter a
 _Avoid_: syllabus, curriculum, outline
 
 **Calibration** (开课校准):
-The one-time question round for a new topic. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
+The one-time question round for a new topic. It asks for the learning goal, the learner's prior exposure, and the concepts the learner already knows well enough to skip. The opening question may already answer the first two. It runs after graph approval and before any tracker file is written. It is not evidence and changes no learner state.
 _Avoid_: onboarding, interview, survey
+
+**Opening question** (开课提问):
+The single question round before either learning skill loads, for a learning request with no explicit command. It asks for the goal, the prior exposure, and the path: one complete answer in this conversation or tracked study. A tracked topic carries its answers into calibration and does not ask them again.
+_Avoid_: calibration, onboarding, interview
 
 **Teaching level** (教学深度):
 A self-reported pitch for one topic, with three values: `beginner`, `standard`, and `advanced`. It sets both step size and explanation detail. It says nothing about mastery, never changes a state, and never counts as evidence.

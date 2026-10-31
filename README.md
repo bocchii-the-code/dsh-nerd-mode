@@ -19,7 +19,7 @@ A chat lesson usually ends when the answer arrives. Nothing checks that you unde
 - One switch for the whole conversation. `/nerd-mode on` teaches every learning-shaped request and leaves feature work, searches, and commands alone.
 - Two ways to learn. `/study` answers one concept or one task in chat and keeps nothing. `/study-plus` runs one topic over weeks with a dated record.
 - A map before the first lesson. A concept graph in prerequisite order, grouped into a Book of Chapters and Sections, approved by you before any file is written.
-- One calibration round per topic. It asks your goal, your background, and the concepts you can skip, then sets a teaching level that every lecture follows.
+- One question round before teaching. It asks your goal, your background, and whether you want one complete answer or a tracked topic; a tracked topic adds the concepts you can skip. The answers set a teaching level that every lecture follows.
 - Teaching that stops at the fork. The guide explains in steps and stops where the choice changes the result, instead of handing over a finished answer.
 - Evidence, not impressions. Unseen questions and a graded teach-back, with the rubric written before the question. Only an answer you produced changes the record.
 - A record that outlives the chat. The graph, the states, and the dated log survive restarts, and the HTML Book rebuilds after each batch and each lesson, with full-text search.
@@ -80,7 +80,7 @@ Use it for a question you want to understand now and will probably not return to
 
 Type the command, or turn the switch on and just ask. With the switch on, a learning-shaped request gets this shape by default.
 
-An explicit `/study-plus` goes straight to tracked study, even when the request names several concepts. An explicit `/study`, or a request that arrives through Nerd Mode without a command, asks one question when it names two or more independent concepts: a one-off book-style answer in chat, or a tracked `/study-plus` session. The one-off answer uses a title, chapter headings, and section headings in plain Markdown.
+An explicit `/study-plus` goes straight to tracked study, even when the request names several concepts. An explicit `/study` goes straight to one-off teaching. With the switch on and no command, a learning request gets one question round first: what you want to be able to do, what you have already read or used, and whether you want one complete answer in this conversation or a tracked `/study-plus` session. The one-off answer uses a title, chapter headings, and section headings in plain Markdown.
 
 You get a title, the central idea, numbered steps, one line of symbols above each formula, and a short table only when four or more symbols keep coming back. Then one worked example, the common mistake, and the single stop at the fork. For a task, you get the finished artifact with its reasoning.
 
@@ -119,7 +119,7 @@ The first session runs in a fixed order.
   teach each concept: recall (optional) → lecture → configured unseen questions → teach-back → dated record
 ```
 
-Approval also runs one calibration round: what you want to do with the topic, what you have already read or used, and the concepts you can skip. The answers set `Teaching level` in `graph.md`, beside `Goal` and `Background`, and every lecture follows that level. It shapes the lecture only, never the questions, the teach-back, or the record. A mid-topic change lasts for that session unless you say to keep it.
+Approval also asks the remaining calibration items: what you want to do with the topic, what you have already read or used, and the concepts you can skip. When the opening question already answered your goal and background, it asks only the concepts you can skip. The answers set `Teaching level` in `graph.md`, beside `Goal` and `Background`, and every lecture follows that level. It shapes the lecture only, never the questions, the teach-back, or the record. A mid-topic change lasts for that session unless you say to keep it.
 
 <p align="center">
   <img src="assets/calibration.svg" width="720" alt="The pre-course flow. You approve 15 to 30 concepts grouped by chapter, then answer one question round, once per topic: what you want to do with the topic, what you have read or used, and which concepts you can skip. The answers set a teaching level in graph.md, and every lecture follows it. A beginner lecture uses numbered steps, explains every term, and gives an example per step. A standard lecture gives the intuition first, then the formal detail, with examples where they help. An advanced lecture goes in one pass with no numbered steps, starts from the formal statement, and uses at most one example per idea.">
