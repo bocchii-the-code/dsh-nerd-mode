@@ -364,6 +364,9 @@ const textOf = (node) => {
   return node?.props ? textOf(node.props.children) : ''
 }
 
+const courseSelect = (tree) => allOfType(tree, 'select')
+  .find(({ props }) => props['aria-label'] === 'Course')
+
 test('registers a standalone Nerd Mode settings section', () => {
   const { registers } = mount()
   const settings = registers.filter(({ options }) => options.name === 'settings.section')
@@ -652,7 +655,7 @@ test('dismissing the toast keeps the tooltip text', async () => {
 // --- Study tab ---------------------------------------------------------------
 
 const GRAPH_TWO_CHAPTERS = [
-  '# Topic: gradient-descent',
+  '# Course: gradient-descent',
   'Book: Learning from Data',
   '',
   '## Chapters',
@@ -772,6 +775,7 @@ test('shows progress, the three Sections, shaky Concepts, and recent cycles', as
   assert.equal(progress.props['aria-valuemin'], 0)
   assert.equal(progress.props['aria-valuemax'], 100)
   assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Study'), true)
+  assert.equal(allOfType(tree, 'select').length, 0)
   assert.deepEqual(stripOf(tree), [
     { label: 'Previous', value: 'Foundations · Section 1 · Loss function' },
     { label: 'Current', value: 'Foundations · Section 2 · Gradient' },
@@ -895,15 +899,15 @@ test('ignores a malformed state row and says how many', async () => {
   assert.match(textOf(tree), /33% of the Book/)
 })
 
-test('names the searched folder when the workspace has no Tracker', async () => {
+test('names the searched folder when the workspace has no Course', async () => {
   const view = renderStudy({ dirs: {}, files: {} })
   const tree = await view.settle()
 
-  assert.match(textOf(tree), /No Tracker in study\//)
+  assert.match(textOf(tree), /No Course in study\//)
   assert.match(textOf(tree), /\/study-plus/)
 })
 
-test('names the failure when a Tracker file cannot be read', async () => {
+test('names the failure when a Course file cannot be read', async () => {
   const view = renderStudy(studyFixture({
     failures: {
       'study/gradient-descent/state.md': { code: 'gateway/internal', message: 'Permission denied' },
@@ -915,7 +919,7 @@ test('names the failure when a Tracker file cannot be read', async () => {
   assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'progressbar'), false)
 })
 
-test('defaults to the most recent topic and switches on request', async () => {
+test('opens on the first Course by name and switches on request', async () => {
   const view = renderStudy({
     dirs: {
       study: ['alpha', 'beta'],
@@ -923,24 +927,24 @@ test('defaults to the most recent topic and switches on request', async () => {
       'study/beta': ['graph.md', 'state.md'],
     },
     files: {
-      'study/alpha/graph.md': ['# Topic: alpha', 'Book: Alpha Book', GRAPH_HEADER, '| 1 | One | a | - | 1 | 1 |'].join('\n'),
+      'study/alpha/graph.md': ['# Course: Alpha', 'Book: Alpha Book', GRAPH_HEADER, '| 1 | One | a | - | 1 | 1 |'].join('\n'),
       'study/alpha/state.md': [STATE_HEADER, '| 1 | One | fluent | 2026-10-01 | 1 | 0 | |'].join('\n'),
-      'study/beta/graph.md': ['# Topic: beta', 'Book: Beta Book', GRAPH_HEADER, '| 1 | Two | b | - | 1 | 1 |'].join('\n'),
+      'study/beta/graph.md': ['# Course: Beta', 'Book: Beta Book', GRAPH_HEADER, '| 1 | Two | b | - | 1 | 1 |'].join('\n'),
       'study/beta/state.md': [STATE_HEADER, '| 1 | Two | shaky | 2026-10-28 | 0 | 1 | |'].join('\n'),
     },
   })
   const tree = await view.settle()
 
-  assert.match(textOf(tree), /Beta Book/)
-  const select = allOfType(tree, 'select')[0]
+  assert.match(textOf(tree), /Alpha Book/)
+  const select = courseSelect(tree)
   assert.deepEqual(select.props.children.map(textOf), ['alpha', 'beta'])
-  assert.equal(select.props.value, 'beta')
+  assert.equal(select.props.value, 'alpha')
 
-  select.props.onChange({ target: { value: 'alpha' } })
+  select.props.onChange({ target: { value: 'beta' } })
   const switched = await view.settle()
 
-  assert.match(textOf(switched), /Alpha Book/)
-  assert.equal(allOfType(switched, 'select')[0].props.value, 'alpha')
+  assert.match(textOf(switched), /Beta Book/)
+  assert.equal(courseSelect(switched).props.value, 'beta')
 })
 
 test('says the Book is finished when nothing is left after the current Section', async () => {
@@ -1017,21 +1021,21 @@ test('lists five shaky Concepts and counts the rest', async () => {
   assert.match(textOf(sectionOf(tree, 'shaky')), /1 more not shown/)
 })
 
-test('keeps the topic selector when the chosen topic has no graph', async () => {
+test('keeps the Course picker when the chosen Course has no graph', async () => {
   const view = renderStudy({
     dirs: { study: ['alpha', 'notes'], 'study/alpha': ['graph.md', 'state.md'], 'study/notes': [] },
     files: {
-      'study/alpha/graph.md': ['# Topic: alpha', 'Book: Alpha Book', GRAPH_HEADER, '| 1 | One | a | - | 1 | 1 |'].join('\n'),
+      'study/alpha/graph.md': ['# Course: Alpha', 'Book: Alpha Book', GRAPH_HEADER, '| 1 | One | a | - | 1 | 1 |'].join('\n'),
       'study/alpha/state.md': [STATE_HEADER, '| 1 | One | fluent | 2026-10-01 | 1 | 0 | |'].join('\n'),
     },
   })
   const tree = await view.settle()
 
-  allOfType(tree, 'select')[0].props.onChange({ target: { value: 'notes' } })
+  courseSelect(tree).props.onChange({ target: { value: 'notes' } })
   const switched = await view.settle()
 
-  assert.match(textOf(switched), /No Tracker in study\/notes/)
-  assert.equal(allOfType(switched, 'select')[0].props.value, 'notes')
+  assert.match(textOf(switched), /No Course in study\/notes/)
+  assert.equal(courseSelect(switched).props.value, 'notes')
 })
 
 // --- Lectures dock page ------------------------------------------------------
@@ -1082,6 +1086,7 @@ function renderLectures(fixture) {
     registration,
     opened,
     get tree() { return renderer.tree },
+    rerender: () => renderer.render(),
     async settle() {
       for (let turn = 0; turn < 60; turn += 1) {
         await new Promise((resolve) => queueMicrotask(resolve))
@@ -1119,7 +1124,7 @@ const lectureFixture = (overrides = {}) => ({
   },
   files: {
     'study/algebra/book.html': '<h1>Book</h1>',
-    'study/algebra/graph.md': '# Topic: algebra',
+    'study/algebra/graph.md': '# Course: Algebra',
     'study/algebra/log.md': '## 2026-10-20\nConcept: Sets',
     'study/algebra/state.md': '| # | Concept |',
     'study/algebra/lectures/book.html': '<h1>Book</h1>',
@@ -1143,18 +1148,20 @@ const lectureFixture = (overrides = {}) => ({
   ...overrides,
 })
 
-test('lists topics by name and their lectures by Concept number', async () => {
+test('lists the chosen Course and its lectures by Concept number', async () => {
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
 
   assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures'), true)
-  assert.deepEqual(lectureTopics(tree), ['algebra', 'calculus'])
+  assert.deepEqual(courseSelect(tree).props.children.map(textOf), ['algebra', 'calculus'])
+  assert.equal(courseSelect(tree).props.value, 'algebra')
+  assert.deepEqual(lectureTopics(tree), ['algebra'])
   assert.deepEqual(lectureRows(tree, 'algebra'), [
     '01 · Sets and Their Laws · Draft',
     '02 · Groups and Homomorphisms · 28 Oct 2026',
     '100 · Review of Groups · 2 Nov 2026',
   ])
-  assert.deepEqual(lectureRows(tree, 'calculus'), ['10 · Limits'])
+  assert.equal(lectureSection(tree, 'calculus'), undefined)
 })
 
 test('marks a draft as a draft without a date and a dated lecture with its date', async () => {
@@ -1168,8 +1175,16 @@ test('marks a draft as a draft without a date and a dated lecture with its date'
   const dated = textOf(lectureEntry(tree, 'algebra', '02'))
   assert.equal(dated, '02 · Groups and Homomorphisms · 28 Oct 2026')
 
-  const plain = textOf(lectureEntry(tree, 'calculus', '10'))
+  const select = courseSelect(tree)
+  select.props.onChange({ target: { value: 'calculus' } })
+  const switched = await view.settle()
+
+  const plain = textOf(lectureEntry(switched, 'calculus', '10'))
   assert.equal(plain, '10 · Limits')
+
+  // Put the shared selection back for the tests that read the first Course.
+  courseSelect(switched).props.onChange({ target: { value: 'algebra' } })
+  await view.settle()
 })
 
 test('folds archived lectures into a collapsed group that opens on click', async () => {
@@ -1262,7 +1277,7 @@ test('treats an empty study folder as a different page from a missing one', asyn
   assert.equal(allOfType(tree, 'p').some(({ props }) => /No Tracker in study\//.test(textOf(props))), false)
 })
 
-test('gives a topic without lectures its own empty line and no empty list', async () => {
+test('gives a Course without lectures its own empty line and no empty list', async () => {
   const view = renderLectures({
     dirs: { study: ['algebra'], 'study/algebra': [] },
     files: {},
@@ -1276,7 +1291,7 @@ test('gives a topic without lectures its own empty line and no empty list', asyn
   assert.deepEqual(allOfType(section, 'li'), [])
 })
 
-test('keeps the empty line off a topic whose only lectures are archived', async () => {
+test('keeps the empty line off a Course whose only lectures are archived', async () => {
   const view = renderLectures({
     dirs: {
       study: ['algebra'],
@@ -1353,7 +1368,6 @@ test('leaves the Book and tracker files out of the list', async () => {
   const tree = await view.settle()
 
   assert.doesNotMatch(textOf(tree), /Book/)
-  assert.doesNotMatch(textOf(tree), /Topic: algebra/)
   assert.equal(view.files.calls.some(([, , path]) => /book\.html$|\/(graph|log|state)\.md$/.test(path)), false)
 })
 
@@ -1366,8 +1380,6 @@ test('reads only the lecture folders and each file once', async () => {
     'study',
     'study/algebra/lectures',
     'study/algebra/lectures/archive',
-    'study/calculus/lectures',
-    'study/calculus/lectures/archive',
   ])
   const reads = view.files.calls.filter(([method]) => method === 'read')
   assert.equal(reads.every(([, , path]) => /^study\/[^/]+\/lectures\/(archive\/)?\d{2,}-.+\.md$/.test(path)), true)
@@ -1379,17 +1391,16 @@ test('keeps the entries it built when a read fails and names the failure', async
   const view = renderLectures(lectureFixture({
     failures: {
       'study/algebra/lectures/02-groups.md': { code: 'workspace-file/too-large', message: 'the file is too large' },
-      'study/calculus/lectures': { code: 'workspace-file/not-directory', message: 'not a folder' },
+      'study/algebra/lectures/archive': { code: 'workspace-file/not-directory', message: 'not a folder' },
     },
   }))
   const tree = await view.settle()
 
-  assert.deepEqual(lectureTopics(tree), ['algebra', 'calculus'])
+  assert.deepEqual(lectureTopics(tree), ['algebra'])
   assert.deepEqual(lectureRows(tree, 'algebra'), [
     '01 · Sets and Their Laws · Draft',
     '100 · Review of Groups · 2 Nov 2026',
   ])
-  assert.deepEqual(lectureRows(tree, 'calculus'), [])
 
   const alerts = allOfType(tree, 'p').filter(({ props }) => props.role === 'alert')
   assert.equal(alerts.length, 1)
@@ -1409,4 +1420,116 @@ test('registers no Lectures seat when the dock registry is absent', () => {
   assert.equal(has('conversation.input.left', 'nerd-mode'), true)
   assert.equal(has('settings.section', 'dsh-nerd-mode'), true)
   assert.equal(has('conversation.view', 'study'), true)
+})
+
+// --- Course picker -----------------------------------------------------------
+// The selection is one module-level binding, so each test here uses Course
+// names that no other fixture uses, and the order of these tests matters.
+
+function coursesFixture(names) {
+  const dirs = { study: names }
+  const files = {}
+  for (const name of names) {
+    const title = name[0].toUpperCase() + name.slice(1)
+    dirs[`study/${name}`] = ['graph.md', 'lectures', 'state.md']
+    dirs[`study/${name}/lectures`] = [`01-${name}.md`]
+    files[`study/${name}/graph.md`] = [
+      `# Course: ${title}`,
+      `Book: ${title} Book`,
+      GRAPH_HEADER,
+      `| 1 | ${name} concept | note | - | 1 | 1 |`,
+    ].join('\n')
+    files[`study/${name}/state.md`] = [
+      STATE_HEADER,
+      `| 1 | ${name} concept | new | - | 0 | 0 | |`,
+    ].join('\n')
+    files[`study/${name}/lectures/01-${name}.md`] = `# ${title} lecture\n`
+  }
+  return { dirs, files }
+}
+
+test('shows a Course picker and the first Course when the workspace has two', async () => {
+  const view = renderStudy(coursesFixture(['proportions', 'ratios']))
+  const tree = await view.settle()
+
+  const label = allOfType(tree, 'label')[0]
+  assert.equal(textOf(label.props.children[0]), 'Course')
+  const select = courseSelect(tree)
+  assert.deepEqual(select.props.children.map(textOf), ['proportions', 'ratios'])
+  assert.equal(select.props.value, 'proportions')
+  assert.match(textOf(tree), /Proportions Book/)
+  assert.doesNotMatch(textOf(tree), /Ratios Book/)
+  const reads = view.files.calls.filter(([method]) => method === 'read')
+  assert.equal(reads.every(([, , path]) => path.startsWith('study/proportions/')), true)
+})
+
+test('shares one Course selection between the Study tab and the Lectures tab', async () => {
+  const lectures = renderLectures(coursesFixture(['proportions', 'ratios']))
+  const before = await lectures.settle()
+
+  assert.equal(courseSelect(before).props.value, 'proportions')
+  assert.deepEqual(lectureTopics(before), ['proportions'])
+
+  const study = renderStudy(coursesFixture(['proportions', 'ratios']))
+  const studyTree = await study.settle()
+  courseSelect(studyTree).props.onChange({ target: { value: 'ratios' } })
+  const switched = await study.settle()
+
+  assert.match(textOf(switched), /Ratios Book/)
+  assert.equal(courseSelect(switched).props.value, 'ratios')
+
+  lectures.rerender()
+  const after = await lectures.settle()
+
+  assert.equal(courseSelect(after).props.value, 'ratios')
+  assert.deepEqual(lectureTopics(after), ['ratios'])
+  assert.deepEqual(lectureRows(after, 'ratios'), ['01 · Ratios lecture'])
+  assert.equal(lectureSection(after, 'proportions'), undefined)
+})
+
+test('lists the second Course lectures only after the picker selects it', async () => {
+  const view = renderLectures(coursesFixture(['statistics', 'probability']))
+  const tree = await view.settle()
+
+  assert.equal(courseSelect(tree).props.value, 'probability')
+  assert.deepEqual(lectureTopics(tree), ['probability'])
+  assert.equal(lectureSection(tree, 'statistics'), undefined)
+  assert.equal(view.files.calls.some(([, , path]) => path.includes('/statistics/')), false)
+
+  view.files.calls.length = 0
+  courseSelect(tree).props.onChange({ target: { value: 'statistics' } })
+  const switched = await view.settle()
+
+  assert.equal(courseSelect(switched).props.value, 'statistics')
+  assert.deepEqual(lectureTopics(switched), ['statistics'])
+  assert.deepEqual(lectureRows(switched, 'statistics'), ['01 · Statistics lecture'])
+  assert.equal(lectureSection(switched, 'probability'), undefined)
+  assert.equal(view.files.calls.some(([, , path]) => path.includes('/probability/')), false)
+})
+
+test('reads a Course heading and keeps an older Topic heading', async () => {
+  const viewFor = (heading) => renderStudy({
+    dirs: { study: ['ratios'], 'study/ratios': ['graph.md'] },
+    files: {
+      'study/ratios/graph.md': [heading, GRAPH_HEADER, '| 1 | Rate | rate | - | 1 | 1 |'].join('\n'),
+    },
+  })
+
+  const course = await viewFor('# Course: Ratios').settle()
+  assert.equal(textOf(allOfType(course, 'h2')[0]), 'Ratios')
+
+  const topic = await viewFor('# Topic: Rates').settle()
+  assert.equal(textOf(allOfType(topic, 'h2')[0]), 'Rates')
+})
+
+test('gives a Course with no lectures its empty line and reads no other Course', async () => {
+  const view = renderLectures({ dirs: { study: ['solo'], 'study/solo': [] }, files: {} })
+  const tree = await view.settle()
+
+  assert.deepEqual(lectureTopics(tree), ['solo'])
+  assert.match(textOf(lectureSection(tree, 'solo')), /No lectures yet/)
+  assert.deepEqual(allOfType(lectureSection(tree, 'solo'), 'ul'), [])
+  assert.equal(allOfType(tree, 'select').length, 0)
+  assert.equal(view.files.calls.every(([, , path]) => path === 'study' || path.startsWith('study/solo/')), true)
+  assert.deepEqual(view.files.calls.filter(([method]) => method === 'read'), [])
 })
