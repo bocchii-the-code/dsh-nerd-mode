@@ -11,3 +11,8 @@ The five canonical roles use the same strings as their names: `needs-triage`, `n
 ### Domain docs
 
 Single-context: `GLOSSARY.md` at the repo root, plus decisions in `docs/adr/`. See `docs/agents/domain.md`.
+
+### Git
+
+One agent per working tree. Before a read or write that depends on the branch,
+run `git branch --show-current`.
