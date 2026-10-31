@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
   <title id="title">Calibration sets one teaching level for every lecture</title>
-  <desc id="desc">You approve the concept graph, then answer one question round, once per topic: what you want to do with it, what you have read or used, and which concepts you can skip. The answers fan out to three teaching levels. Beginner uses numbered steps, explains every term, and shows an example per step. Standard gives intuition first, then the formal detail, with examples where useful. Advanced takes one pass with no steps, gives the formal statement first, and uses at most one example. The level is written to graph.md, and every lecture follows it. The questions, the teach-back, and the record stay the same.</desc>
+  <desc id="desc">You approve the concept graph, then answer one question round, once per Course: what you want to do with it, what you have read or used, and which concepts you can skip. The answers fan out to three teaching levels. Beginner uses numbered steps, explains every term, and shows an example per step. Standard gives intuition first, then the formal detail, with examples where useful. Advanced takes one pass with no steps, gives the formal statement first, and uses at most one example. The level is written to graph.md, and every lecture follows it. The questions, the teach-back, and the record stay the same.</desc>
 
   <rect x="8" y="8" width="944" height="624" rx="20" fill="#FFFFFF" stroke="#D8D2C6" stroke-width="2"/>
 
@@ -37,7 +37,7 @@
     <text x="168" y="322" font-size="18">grouped by chapter</text>
 
     <text x="428" y="244" font-size="21" font-weight="700" letter-spacing="0.2">One question round</text>
-    <text x="428" y="266" font-size="17">once per topic</text>
+    <text x="428" y="266" font-size="17">once per Course</text>
     <text x="428" y="296" font-size="18">what you want to do with it</text>
     <text x="428" y="326" font-size="18">what you have read or used</text>
     <text x="428" y="356" font-size="18">which concepts you can skip</text>
