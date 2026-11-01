@@ -35,3 +35,36 @@ Message sources include `user`, `skill-invocation`, `tool`, and
 
 Use `deriveMessages()` to find an earlier skill invocation. Use `eventAt` and
 `seq` only for the current turn, and stop at `turn/start`.
+
+## Read the session log file
+
+A session lives at `~/.dsh/sessions/<workspace-slug>/<session-id>/session.v4.jsonl.zstd`.
+The file is a chain of independent zstd frames, one per append batch.
+`zstdDecompressSync` on the whole file stops after the first frame, which holds
+only the `session` header. Decode frame by frame.
+
+```js
+import fs from 'node:fs'
+import z from 'node:zlib'
+
+// path = '.../<session-id>/session.v4.jsonl.zstd'
+const MAGIC = [0x28, 0xb5, 0x2f, 0xfd]
+const bytes = fs.readFileSync(path)
+const starts = []
+for (let i = 0; i <= bytes.length - 4; i += 1) {
+  if (MAGIC.every((byte, k) => bytes[i + k] === byte)) starts.push(i)
+}
+let text = ''
+for (let i = 0; i < starts.length; i += 1) {
+  text += z.zstdDecompressSync(bytes.subarray(starts[i], starts[i + 1] ?? bytes.length)).toString('utf8')
+}
+const events = text.split('\n').filter(Boolean).map((line) => JSON.parse(line))
+```
+
+Each line is one event, and the first line is the `session` header. A
+`system/message` event holds the prompt actually sent, which is the fastest way
+to confirm which prompt text one turn used. Correlate a tool call with its
+result by `source.callId`. Scanning for the magic bytes is a shortcut: a byte
+sequence inside compressed data can match, so verify the first decoded frame
+before trusting a scan.
+

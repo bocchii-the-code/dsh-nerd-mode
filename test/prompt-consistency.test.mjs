@@ -11,12 +11,12 @@ const LEVELS = ['beginner', 'standard', 'advanced']
 const POLICY_FILES = [
   'skills/study/SKILL.md',
   'skills/study-plus/SKILL.md',
-  'cordis.patch.yml',
+  'assets/section.md',
   'GLOSSARY.md',
 ]
 
 // The two copies of the calibration rules, restated for plain Nerd Mode.
-const POLICY_COPIES = ['skills/study-plus/SKILL.md', 'cordis.patch.yml']
+const POLICY_COPIES = ['skills/study-plus/SKILL.md', 'assets/section.md']
 
 // One anchor per mapping row. Both copies must keep every row.
 const MAPPING = [
@@ -65,9 +65,9 @@ test('both copies keep every calibration rule', () => {
 })
 
 test('the opening question comes before the path choice', () => {
-  const patch = read('cordis.patch.yml')
-  assert.match(patch, /opening question/i)
-  assert.match(patch, /bare topic/i)
+  const section = read('assets/section.md')
+  assert.match(section, /opening question/i)
+  assert.match(section, /bare topic/i)
   assert.match(read('skills/study/SKILL.md'), /bare topic/i)
   assert.match(read('skills/study-plus/SKILL.md'), /opening question/i)
 })

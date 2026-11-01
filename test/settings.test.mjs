@@ -86,8 +86,8 @@ function ptcInvocationEvents(name = 'study-plus') {
   ]
 }
 
-test('config validates the required section and volatile setting defaults', () => {
-  assert.throws(() => Config({}), /section.*missing|required/i)
+test('config defaults the section from the bundled file and validates settings', () => {
+  assert.match(Config({}).section, /^Nerd Mode is on for this conversation\./)
   assert.throws(() => Config({ section: '' }), /section.*match/i)
   assert.throws(() => Config({ section: '  \n  ' }), /section.*match/i)
 
