@@ -40,7 +40,7 @@ test('changelog entries run from newest to oldest', () => {
 test('every changelog entry has a date and a change group', () => {
   for (const { heading, body } of sections) {
     assert.match(heading, / - \d{4}-\d{2}-\d{2}( \(unpublished\))?$/)
-    assert.match(body, /^### (Added|Changed|Fixed)$/m)
+    assert.match(body, /^### (Added|Changed|Fixed|Removed)$/m)
   }
 })
 

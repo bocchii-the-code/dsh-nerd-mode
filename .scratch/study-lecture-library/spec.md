@@ -2,6 +2,8 @@
 
 Status: resolved
 
+Superseded in part by `.scratch/course-folders/spec.md`: the panel lists the selected Course only, not every Course in the workspace.
+
 ## Problem Statement
 
 A learner who finishes a Concept cycle gets a saved lecture file under `study/<topic>/lectures/`. The only way to read that file again is the Files panel, which shows a raw directory tree with no idea what a lecture is, or the generated Book, which hides drafts and archived material. The learner cannot see what teaching material already exists, cannot tell a draft from a taught Lecture, and cannot find the lecture about one Concept without knowing its folder and number.

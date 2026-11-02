@@ -29,8 +29,6 @@ Write the SVG file first, then talk about it.
 3. Put one caption sentence after it that states the point the picture makes. Keep the prose around it short; the figure carries the detail.
 4. Embed the figure in the section whose step it illustrates, not in a gallery at the end.
 
-Inside a `/teach` workspace, write the file to that workspace's `assets/` and reference it from the lesson file instead, with the same relative form.
-
 The Markdown path is resolved against the working directory and served from disk, so it must be a file that exists when the message renders. Write the file before the sentence that shows it. No query string, no fragment, no `data:` URL: the renderer rejects all three and shows the alt text instead. To revise a figure, overwrite the file; if the learner still sees the old picture, write a new name.
 
 ## File contract

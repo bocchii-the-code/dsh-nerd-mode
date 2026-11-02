@@ -5,7 +5,7 @@ This package is MIT licensed. It also bundles skills written by other people. Ea
 | Skill | Author | License |
 |---|---|---|
 | `study`, `study-plus`, `diagram` | This package | MIT |
-| `teach`, `writing-beats` | Matt Pocock, [mattpocock/skills](https://github.com/mattpocock/skills) | MIT |
+| `writing-beats` | Matt Pocock, [mattpocock/skills](https://github.com/mattpocock/skills) | MIT |
 | `humanizer` | Siqi Chen | MIT, full text in `skills/humanizer/LICENSE` |
 | `answer-me-with-html` | QingYunA, [QingYunA/answer-me-with-html](https://github.com/QingYunA/answer-me-with-html) | MIT. The Bangers font is under SIL OFL 1.1, full text in `skills/answer-me-with-html/licenses/OFL-Bangers.txt` |
 | `convert-documents-to-markdown` | firecrawl | MIT, stated in its frontmatter |

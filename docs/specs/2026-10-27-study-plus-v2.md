@@ -26,6 +26,8 @@ Two v1 artifacts go away: the `study-skills` junction root, and both Study prese
 
 `teach` stays: it is invoked explicitly as `/teach` and does not blend.
 
+Superseded: the package no longer ships `teach`. This sentence records the v2 decision only.
+
 The recorded session mirrors `teach`, so it is explicit and never fires by accident. The guide loads by itself while the switch is on.
 
 ```yaml

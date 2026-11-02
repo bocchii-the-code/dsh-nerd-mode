@@ -150,7 +150,7 @@ The teaching explanation for one Concept during a Concept cycle. It is not a Boo
 _Avoid_: lesson, chapter, section, content dump
 
 **Lecture library** (讲义库):
-The read-only list of saved lecture copies in one workspace, grouped by Course. It exists to find teaching material. It is not a Book, not a Tracker, and not evidence that a Concept was taught.
+The read-only list of saved lecture copies for one Course. It exists to find teaching material. It is not a Book, not a Tracker, and not evidence that a Concept was taught.
 _Avoid_: notes panel, docs browser, file manager
 
 **Figure**:

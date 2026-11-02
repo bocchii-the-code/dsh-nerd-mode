@@ -2,6 +2,12 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.4.4] - 2026-11-02
+
+### Removed
+
+- The bundled `teach` skill. A `teach` workspace keeps its files: `MISSION.md`, `lessons/`, `reference/`, `learning-records/`, and `assets/` stay where the learner put them.
+
 ## [0.4.3] - 2026-11-01
 
 ### Changed
