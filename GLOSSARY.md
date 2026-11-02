@@ -65,7 +65,7 @@ The one-time question round for a new Course. It asks for the learning goal, the
 _Avoid_: onboarding, interview, survey
 
 **Opening question** (开课提问):
-The single question round before either learning skill loads, for a learning request with no explicit command. It asks for the goal, the prior exposure, and the path: one complete answer in this conversation or tracked study. A tracked Course carries its answers into calibration and does not ask them again.
+The single question round before either learning skill loads, for a learning request with no explicit command. It asks for the goal, the prior exposure, and the path as single choices, in that order. Option labels follow the learner's language, and free input stays available. The prior-exposure options run from least to most exposure, and the highest one that applies is the answer. A tracked Course carries its answers into calibration and does not ask them again.
 _Avoid_: calibration, onboarding, interview
 
 **Teaching level** (教学深度):

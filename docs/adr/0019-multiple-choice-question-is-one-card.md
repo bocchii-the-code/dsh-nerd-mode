@@ -1,0 +1,9 @@
+# A multiple-choice question is one question card
+
+Status: accepted, 2026-11-01. Follows the choice-tool pattern in [ADR 0018](0018-opening-question-offers-choices.md).
+
+The post-lecture questions were asked as chat text, including the four-option multiple choice. The learner had to type the chosen label, so a correct answer could be lost to a typo or to a partial quote. The host already shows a question card for a fixed choice, so the four options belong on that card.
+
+Now a `multiple-choice` slot is one `question` call with four options and exactly one correct answer, and choosing it is sufficient. One call asks one question, so the wait, the hint, the re-ask, and the similar question still act on one slot. Option labels carry the whole answer, with no description, and the four positions are shuffled for each slot. The learner may type instead of choosing: text that names or repeats an option counts as choosing it, and any other text is graded like a short answer. A dismissed card or a timeout is not a miss. The skill re-asks once, then records a defer. A host without a `question` tool gets the same four options as a numbered text list. Short-answer slots stay in the conversation, because options on an open question point at the answer.
+
+Alternatives. Sending every question form through the card was rejected: a card needs options, and any option narrows an open answer. Batching all slots into one call was rejected: the hint, the re-ask, and the similar question act on one slot, and a card that holds every slot cannot leave one slot open. Counting a dismissed card as a miss was rejected: closing a card is not a wrong answer, and a miss lowers the pass rate. Putting a one-line description on each option was rejected: the description is a second place to leak the answer.

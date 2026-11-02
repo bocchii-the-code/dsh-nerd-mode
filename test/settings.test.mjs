@@ -250,7 +250,7 @@ test('study-plus instructions keep request overrides, recall effects, and slot r
   assert.match(skill, /Do not change learner knowledge, tracker state, or the session log because of this activity/)
   assert.match(skill, /When the configured count is zero, skip unseen questions\. A passed Teach-back alone is sufficient to pass/)
   assert.match(skill, /`ceil\(2 × slot count \/ 3\)` correct slots/)
-  assert.match(skill, /four options with exactly one correct answer/)
+  assert.match(skill, /four options and exactly one correct answer/)
   assert.match(skill, /choose short-answer or multiple-choice independently at random for each planned slot/)
   assert.match(skill, /similar question in the same slot/)
   assert.match(skill, /Keep the original miss recorded even if the learner answers the similar question correctly/)

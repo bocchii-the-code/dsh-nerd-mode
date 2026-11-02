@@ -2,6 +2,27 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.4.3] - 2026-11-01
+
+### Changed
+
+- The path item lists only Courses that exist, labels a single Course as the current Course, and keeps "one concept per session" in the question text instead of the option labels.
+- A new Course from the path item asks for its name once. A name that matches an existing Course asks whether to continue it or use another name.
+- A post-lecture multiple-choice question is one `question` call with four labeled options in shuffled positions. A typed answer that names an option counts as choosing it, a dismissed card re-asks once and never counts as a miss, and a host without the tool gets a numbered text list.
+
+## [0.4.2] - 2026-11-01
+
+### Fixed
+
+- The graph approval shows the full table in the reply, not in the question text, so the card no longer prints raw table pipes.
+
+## [0.4.1] - 2026-11-01
+
+### Changed
+
+- The opening question offers single choices for the goal, the background, and the path. Labels follow the learner's language, free input stays available, and a host without a choice tool gets a numbered text list.
+- A brief from the upper layer is final, so `study` never asks again for a goal or a background that the brief leaves out.
+
 ## [0.4.0] - 2026-10-31
 
 ### Added

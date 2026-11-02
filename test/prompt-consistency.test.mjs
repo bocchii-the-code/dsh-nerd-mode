@@ -72,8 +72,77 @@ test('the opening question comes before the path choice', () => {
   assert.match(read('skills/study-plus/SKILL.md'), /opening question/i)
 })
 
+// The opening question is a fixed set of single choices, listed in one copy of
+// the prompt. A label lost from that copy fails here.
+const OPENING_CHOICES = [
+  /single-choice/i,
+  /pass an exam/i,
+  /understand the principles/i,
+  /use it in a project or at work/i,
+  /get a rough overview/i,
+  /never studied it/i,
+  /read introductory material/i,
+  /took a course or systematic training/i,
+  /used it at work/i,
+  /one complete answer in this conversation/i,
+  /no Course record/i,
+  /current Course/i,
+  /each existing Course/i,
+  /one concept per session/i,
+  /start a new Course/i,
+  /numbered text list/i,
+]
+
+test('the opening question keeps every fixed choice', () => {
+  const section = read('assets/section.md')
+  for (const choice of OPENING_CHOICES) {
+    assert.match(section, choice, `assets/section.md lost ${choice}`)
+  }
+  assert.match(read('skills/study-plus/SKILL.md'), /start a new Course/i)
+  assert.match(read('skills/study/SKILL.md'), /brief from an upper layer is final/i)
+})
+
+test('the graph approval keeps the table out of the question text', () => {
+  const skill = read('skills/study-plus/SKILL.md')
+  assert.match(skill, /full graph and chapter layout in the reply before the approval question/i)
+  assert.match(skill, /Do not put the table in the question text/i)
+})
+
+test('a new Course asks for its name and handles a name collision', () => {
+  const skill = read('skills/study-plus/SKILL.md')
+  assert.match(skill, /asks for its name once/i)
+  assert.match(skill, /matches an existing Course/i)
+  assert.match(skill, /continue that Course or use another name/i)
+})
+
+test('the path item lists only Courses that exist', () => {
+  for (const path of ['assets/section.md', 'skills/study-plus/SKILL.md']) {
+    assert.match(read(path), /only for a Course that exists under `study\/`/i, `${path} lost the existing-Course rule`)
+  }
+})
+
 test('the graph format line names the three levels in order', () => {
   assert.match(read('skills/study-plus/SKILL.md'), /^Teaching level: beginner \| standard \| advanced$/m)
+})
+
+// A multiple-choice slot is one question card. A rule deleted from the skill
+// fails here.
+const QUESTION_CARD = [
+  /One call asks one question/,
+  /one `question` call with four options/,
+  /no description/,
+  /shuffle the four positions/,
+  /numbered text list/,
+  /names or repeats one option/,
+  /closes the question card/,
+]
+
+test('a multiple-choice question is one question card', () => {
+  const skill = read('skills/study-plus/SKILL.md')
+  for (const pattern of QUESTION_CARD) {
+    assert.match(skill, pattern, `skills/study-plus/SKILL.md lost ${pattern}`)
+  }
+  assert.match(skill, /`short-answer`, ask the question in the conversation/)
 })
 
 test('every README image is a real SVG with a title and a viewBox', () => {

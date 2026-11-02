@@ -19,7 +19,7 @@ A chat lesson usually ends when the answer arrives. Nothing checks that you unde
 - One switch for the whole conversation. `/nerd-mode on` teaches every learning-shaped request and leaves feature work, searches, and commands alone.
 - Two ways to learn. `/study` answers one concept or one task in chat and keeps nothing. `/study-plus` runs one Course over weeks with a dated record.
 - A map before the first lesson. A concept graph in prerequisite order, grouped into a Book of Chapters and Sections, approved by you before any file is written.
-- One question round before teaching. It asks your goal, your background, and whether you want one complete answer or a tracked Course; a tracked Course adds the concepts you can skip. The answers set a teaching level that every lecture follows.
+- One question round before teaching. It offers choices for your goal, your background, and whether you want one complete answer or a tracked Course; a tracked Course adds the concepts you can skip. The answers set a teaching level that every lecture follows.
 - Teaching that stops at the fork. The guide explains in steps and stops where the choice changes the result, instead of handing over a finished answer.
 - Evidence, not impressions. Unseen questions and a graded teach-back, with the rubric written before the question. Only an answer you produced changes the record.
 - A record that outlives the chat. The graph, the states, and the dated log survive restarts, and the HTML Book rebuilds after each batch and each lesson, with full-text search.
@@ -80,7 +80,7 @@ Use it for a question you want to understand now and will probably not return to
 
 Type the command, or turn the switch on and just ask. With the switch on, a learning-shaped request gets this shape by default.
 
-An explicit `/study-plus` goes straight to tracked study, even when the request names several concepts. An explicit `/study` goes straight to one-off teaching. With the switch on and no command, a learning request gets one question round first: what you want to be able to do, what you have already read or used, and whether you want one complete answer in this conversation or a tracked `/study-plus` session. The one-off answer uses a title, chapter headings, and section headings in plain Markdown.
+An explicit `/study-plus` goes straight to tracked study, even when the request names several concepts. An explicit `/study` goes straight to one-off teaching. With the switch on and no command, a learning request gets one question round first: your goal and your background as single choices, and whether you want one complete answer in this conversation or a tracked `/study-plus` session. The one-off answer uses a title, chapter headings, and section headings in plain Markdown.
 
 You get a title, the central idea, numbered steps, one line of symbols above each formula, and a short table only when four or more symbols keep coming back. Then one worked example, the common mistake, and the single stop at the fork. For a task, you get the finished artifact with its reasoning.
 
@@ -133,7 +133,7 @@ A concept the graph removes has its lecture file moved to `lectures/archive/`, n
 
 Later sessions read the tracker files first. You pick a Chapter or a Concept, and it names that Concept, its state, and the state of its prerequisites in one line. Nothing forces a prerequisite order.
 
-Profile defaults live under Settings -> Nerd Mode. They cover whether each tracked session opens with a Recall Session, and how many unseen questions follow a lecture, in which form (short answer, four-option multiple choice, or mixed). Save applies to the next session, Cancel discards a draft, and Restore defaults returns to recall off, 3 questions, short answer. A preference stated inside one `/study-plus` request wins for that session only.
+Profile defaults live under Settings -> Nerd Mode. They cover whether each tracked session opens with a Recall Session, and how many unseen questions follow a lecture, in which form (short answer, four-option multiple choice, or mixed). A four-option question appears as a card with one correct choice. A short-answer question is asked in the conversation. Save applies to the next session, Cancel discards a draft, and Restore defaults returns to recall off, 3 questions, short answer. A preference stated inside one `/study-plus` request wins for that session only.
 
 You get a reading order and a prerequisite order, any concept you choose, a graded check for that concept, a saved lecture, and a record that survives restarts. The HTML book refreshes after each draft batch and each lesson, with one page per saved Section in its original order, full text search, and a draft label on unprepared reading.
 

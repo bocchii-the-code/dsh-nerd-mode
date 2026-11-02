@@ -12,3 +12,13 @@
         providerName: study-plus
         includeDefaultRoots: false
         bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('dsh-nerd-mode/package.json')), 'skills')
+
+# Goal mode stays off. The built-in create_goal description tells the model to
+# arm a goal for any long-running request, which turns one study answer into an
+# auto-continuing run. Without the three packages below, no goal can be created.
+- id: tool-goal
+  disabled: true
+- id: command-goal
+  disabled: true
+- id: goal-round-driver
+  disabled: true

@@ -48,7 +48,7 @@ For `advanced`:
 
 Accuracy rules outrank the level. No level removes a symbol definition, a justification for a derivation step, a stated assumption or approximation, or a bound. No level adds filler, repeated explanation, or a section the concept does not need. The level affects the lecture only.
 
-For a one-off request with no graph, derive the level from the brief the upper layer supplies and from the request and the supplied material. A bare topic, or "I want to learn X", states no goal. When neither the brief nor the request states a goal or a background, ask one combined question before teaching: what the learner wants to reach and whether they have met the topic before. State the derived level in one line, then teach. Write no file.
+For a one-off request with no graph, derive the level from the brief the upper layer supplies and from the request and the supplied material. A brief from an upper layer is final: never ask again for a goal or a background it leaves out. A bare topic, or "I want to learn X", states no goal. When no brief arrives and neither the request nor the supplied material states a goal or a background, ask one combined question before teaching: what the learner wants to reach and whether they have met the topic before. State the derived level in one line, then teach. Write no file.
 
 ## Format the answer
 
