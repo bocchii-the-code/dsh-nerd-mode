@@ -213,6 +213,8 @@ Change the defaults under Settings → Nerd Mode.
 
 A four-option question appears as a card with one correct choice. The guide asks a short-answer question in the conversation. Save applies to the next session, Cancel discards a draft, and Restore defaults returns to recall off, 3 questions, short answer. A preference stated inside one `/study-plus` request wins for that session only and does not update the profile.
 
+The About group at the bottom shows the installed and the newest npm version. Its button installs an update through DSH Market and offers a restart when the host allows one. The whole page follows the DSH interface language.
+
 ## How it fits into dsh
 
 Nerd Mode is a profile-level plugin, mounted from `cordis.patch.yml`. The patch covers the whole profile, so every mode gains the command and the pill.

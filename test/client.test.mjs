@@ -1,10 +1,55 @@
-import test from 'node:test'
+import test, { afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 
 // client.js calls window.__ModuleLoader__.load at import time.
 let captured
 globalThis.window = { __ModuleLoader__: { load: (entry) => { captured = entry } } }
 await import('../client.js')
+
+const realFetch = globalThis.fetch
+let marketCalls = []
+
+function jsonResponse(body, status = 200) {
+  return { ok: status >= 200 && status < 300, status, json: async () => body }
+}
+
+// Routes match on a URL substring. A response is a value or a function of the request.
+function stubFetch(routes) {
+  marketCalls = []
+  globalThis.fetch = async (url, options = {}) => {
+    const request = { url: String(url), method: options.method ?? 'GET', body: options.body }
+    marketCalls.push(request)
+    const route = routes.find(({ match, method = 'GET' }) => method === request.method
+      && (match instanceof RegExp ? match.test(request.url) : request.url.includes(match)))
+    if (route === undefined) return jsonResponse({ error: 'no route' }, 404)
+    return typeof route.respond === 'function' ? route.respond(request) : route.respond
+  }
+  return marketCalls
+}
+
+afterEach(() => {
+  globalThis.fetch = realFetch
+})
+
+// The host locale service: one active key, a subscriber list, an English fallback.
+function fakeLocale(language = 'en') {
+  let active = language
+  const listeners = new Set()
+  return {
+    getSnapshot: () => active,
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    resolveText(text) {
+      return text[active] ?? text.en
+    },
+    switchTo(next) {
+      active = next
+      for (const listener of listeners) listener()
+    },
+  }
+}
 
 const FakeToast = function Toast() {}
 let hookInstances = new Map()
@@ -199,6 +244,8 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
     },
   }
   const dockTypes = []
+  const locale = fakeLocale(configOptions.locale ?? 'en')
+  const fetchCalls = stubFetch(configOptions.market ?? [])
   const ctx = {
     effect(fn) {
       return fn()
@@ -243,10 +290,11 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
       },
       describe: () => description,
     },
+    locale,
   }
   // Cordis has a scoped inject, but apply itself always runs.
   client.apply(ctx)
-  return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description }
+  return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description, locale, fetchCalls }
 }
 
 function render(active, executeImpl) {
@@ -340,6 +388,12 @@ function renderSettings(initialSettings, configOptions) {
     get tree() { return renderer.tree },
     rerender: () => renderer.render(),
     flush: () => renderer.flush(),
+    async settle() {
+      for (let turn = 0; turn < 60; turn += 1) {
+        await new Promise((resolve) => queueMicrotask(resolve))
+      }
+      return renderer.tree
+    },
   }
 }
 
@@ -650,6 +704,248 @@ test('dismissing the toast keeps the tooltip text', async () => {
   const later = view.rerender(false)
   assert.equal(toastOf(later), undefined)
   assert.match(buttonOf(later).props.title, /not available in this build/)
+})
+
+// --- About group -------------------------------------------------------------
+
+const MARKET = {
+  capabilities: '/dsh-market/api/v1/capabilities',
+  updates: '/dsh-market/api/v1/updates',
+  operations: '/dsh-market/api/v1/operations',
+  restart: '/dsh-market/api/v1/restart',
+}
+const UPDATE_SCHEMA = 'dsh-market/update-api/v1'
+
+const capabilitiesBody = ({ profile = 'work', update = true, restart = true } = {}) => ({
+  schema: UPDATE_SCHEMA,
+  profile,
+  features: { update, restart },
+  endpoints: {
+    updates: MARKET.updates,
+    operations: MARKET.operations,
+    ...(restart ? { restart: MARKET.restart } : {}),
+  },
+})
+
+const releaseBody = (overrides = {}) => ({
+  schema: UPDATE_SCHEMA,
+  package: {
+    name: 'dsh-nerd-mode',
+    source: 'npm',
+    installedVersion: '0.4.4',
+    latestVersion: '0.4.5',
+    updateAvailable: true,
+    channelSwitch: null,
+    ...overrides,
+  },
+})
+
+const operationBody = (overrides = {}) => ({
+  schema: UPDATE_SCHEMA,
+  operation: {
+    operationId: 'op-1',
+    packageName: 'dsh-nerd-mode',
+    state: 'succeeded',
+    beforeVersion: '0.4.4',
+    installedVersion: '0.4.5',
+    outcome: { refreshRequired: true, restartRequired: true, rollback: null },
+    failure: null,
+    ...overrides,
+  },
+})
+
+// The default run: capabilities and a release, with no operation involved.
+const marketRoutes = () => [
+  { match: MARKET.capabilities, respond: jsonResponse(capabilitiesBody()) },
+  { match: MARKET.updates, respond: jsonResponse(releaseBody()) },
+]
+
+// The same run plus a single operation that reaches a terminal state on the first poll.
+const updateRoutes = ({ capabilities = capabilitiesBody(), operation = operationBody() } = {}) => [
+  { match: MARKET.capabilities, respond: jsonResponse(capabilities) },
+  { match: MARKET.updates, respond: jsonResponse(releaseBody()) },
+  { match: MARKET.updates, method: 'POST', respond: jsonResponse({ schema: UPDATE_SCHEMA, operation: { operationId: 'op-1' } }, 202) },
+  { match: MARKET.operations, respond: jsonResponse(operation) },
+  { match: MARKET.restart, method: 'POST', respond: jsonResponse({ schema: UPDATE_SCHEMA }) },
+]
+
+const buttonNamed = (tree, text) => allOfType(tree, 'button')
+  .find(({ props }) => textOf(props.children) === text)
+
+async function confirmUpdate(view) {
+  buttonNamed(view.tree, 'Update to v0.4.5').props.onClick()
+  return view.settle()
+}
+
+test('the About group checks on mount and shows both versions without force', async () => {
+  const view = renderSettings(undefined, { market: marketRoutes() })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /Installed v0\.4\.4 · latest v0\.4\.5/)
+  assert.equal(view.fetchCalls[0].url, MARKET.capabilities)
+  const check = view.fetchCalls.find(({ url }) => url.startsWith(MARKET.updates))
+  assert.match(check.url, /name=dsh-nerd-mode/)
+  assert.doesNotMatch(check.url, /force/)
+  assert.equal(view.fetchCalls.length, 2)
+  assert.equal(view.fetchCalls.every(({ method }) => method === 'GET'), true)
+})
+
+test('confirming posts the package once and a succeeded operation offers the restart', async () => {
+  const view = renderSettings(undefined, { market: updateRoutes() })
+  await view.settle()
+
+  const confirming = await confirmUpdate(view)
+  assert.match(textOf(confirming), /Install v0\.4\.5 and restart DSH afterwards\?/)
+  assert.equal(buttonNamed(confirming, 'Cancel') !== undefined, true)
+
+  buttonNamed(confirming, 'Update').props.onClick()
+  const installed = await view.settle()
+
+  const posts = view.fetchCalls.filter(({ method, url }) => method === 'POST' && url === MARKET.updates)
+  assert.equal(posts.length, 1)
+  assert.deepEqual(JSON.parse(posts[0].body), { packageName: 'dsh-nerd-mode' })
+  assert.equal(view.fetchCalls.some(({ url }) => url.startsWith(MARKET.operations)), true)
+  assert.match(textOf(installed), /Installed v0\.4\.5/)
+  assert.match(textOf(installed), /Restart DSH to use v0\.4\.5\./)
+
+  buttonNamed(installed, 'Restart now').props.onClick()
+  const restarted = await view.settle()
+
+  const restarts = view.fetchCalls.filter(({ method, url }) => method === 'POST' && url === MARKET.restart)
+  assert.equal(restarts.length, 1)
+  assert.equal(restarts[0].body, '{}')
+  assert.match(textOf(restarted), /DSH is restarting/)
+})
+
+test('hides the restart button when the Market cannot restart', async () => {
+  const view = renderSettings(undefined, {
+    market: updateRoutes({ capabilities: capabilitiesBody({ restart: false }) }),
+  })
+  await view.settle()
+  const confirming = await confirmUpdate(view)
+  buttonNamed(confirming, 'Update').props.onClick()
+  const installed = await view.settle()
+
+  assert.equal(buttonNamed(installed, 'Restart now'), undefined)
+  assert.equal(buttonNamed(installed, 'Check again') !== undefined, true)
+  assert.match(textOf(installed), /Installed v0\.4\.5/)
+})
+
+test('a linked install stays local, reveals the note, and posts nothing', async () => {
+  const view = renderSettings(undefined, {
+    market: [
+      { match: MARKET.capabilities, respond: jsonResponse(capabilitiesBody()) },
+      {
+        match: MARKET.updates,
+        respond: jsonResponse(releaseBody({ source: 'linked', latestVersion: null, updateAvailable: false })),
+      },
+    ],
+  })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /Local v0\.4\.4/)
+  const about = buttonNamed(tree, 'About local installs')
+  assert.ok(about)
+  about.props.onClick()
+  const revealed = await view.settle()
+
+  assert.match(textOf(revealed), /linked to a folder\. Update it with git, not npm\./)
+  assert.equal(buttonNamed(revealed, 'About local installs') !== undefined, true)
+  assert.equal(view.fetchCalls.every(({ method }) => method === 'GET'), true)
+})
+
+test('an installed version ahead of npm offers no downgrade', async () => {
+  const view = renderSettings(undefined, {
+    market: [
+      { match: MARKET.capabilities, respond: jsonResponse(capabilitiesBody()) },
+      {
+        match: MARKET.updates,
+        respond: jsonResponse(releaseBody({ installedVersion: '0.5.0', updateAvailable: false })),
+      },
+    ],
+  })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /Local v0\.5\.0 · npm v0\.4\.5/)
+  assert.match(textOf(tree), /This copy is newer than npm\. No update\./)
+  assert.equal(buttonNamed(tree, 'Update to v0.4.5'), undefined)
+})
+
+test('a missing Market shows the manual command with a literal profile', async () => {
+  const view = renderSettings(undefined, { market: [] })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /dsh plugin --profile <profile> add dsh-nerd-mode/)
+  assert.equal(view.fetchCalls.length, 1)
+  assert.equal(view.fetchCalls[0].url, MARKET.capabilities)
+  assert.equal(buttonNamed(tree, 'Check again'), undefined)
+  assert.equal(buttonNamed(tree, 'Try again'), undefined)
+})
+
+test('a failed operation shows its message and retries with force', async () => {
+  const view = renderSettings(undefined, {
+    market: [
+      { match: MARKET.capabilities, respond: jsonResponse(capabilitiesBody()) },
+      { match: MARKET.updates, respond: jsonResponse(releaseBody()) },
+      {
+        match: MARKET.updates,
+        method: 'POST',
+        respond: (request) => jsonResponse({
+          schema: UPDATE_SCHEMA,
+          operation: { operationId: JSON.parse(request.body).force === true ? 'op-2' : 'op-1' },
+        }, 202),
+      },
+      {
+        match: MARKET.operations,
+        respond: (request) => jsonResponse(request.url.includes('op-2')
+          ? operationBody({ operationId: 'op-2' })
+          : operationBody({
+              operationId: 'op-1',
+              state: 'failed',
+              outcome: null,
+              failure: { code: 'RELEASE_TOO_FRESH', message: 'The release is too fresh.', retryable: true },
+            })),
+      },
+    ],
+  })
+  await view.settle()
+  const confirming = await confirmUpdate(view)
+  buttonNamed(confirming, 'Update').props.onClick()
+  const failed = await view.settle()
+
+  assert.match(textOf(failed), /The release is too fresh\./)
+  assert.match(textOf(failed), /dsh plugin --profile work add dsh-nerd-mode/)
+
+  buttonNamed(failed, 'Try again').props.onClick()
+  const retried = await view.settle()
+
+  const posts = view.fetchCalls.filter(({ method, url }) => method === 'POST' && url === MARKET.updates)
+  assert.equal(posts.length, 2)
+  assert.deepEqual(JSON.parse(posts[1].body), { packageName: 'dsh-nerd-mode', force: true })
+  assert.match(textOf(retried), /Installed v0\.4\.5/)
+})
+
+test('renders the whole settings section in Chinese when the locale is zh', async () => {
+  const view = renderSettings(undefined, { locale: 'zh', market: marketRoutes() })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /恢复默认/)
+  assert.match(textOf(tree), /关于/)
+  assert.match(textOf(tree), /新 study-plus 会话的 profile 默认值/)
+  assert.match(textOf(tree), /已安装 v0\.4\.4 · 最新 v0\.4\.5/)
+  assert.doesNotMatch(textOf(tree), /Restore defaults/)
+})
+
+test('follows a language switch without remounting the section', async () => {
+  const view = renderSettings(undefined, { market: marketRoutes() })
+  await view.settle()
+  assert.match(textOf(view.tree), /Restore defaults/)
+
+  view.locale.switchTo('zh')
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /恢复默认/)
+  assert.match(textOf(tree), /更新到 v0\.4\.5/)
 })
 
 // --- Study tab ---------------------------------------------------------------

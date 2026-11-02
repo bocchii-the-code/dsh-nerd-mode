@@ -59,7 +59,110 @@ window.__ModuleLoader__.load({
         && left.unseenQuestionType === right.unseenQuestionType;
     }
 
-    function NerdModeSettingsEntry({ configForms, close }) {
+    const MARKET_API = '/dsh-market/api/v1';
+    const PACKAGE = 'dsh-nerd-mode';
+    const UPDATE_SCHEMA = 'dsh-market/update-api/v1';
+    const REQUEST_TIMEOUT = 10000;
+    const POLL_INTERVAL = 1000;
+
+    function useT(locale) {
+      React.useSyncExternalStore(
+        (listener) => locale.subscribe(listener),
+        () => locale.getSnapshot(),
+        () => locale.getSnapshot(),
+      );
+      return (text) => locale.resolveText(text);
+    }
+
+    // Every Market call carries the session cookies and gives up after 10 s.
+    async function marketRequest(url, options = {}, life = null) {
+      const controller = new AbortController();
+      if (life !== null) life.controller = controller;
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+      try {
+        const response = await fetch(url, {
+          credentials: 'same-origin',
+          ...options,
+          signal: controller.signal,
+        });
+        const body = await response.json().catch(() => null);
+        return { ok: response.ok, status: response.status, body };
+      } catch (error) {
+        if (controller.signal.aborted) throw new Error('DSH Market did not answer within 10 seconds.');
+        throw error;
+      } finally {
+        clearTimeout(timer);
+        if (life !== null && life.controller === controller) life.controller = null;
+      }
+    }
+
+    function marketFailure(result, fallback) {
+      const body = result?.body ?? {};
+      return body.error
+        ?? body.failure?.message
+        ?? body.failure?.code
+        ?? `${fallback} (HTTP ${result?.status ?? 0}).`;
+    }
+
+    // The schema is optional on the operation endpoints, but a wrong one is a different API.
+    const wrongSchema = (body) => body?.schema !== undefined && body.schema !== UPDATE_SCHEMA;
+
+    async function readCapabilities(life) {
+      const result = await marketRequest(`${MARKET_API}/capabilities`, {}, life);
+      const body = result.body ?? {};
+      if (!result.ok) throw new Error(marketFailure(result, 'DSH Market did not answer'));
+      if (body.schema !== UPDATE_SCHEMA || body.features?.update !== true) {
+        throw new Error('DSH Market does not support plugin updates.');
+      }
+      const endpoints = body.endpoints ?? {};
+      if (typeof endpoints.updates !== 'string' || typeof endpoints.operations !== 'string') {
+        throw new Error('DSH Market returned no update endpoints.');
+      }
+      return {
+        endpoints: { updates: endpoints.updates, operations: endpoints.operations },
+        profile: typeof body.profile === 'string' ? body.profile : null,
+        restart: body.features.restart === true && typeof endpoints.restart === 'string' ? endpoints.restart : null,
+      };
+    }
+
+    async function readRelease(market, force, life) {
+      const url = `${market.endpoints.updates}?name=${encodeURIComponent(PACKAGE)}${force ? '&force=1' : ''}`;
+      const result = await marketRequest(url, {}, life);
+      const body = result.body ?? {};
+      if (!result.ok) throw new Error(marketFailure(result, 'DSH Market did not check for an update'));
+      if (body.schema !== UPDATE_SCHEMA || typeof body.package !== 'object' || body.package === null) {
+        throw new Error('DSH Market returned no release for this plugin.');
+      }
+      return body.package;
+    }
+
+    const VERSION = /^(\d+)\.(\d+)\.(\d+)$/;
+
+    // Only a plain `major.minor.patch` pair can prove the local copy is newer.
+    function compareVersions(left, right) {
+      const first = VERSION.exec(String(left ?? ''));
+      const second = VERSION.exec(String(right ?? ''));
+      if (first === null || second === null) return 0;
+      for (let at = 1; at <= 3; at += 1) {
+        const difference = Number(first[at]) - Number(second[at]);
+        if (difference !== 0) return difference;
+      }
+      return 0;
+    }
+
+    const manualCommand = (profile) => `dsh plugin --profile ${profile ?? '<profile>'} add ${PACKAGE}`;
+
+    function NerdModeSettingsEntry({ configForms, close, locale }) {
+      return React.createElement(
+        'div',
+        { 'data-nerd-mode-settings': '', style: settingsColumnStyle },
+        React.createElement(NerdModeSettingsBody, { configForms, close, locale }),
+        React.createElement(AboutGroup, { locale }),
+      );
+    }
+
+    function NerdModeSettingsBody({ configForms, close, locale }) {
+      const t = useT(locale);
       const description = configForms.describe();
       const described = React.useSyncExternalStore(
         (listener) => description.subscribe(listener),
@@ -69,30 +172,32 @@ window.__ModuleLoader__.load({
       const settingsExist = described.view?.namespaces.some(({ ns }) => ns === SETTINGS_NAMESPACE) === true;
       if (!settingsExist) {
         const loading = (described.status === 'idle' || described.status === 'loading') && !described.error;
-        return React.createElement('div', { 'data-nerd-mode-settings': '' },
+        return React.createElement(React.Fragment, null,
           React.createElement('p', {
             role: 'status',
             'aria-busy': loading,
             style: feedbackStyle,
           }, loading
-            ? 'Loading Nerd Mode settings…'
+            ? t({ en: 'Loading Nerd Mode settings…', zh: '正在加载 Nerd Mode 设置…' })
             : described.status === 'ready'
-              ? 'Nerd Mode settings are unavailable in this profile.'
-              : 'Nerd Mode settings could not be loaded. Refresh the Settings window and try again.'),
+              ? t({ en: 'Nerd Mode settings are unavailable in this profile.', zh: '此 profile 中没有 Nerd Mode 设置。' })
+              : t({ en: 'Nerd Mode settings could not be loaded. Refresh the Settings window and try again.', zh: '无法加载 Nerd Mode 设置。请刷新设置窗口后重试。' })),
           loading ? null : React.createElement('button', {
             type: 'button',
             onClick: close,
             style: secondaryButtonStyle,
-          }, 'Close'),
+          }, t({ en: 'Close', zh: '关闭' })),
         );
       }
       return React.createElement(NerdModeSettings, {
         close,
+        locale,
         scope: configForms.get(SETTINGS_NAMESPACE),
       });
     }
 
-    function NerdModeSettings({ scope, close }) {
+    function NerdModeSettings({ scope, close, locale }) {
+      const t = useT(locale);
       const snapshot = React.useSyncExternalStore(
         (listener) => scope.subscribe(listener),
         () => scope.getSnapshot(),
@@ -111,19 +216,19 @@ window.__ModuleLoader__.load({
           role: 'status',
           'aria-busy': true,
           style: feedbackStyle,
-        }, 'Loading Nerd Mode settings…');
+        }, t({ en: 'Loading Nerd Mode settings…', zh: '正在加载 Nerd Mode 设置…' }));
       }
       if (snapshot?.status !== 'ready') {
-        return React.createElement('div', { 'data-nerd-mode-settings': '' },
+        return React.createElement(React.Fragment, null,
           React.createElement('p', { role: 'status', style: feedbackStyle },
             snapshot?.status === 'unavailable'
-              ? 'Nerd Mode settings are unavailable in this profile.'
-              : 'Nerd Mode settings could not be loaded. Refresh the Settings window and try again.'),
+              ? t({ en: 'Nerd Mode settings are unavailable in this profile.', zh: '此 profile 中没有 Nerd Mode 设置。' })
+              : t({ en: 'Nerd Mode settings could not be loaded. Refresh the Settings window and try again.', zh: '无法加载 Nerd Mode 设置。请刷新设置窗口后重试。' })),
           React.createElement('button', {
             type: 'button',
             onClick: close,
             style: secondaryButtonStyle,
-          }, 'Close'),
+          }, t({ en: 'Close', zh: '关闭' })),
         );
       }
       const current = settingsValues(snapshot);
@@ -153,38 +258,39 @@ window.__ModuleLoader__.load({
         setFeedback(null);
         try {
           const accepted = await scope.mutate(operations, latest.revision);
-          if (accepted === false) throw new Error('The profile rejected these settings.');
+          if (accepted === false) {
+            throw new Error(t({ en: 'The profile rejected these settings.', zh: 'profile 拒绝了这些设置。' }));
+          }
           setDraft(settingsValues(scope.getSnapshot()));
-          setFeedback('Saved to this profile. Changes apply to the next study-plus session.');
+          setFeedback({
+            tone: 'status',
+            text: {
+              en: 'Saved to this profile. Changes apply to the next study-plus session.',
+              zh: '已保存到此 profile。更改将在下次 study-plus 会话中生效。',
+            },
+          });
         } catch (error) {
-          setFeedback(`Could not save settings: ${error?.message ?? 'the profile rejected the changes'}`);
+          setFeedback({
+            tone: 'alert',
+            text: {
+              en: `Could not save settings: ${error?.message ?? 'the profile rejected the changes'}`,
+              zh: `无法保存设置：${error?.message ?? 'profile 拒绝了这些更改'}`,
+            },
+          });
         } finally {
           setSaving(false);
         }
       };
 
       return React.createElement(
-        'div',
-        {
-          'data-nerd-mode-settings': '',
-          style: {
-            boxSizing: 'border-box',
-            color: 'var(--dsw-alias-label-primary)',
-            display: 'flex',
-            flexDirection: 'column',
-            fontFamily: 'var(--dsw-font-family, inherit)',
-            gap: 16,
-            maxWidth: 720,
-            paddingBottom: 24,
-            width: '100%',
-          },
-        },
+        React.Fragment,
+        null,
         React.createElement(
           'header',
           { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
           React.createElement('h2', {
             style: { fontSize: 16, fontWeight: 600, lineHeight: '24px', margin: 0 },
-          }, 'Nerd Mode'),
+          }, t({ en: 'Nerd Mode', zh: 'Nerd Mode' })),
           React.createElement('p', {
             style: {
               color: 'var(--dsw-alias-label-tertiary)',
@@ -192,7 +298,7 @@ window.__ModuleLoader__.load({
               lineHeight: '22px',
               margin: 0,
             },
-          }, 'Profile defaults for new study-plus sessions.'),
+          }, t({ en: 'Profile defaults for new study-plus sessions.', zh: '新 study-plus 会话的 profile 默认值。' })),
         ),
         React.createElement(
           'section',
@@ -203,8 +309,8 @@ window.__ModuleLoader__.load({
           React.createElement(
             'div',
             { style: { minWidth: 0 } },
-            React.createElement('h3', { style: groupTitleStyle }, 'Recall Session / 课前回忆'),
-            React.createElement('p', { style: groupDescriptionStyle }, 'One ungraded recall question before teaching.'),
+            React.createElement('h3', { style: groupTitleStyle }, t({ en: 'Recall Session / 课前回忆', zh: '课前回忆' })),
+            React.createElement('p', { style: groupDescriptionStyle }, t({ en: 'One ungraded recall question before teaching.', zh: '讲授前的一次不计分课前回忆。' })),
           ),
           React.createElement(
             'button',
@@ -212,14 +318,16 @@ window.__ModuleLoader__.load({
               type: 'button',
               role: 'switch',
               'aria-checked': draft.recallSessionEnabled,
-              'aria-label': 'Recall Session',
+              'aria-label': t({ en: 'Recall Session', zh: '课前回忆' }),
               'data-setting': 'recallSessionEnabled',
               'data-state': draft.recallSessionEnabled ? 'on' : 'off',
               disabled: !writable || saving,
               onClick: () => updateDraft('recallSessionEnabled', !draft.recallSessionEnabled),
               style: switchStyle(draft.recallSessionEnabled, !writable || saving),
             },
-            React.createElement('span', null, draft.recallSessionEnabled ? 'On' : 'Off'),
+            React.createElement('span', null, draft.recallSessionEnabled
+              ? t({ en: 'On', zh: '开' })
+              : t({ en: 'Off', zh: '关' })),
             React.createElement('span', {
               'aria-hidden': 'true',
               style: {
@@ -241,8 +349,8 @@ window.__ModuleLoader__.load({
           React.createElement(
             'div',
             null,
-            React.createElement('h3', { style: groupTitleStyle }, 'Post-lecture questions'),
-            React.createElement('p', { style: groupDescriptionStyle }, 'Choose how many unseen questions follow each lecture.'),
+            React.createElement('h3', { style: groupTitleStyle }, t({ en: 'Post-lecture questions', zh: '课后提问' })),
+            React.createElement('p', { style: groupDescriptionStyle }, t({ en: 'Choose how many unseen questions follow each lecture.', zh: '选择每节课后出几道题。' })),
           ),
           React.createElement(
             'div',
@@ -250,7 +358,7 @@ window.__ModuleLoader__.load({
             React.createElement(
               'label',
               { htmlFor: 'nerd-mode-question-count', style: fieldLabelStyle },
-              React.createElement('span', null, 'Question count'),
+              React.createElement('span', null, t({ en: 'Question count', zh: '题数' })),
               React.createElement('input', {
                 id: 'nerd-mode-question-count',
                 type: 'number',
@@ -264,12 +372,12 @@ window.__ModuleLoader__.load({
                 onChange: (event) => updateDraft('unseenQuestionCount', event.target.value),
                 style: fieldControlStyle,
               }),
-              React.createElement('span', { style: fieldHintStyle }, 'Use 0 to skip unseen questions.'),
+              React.createElement('span', { style: fieldHintStyle }, t({ en: 'Use 0 to skip unseen questions.', zh: '设为 0 可跳过课后提问。' })),
             ),
             React.createElement(
               'label',
               { htmlFor: 'nerd-mode-question-type', style: fieldLabelStyle },
-              React.createElement('span', null, 'Question type'),
+              React.createElement('span', null, t({ en: 'Question type', zh: '题型' })),
               React.createElement(
                 'select',
                 {
@@ -280,11 +388,11 @@ window.__ModuleLoader__.load({
                   onChange: (event) => updateDraft('unseenQuestionType', event.target.value),
                   style: fieldControlStyle,
                 },
-                React.createElement('option', { value: 'short-answer' }, 'Short answer'),
-                React.createElement('option', { value: 'multiple-choice' }, 'Multiple choice'),
-                React.createElement('option', { value: 'mixed' }, 'Mixed'),
+                React.createElement('option', { value: 'short-answer' }, t({ en: 'Short answer', zh: '简答' })),
+                React.createElement('option', { value: 'multiple-choice' }, t({ en: 'Multiple choice', zh: '四选一' })),
+                React.createElement('option', { value: 'mixed' }, t({ en: 'Mixed', zh: '混合' })),
               ),
-              React.createElement('span', { style: fieldHintStyle }, 'Mixed chooses a type for each question.'),
+              React.createElement('span', { style: fieldHintStyle }, t({ en: 'Mixed chooses a type for each question.', zh: '混合会为每道题随机选题型。' })),
             ),
           ),
         ),
@@ -306,7 +414,7 @@ window.__ModuleLoader__.load({
             disabled: !writable || saving,
             onClick: restoreDefaults,
             style: secondaryButtonStyle,
-          }, 'Restore defaults'),
+          }, t({ en: 'Restore defaults', zh: '恢复默认' })),
           React.createElement(
             'div',
             { style: { display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' } },
@@ -315,26 +423,300 @@ window.__ModuleLoader__.load({
               disabled: !dirty || saving,
               onClick: cancel,
               style: secondaryButtonStyle,
-            }, 'Cancel'),
+            }, t({ en: 'Cancel', zh: '取消' })),
             React.createElement('button', {
               type: 'button',
               disabled: !dirty || !validSettings(draft) || !writable || saving,
               onClick: save,
               style: primaryButtonStyle,
-            }, saving ? 'Saving…' : 'Save'),
+            }, saving ? t({ en: 'Saving…', zh: '保存中…' }) : t({ en: 'Save', zh: '保存' })),
           ),
         ),
         snapshot?.writable === false
-          ? React.createElement('p', { role: 'status', style: feedbackStyle }, 'These profile settings are read-only.')
+          ? React.createElement('p', { role: 'status', style: feedbackStyle }, t({ en: 'These profile settings are read-only.', zh: '这些 profile 设置为只读。' }))
           : null,
         feedback === null
           ? null
           : React.createElement('p', {
-            role: feedback.startsWith('Could not save') ? 'alert' : 'status',
+            role: feedback.tone,
             style: feedbackStyle,
-          }, feedback),
+          }, t(feedback.text)),
       );
     }
+
+    function AboutGroup({ locale }) {
+      const t = useT(locale);
+      const [life] = React.useState(() => ({ cancelled: false, timer: null, controller: null }));
+      const [view, setView] = React.useState({ phase: 'checking' });
+
+      // An answer that arrives after the panel closed writes nothing.
+      const show = (next) => {
+        if (!life.cancelled) setView(next);
+      };
+
+      async function check(force) {
+        setView({ phase: 'checking' });
+        let market;
+        try {
+          market = await readCapabilities(life);
+        } catch {
+          show({ phase: 'unavailable' });
+          return;
+        }
+        try {
+          const release = await readRelease(market, force, life);
+          show({ phase: 'ready', market, release, confirming: false, linkedNote: false });
+        } catch (error) {
+          show({
+            phase: 'failed',
+            market,
+            release: null,
+            message: error?.message ?? 'The update check failed.',
+            retry: 'check',
+            force: false,
+          });
+        }
+      }
+
+      function follow(market, operationId, release) {
+        return new Promise((resolve, reject) => {
+          const tick = async () => {
+            if (life.cancelled) {
+              resolve(null);
+              return;
+            }
+            let result;
+            try {
+              result = await marketRequest(`${market.endpoints.operations}?operationId=${encodeURIComponent(operationId)}`, {}, life);
+            } catch (error) {
+              reject(error);
+              return;
+            }
+            if (life.cancelled) {
+              resolve(null);
+              return;
+            }
+            if (!result.ok || wrongSchema(result.body)) {
+              reject(new Error(marketFailure(result, 'The update could not be followed')));
+              return;
+            }
+            const operation = result.body?.operation ?? {};
+            if (operation.state === 'succeeded') {
+              resolve(operation);
+              return;
+            }
+            if (operation.state === 'failed' || operation.state === 'cancelled' || operation.state === 'rolled-back') {
+              const error = new Error(operation.failure?.message ?? operation.failure?.code ?? `The update ${operation.state}.`);
+              error.code = operation.failure?.code ?? null;
+              reject(error);
+              return;
+            }
+            show({ phase: 'updating', market, release, progress: operation.state ?? 'running' });
+            life.timer = setTimeout(tick, POLL_INTERVAL);
+          };
+          tick();
+        });
+      }
+
+      async function install(market, release, force) {
+        setView({ phase: 'updating', market, release, progress: 'queued' });
+        try {
+          const result = await marketRequest(market.endpoints.updates, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ packageName: PACKAGE, ...(force ? { force: true } : {}) }),
+          }, life);
+          if (!result.ok || wrongSchema(result.body)) {
+            const error = new Error(marketFailure(result, 'The update did not start'));
+            error.code = result.body?.failure?.code ?? null;
+            throw error;
+          }
+          const operationId = result.body?.operation?.operationId;
+          if (typeof operationId !== 'string') throw new Error('DSH Market returned no operation to follow.');
+          const operation = await follow(market, operationId, release);
+          if (operation === null) return;
+          show({
+            phase: 'installed',
+            market,
+            release,
+            version: operation.installedVersion ?? release.latestVersion,
+            restartNeeded: operation.outcome?.restartRequired === true,
+            restarting: false,
+            restartSent: false,
+          });
+        } catch (error) {
+          const code = error?.code ?? null;
+          show({
+            phase: 'failed',
+            market,
+            release,
+            message: error?.message ?? 'The update failed.',
+            retry: 'install',
+            force: code === 'RELEASE_TOO_FRESH' || code === 'VERSION_UNCHANGED',
+          });
+        }
+      }
+
+      async function restart(current) {
+        setView({ ...current, restarting: true });
+        try {
+          const result = await marketRequest(current.market.restart, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: '{}',
+          }, life);
+          if (!result.ok) throw new Error(marketFailure(result, 'DSH could not restart'));
+          show({ ...current, restarting: false, restartSent: true });
+        } catch (error) {
+          show({
+            phase: 'failed',
+            market: current.market,
+            release: current.release,
+            message: error?.message ?? 'DSH could not restart.',
+            retry: 'check',
+            force: false,
+          });
+        }
+      }
+
+      React.useEffect(() => {
+        check(false);
+        return () => {
+          life.cancelled = true;
+          if (life.timer !== null) clearTimeout(life.timer);
+          if (life.controller !== null) life.controller.abort();
+        };
+      }, []);
+
+      const busy = view.phase === 'checking' || view.phase === 'updating' || view.restarting === true;
+      const button = (text, onClick, disabled = false, primary = false) => React.createElement('button', {
+        type: 'button',
+        disabled,
+        onClick,
+        style: primary ? primaryButtonStyle : secondaryButtonStyle,
+      }, text);
+      const code = (text) => React.createElement('code', { style: commandStyle }, text);
+      const checkAgain = button(t({ en: 'Check again', zh: '重新检查' }), () => check(true));
+      const versions = (release) => t({
+        en: `Installed v${release.installedVersion} · latest v${release.latestVersion}`,
+        zh: `已安装 v${release.installedVersion} · 最新 v${release.latestVersion}`,
+      });
+
+      let versionLine = null;
+      const feedback = [];
+      let actions = null;
+
+      if (view.phase === 'checking') {
+        versionLine = t({ en: 'Checking…', zh: '正在检查…' });
+      } else if (view.phase === 'unavailable') {
+        feedback.push(t({
+          en: 'DSH Market is not available on this host, so Nerd Mode cannot check for updates. Run this command in a terminal:',
+          zh: '此主机上没有 DSH Market，因此 Nerd Mode 无法检查更新。请在终端运行：',
+        }));
+        feedback.push(code(manualCommand(null)));
+      } else if (view.phase === 'failed') {
+        if (view.release !== null) versionLine = versions(view.release);
+        feedback.push(t({ en: 'The update did not finish: ', zh: '更新未完成：' }));
+        feedback.push(view.message);
+        feedback.push(t({ en: ' Install it by hand with:', zh: ' 可手动安装：' }));
+        feedback.push(code(manualCommand(view.market?.profile ?? null)));
+        actions = [button(t({ en: 'Try again', zh: '重试' }), () => {
+          if (view.retry === 'install') install(view.market, view.release, view.force === true);
+          else check(true);
+        })];
+      } else if (view.phase === 'installed') {
+        versionLine = t({ en: `Installed v${view.version}`, zh: `已安装 v${view.version}` });
+        feedback.push(view.restartSent
+          ? t({ en: `DSH is restarting to load v${view.version}.`, zh: `DSH 正在重启以加载 v${view.version}。` })
+          : t({ en: `Restart DSH to use v${view.version}.`, zh: `重启 DSH 以使用 v${view.version}。` }));
+        actions = view.restartNeeded && view.market.restart !== null && view.restartSent !== true
+          ? [button(
+              t({ en: view.restarting ? 'Restarting…' : 'Restart now', zh: view.restarting ? '正在重启…' : '立即重启' }),
+              () => restart(view),
+              view.restarting === true,
+              true,
+            )]
+          : [checkAgain];
+      } else if (view.release.source === 'linked') {
+        versionLine = t({ en: `Local v${view.release.installedVersion}`, zh: `本地 v${view.release.installedVersion}` });
+        actions = [button(t({ en: 'About local installs', zh: '关于本地安装' }), () => {
+          setView({ ...view, linkedNote: view.linkedNote !== true });
+        })];
+        if (view.linkedNote === true) {
+          feedback.push(t({ en: 'This copy is linked to a folder. Update it with git, not npm.', zh: '此副本链接到本地文件夹。请用 git 更新，不要用 npm。' }));
+        }
+      } else if (view.phase === 'updating') {
+        versionLine = versions(view.release);
+        feedback.push(t({ en: `Update in progress (${view.progress}).`, zh: `更新进行中（${view.progress}）。` }));
+        actions = [button(t({ en: 'Updating…', zh: '正在更新…' }), () => {}, true)];
+      } else if (view.release.updateAvailable === true) {
+        versionLine = versions(view.release);
+        if (view.confirming === true) {
+          feedback.push(t({
+            en: `Install v${view.release.latestVersion} and restart DSH afterwards?`,
+            zh: `安装 v${view.release.latestVersion} 并在之后重启 DSH？`,
+          }));
+          actions = [
+            button(t({ en: 'Cancel', zh: '取消' }), () => setView({ ...view, confirming: false })),
+            button(t({ en: 'Update', zh: '更新' }), () => install(view.market, view.release, false), false, true),
+          ];
+        } else {
+          actions = [button(
+            t({ en: `Update to v${view.release.latestVersion}`, zh: `更新到 v${view.release.latestVersion}` }),
+            () => setView({ ...view, confirming: true }),
+            false,
+            true,
+          )];
+        }
+      } else if (compareVersions(view.release.installedVersion, view.release.latestVersion) > 0) {
+        versionLine = t({
+          en: `Local v${view.release.installedVersion} · npm v${view.release.latestVersion}`,
+          zh: `本地 v${view.release.installedVersion} · npm v${view.release.latestVersion}`,
+        });
+        feedback.push(t({ en: 'This copy is newer than npm. No update.', zh: '此副本比 npm 上的版本更新，无需更新。' }));
+        actions = [checkAgain];
+      } else {
+        versionLine = versions(view.release);
+        actions = [checkAgain];
+      }
+
+      return React.createElement(
+        'div',
+        { 'data-settings-group': 'about', style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+        React.createElement(
+          'div',
+          { style: groupStyle },
+          React.createElement(
+            'div',
+            { style: { minWidth: 0 } },
+            React.createElement('h3', { style: groupTitleStyle }, t({ en: 'About', zh: '关于' })),
+            versionLine === null ? null : React.createElement('p', { style: groupDescriptionStyle }, versionLine),
+          ),
+          actions === null ? null : React.createElement(
+            'div',
+            { style: { alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' } },
+            ...actions,
+          ),
+        ),
+        React.createElement('p', {
+          role: view.phase === 'failed' ? 'alert' : 'status',
+          'aria-busy': busy,
+          style: feedbackStyle,
+        }, ...feedback),
+      );
+    }
+
+    const settingsColumnStyle = {
+      boxSizing: 'border-box',
+      color: 'var(--dsw-alias-label-primary)',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'var(--dsw-font-family, inherit)',
+      gap: 16,
+      maxWidth: 720,
+      paddingBottom: 24,
+      width: '100%',
+    };
 
     const groupStyle = {
       alignItems: 'center',
@@ -407,6 +789,16 @@ window.__ModuleLoader__.load({
       fontSize: 13,
       lineHeight: '20px',
       margin: 0,
+    };
+    const commandStyle = {
+      background: 'var(--dsw-alias-bg-layer-2)',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      display: 'inline-block',
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+      fontSize: 12,
+      lineHeight: '18px',
+      padding: '2px 6px',
+      wordBreak: 'break-all',
     };
 
     function switchStyle(active, disabled) {
@@ -1349,17 +1741,20 @@ window.__ModuleLoader__.load({
             }),
           }, NerdModeToggle),
         );
-        ctx.slots.inject(SETTINGS_SLOT, () =>
-          ctx.slots.register({
-            name: SETTINGS_SLOT,
-            id: 'dsh-nerd-mode',
-            order: 30,
-            label: LABEL,
-          }, ({ close }) => React.createElement(NerdModeSettingsEntry, {
-            close,
-            configForms: ctx.configForms,
-          })),
-        );
+        ctx.inject(['locale'], (localeCtx) => {
+          ctx.slots.inject(SETTINGS_SLOT, () =>
+            ctx.slots.register({
+              name: SETTINGS_SLOT,
+              id: 'dsh-nerd-mode',
+              order: 30,
+              label: LABEL,
+            }, ({ close }) => React.createElement(NerdModeSettingsEntry, {
+              close,
+              configForms: ctx.configForms,
+              locale: localeCtx.locale,
+            })),
+          );
+        });
         ctx.slots.inject(VIEW_SLOT, () =>
           ctx.slots.register({
             name: VIEW_SLOT,

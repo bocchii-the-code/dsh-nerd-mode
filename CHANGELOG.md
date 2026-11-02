@@ -2,6 +2,13 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.4.5] - 2026-11-02
+
+### Added
+
+- An About group in the Nerd Mode settings section shows the installed and the newest npm version, and installs the newer release through DSH Market's update API.
+- The settings page follows the DSH interface language: English and Chinese.
+
 ## [0.4.4] - 2026-11-02
 
 ### Removed
