@@ -82,9 +82,13 @@ function build() {
     ...(book.goal ? [`subtitle: ${JSON.stringify(book.goal)}`] : []),
     '---',
     '',
-    book.units.map((unit) => `## ${unit.section}. ${unit.title}\n\n${unit.body}`).join('\n\n'),
+    book.units.map((unit) => `## ${unit.chapter}.${unit.section} ${unit.title}\n\n${unit.body}`).join('\n\n'),
     '',
-  ].join('\n');
+  ].join('\n')
+    // am reads $ and $$ math only: a LaTeX display delimiter on its own line
+    // would reach the page as a literal bracket, so turn it into a $$ block.
+    .replace(/^ {0,3}\\\[\s*$/gm, () => '$$')
+    .replace(/^ {0,3}\\\]\s*$/gm, () => '$$');
   const outPath = join(dir, 'book.html');
   const backupPath = join(dir, 'book.html.bak');
   const guardPath = (path, what) => {
@@ -123,7 +127,9 @@ function build() {
       units: book.units.map(({ concept, title, chapter, section, index, status }) => ({ concept, title, chapter, section, index, status })),
     };
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
-    const client = readFileSync(CLIENT, 'utf8');
+    // HTML parsing turns CRLF into LF before the browser checks the CSP hash,
+    // so a Windows checkout would otherwise be blocked as the wrong hash.
+    const client = readFileSync(CLIENT, 'utf8').replace(/\r\n?/g, '\n');
     const html = readFileSync(tmpPath, 'utf8');
     const scriptText = `\n${client}\n`;
     const hash = createHash('sha256').update(scriptText, 'utf8').digest('base64');

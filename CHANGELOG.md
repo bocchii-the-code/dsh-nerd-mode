@@ -2,6 +2,18 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.4.6] - 2026-11-05
+
+### Fixed
+
+- The book page shows its left chapter list, numbers each lecture as `1.1` in the list and the title, and scrolls the list on its own.
+- A display formula written as `\[ ... \]` renders as math instead of literal brackets.
+
+### Changed
+
+- The Lectures page keeps its course list in view and opens a lecture in a tab.
+- The `study` and `study-plus` descriptions start with the package version, so the loaded copy is visible.
+
 ## [0.4.5] - 2026-11-02
 
 ### Added

@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -309,11 +310,50 @@ test('CLI renders quoted YAML metadata and overwrites a regular book output', ()
     const html = readFileSync(output, 'utf8')
     assert.notEqual(html, 'old book page')
     assert.match(html, /Content-Security-Policy/)
+    assert.match(html, /<h2>1\.1 Ratio<\/h2>/, 'the lecture title carries its chapter and section number')
     const payloadText = html.match(/<script type="application\/json" id="bk-book">([\s\S]*?)<\/script>/)?.[1]
     assert.ok(payloadText)
     const payload = JSON.parse(payloadText)
     assert.equal(payload.title, 'Ratios: # "quoted" \\ title')
     assert.equal(payload.goal, 'Compare values: # "safely" \\')
+  } finally {
+    rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+  }
+})
+
+test('CLI renders LaTeX display math written with backslash brackets', () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'study-plus-math-'))
+  try {
+    const base = lecture(1, 'Ratio')
+    const { topic } = makeTopic(workspace, oneConceptGraph, [{
+      name: base.name,
+      text: `${base.text}\n\nAn estimate:\n\n\\[\n\\mathrm{FLOPs}(UV)=rc(2m-1)\\approx 2rmc.\n\\]\n`,
+    }])
+    const result = spawnSync(process.execPath, [builder, topic], { cwd: workspace, encoding: 'utf8' })
+    assert.equal(result.status, 0, result.stderr)
+    const html = readFileSync(join(topic, 'book.html'), 'utf8')
+    assert.match(html, /class="am-math-block"/, 'the display formula becomes a math block')
+    assert.doesNotMatch(html, /<p>\[\s*\n/, 'the delimiters are not left as literal brackets')
+  } finally {
+    rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+  }
+})
+
+test('CLI lets the page policy accept the injected book script', () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'study-plus-csp-'))
+  try {
+    const { topic } = makeTopic(workspace, oneConceptGraph, [lecture(1, 'Ratio')])
+    const result = spawnSync(process.execPath, [builder, topic], { cwd: workspace, encoding: 'utf8' })
+    assert.equal(result.status, 0, result.stderr)
+    const html = readFileSync(join(topic, 'book.html'), 'utf8')
+    const injected = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+      .map((match) => match[1])
+      .find((text) => text.includes("document.getElementById('bk-book')"))
+    assert.ok(injected, 'the book script is injected')
+    // The browser hashes the parsed text, where CRLF has become LF.
+    assert.doesNotMatch(injected, /\r/, 'the injected text carries no carriage returns')
+    const hash = createHash('sha256').update(injected, 'utf8').digest('base64')
+    assert.ok(html.includes(`script-src 'sha256-${hash}'`), 'the policy allows the text the browser hashes')
   } finally {
     rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   }

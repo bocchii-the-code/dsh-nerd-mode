@@ -129,7 +129,7 @@ test('the graph format line names the three levels in order', () => {
 // fails here.
 const QUESTION_CARD = [
   /One call asks one question/,
-  /one `question` call with four options/,
+  /one question-tool call with four options/,
   /no description/,
   /shuffle the four positions/,
   /numbered text list/,
@@ -143,6 +143,26 @@ test('a multiple-choice question is one question card', () => {
     assert.match(skill, pattern, `skills/study-plus/SKILL.md lost ${pattern}`)
   }
   assert.match(skill, /`short-answer`, ask the question in the conversation/)
+})
+
+// The host tool is `ask_user_question`. A literal `question` reads as a tool
+// that does not exist, which lets the model fall back to a text list.
+test('the question card names no tool the host does not have', () => {
+  assert.doesNotMatch(read('skills/study-plus/SKILL.md'), /`question`/)
+})
+
+// The skill catalog shows only the description. A stale copy stays visible
+// only when the version travels with the text.
+const VERSIONED_SKILLS = ['study', 'study-plus']
+
+test('the study skills carry the package version', () => {
+  const version = JSON.parse(read('package.json')).version
+  for (const name of VERSIONED_SKILLS) {
+    const frontmatter = read(`skills/${name}/SKILL.md`).match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? ''
+    const raw = frontmatter.match(/^description:\s*(.*)$/m)?.[1]?.trim() ?? ''
+    const description = raw.startsWith('"') && raw.endsWith('"') ? raw.slice(1, -1) : raw
+    assert.ok(description.startsWith(`[v${version}] `), `skills/${name}/SKILL.md lost [v${version}]`)
+  }
 })
 
 test('every README image is a real SVG with a title and a viewBox', () => {

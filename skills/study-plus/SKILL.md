@@ -1,6 +1,6 @@
 ---
 name: study-plus
-description: Run one tracked session against a dated learning record. Load for an explicit command or after the user chooses tracked study in the upper router.
+description: "[v0.4.6] Run one tracked session against a dated learning record. Load for an explicit command or after the user chooses tracked study in the upper router."
 argument-hint: "<course-slug>, or empty to continue the current Course"
 ---
 # Study Plus
@@ -52,15 +52,15 @@ For a new graph:
 2. Make a concept table in prerequisite order. Each row has a one-line definition and prerequisite numbers. Keep prerequisite order separate from textbook reading order.
 3. Use the source's book and chapter hierarchy when present. Otherwise, propose logical chapter groupings.
 4. Show the full graph and chapter layout in the reply before the approval question, as a Markdown table. Keep the question text short, because it renders as one paragraph: ask whether to approve, edit, or rebuild the graph shown above, and state that approval starts draft generation for every concept, including any concept the learner then skips, and that drafts are not teaching. Do not put the table in the question text. Do not add another approval step.
-5. After approval, run calibration as one `question` call with up to three items: what the learner wants to be able to do after this Course, what they have already read, studied, or used in this area in their own words, and which concepts in the approved graph they know well enough to skip, as a multi-select list. Items 1 and 2 are free text. Ask the goal and background items only when nothing already answers them: not the current request, not the opening question, not the supplied material. Reuse an opening-question answer verbatim. Derive the level. Then write `graph.md`, create `state.md` with every concept `new` and undated except the concepts selected to skip, which are `skipped`, create an empty `log.md`, and generate one draft per concept (section 3). Do not create `plan.md`.
+5. After approval, run calibration as one question-tool call with up to three items: what the learner wants to be able to do after this Course, what they have already read, studied, or used in this area in their own words, and which concepts in the approved graph they know well enough to skip, as a multi-select list. Items 1 and 2 are free text. Ask the goal and background items only when nothing already answers them: not the current request, not the opening question, not the supplied material. Reuse an opening-question answer verbatim. Derive the level. Then write `graph.md`, create `state.md` with every concept `new` and undated except the concepts selected to skip, which are `skipped`, create an empty `log.md`, and generate one draft per concept (section 3). Do not create `plan.md`.
 
 Calibration writes `Goal`, `Background`, and `Teaching level` to `graph.md`. Derive the level from the two answers:
 
-| Answers | Level |
-|---|---|
-| Most prerequisites are unknown, or the goal is to learn the topic from zero | `beginner` |
+| Answers                                                                                    | Level        |
+| ------------------------------------------------------------------------------------------ | ------------ |
+| Most prerequisites are unknown, or the goal is to learn the topic from zero                | `beginner` |
 | Some prerequisites are known, and the goal is to understand the principles or pass an exam | `standard` |
-| Most prerequisites are known, and the goal is review, reference, or use in a project | `advanced` |
+| Most prerequisites are known, and the goal is review, reference, or use in a project       | `advanced` |
 
 When the two answers clearly conflict, you may choose an adjacent level and state the reason in one line. When the learner declines or gives no usable answer, write `Teaching level: standard` and omit the `Goal` and `Background` lines. Each selected concept becomes `skipped`, with no date and no passes.
 
@@ -136,7 +136,7 @@ If the row was already `in_process`, say that the last session stopped before th
 
 **Ask unseen questions.** Use the explicit count or type preference in the current `/study-plus` request when present. Otherwise, use the profile defaults in the top-level Nerd Mode instructions. Plan the configured number of unseen question slots, from 0 to 10. A hint, re-ask, or similar question stays in its current slot and does not add a slot. For each slot, write down the expected answer and criteria for a good answer. Keep both private. A draft never contains them. The criteria test the conclusion and whether each step taken is valid, not the route you had in mind. Ask one question at a time, then wait. One call asks one question. Outside `study-plus`, ignore these preferences.
 
-For `short-answer`, ask the question in the conversation. For `multiple-choice`, ask it as one `question` call with four options and exactly one correct answer; choosing it is sufficient. Give the labels alone, with no description, and shuffle the four positions for each slot. A host without a `question` tool gets the same four options as a numbered text list. A typed answer that names or repeats one option counts as choosing it. Any other typed answer is graded like a short answer. For `mixed`, choose short-answer or multiple-choice independently at random for each planned slot. Do not add question-type details to the session log. When the configured count is zero, skip unseen questions. A passed Teach-back alone is sufficient to pass. With one or more slots, require a passed Teach-back and `ceil(2 × slot count / 3)` correct slots.
+For `short-answer`, ask the question in the conversation. For `multiple-choice`, ask it as one question-tool call with four options and exactly one correct answer; choosing it is sufficient. Give the labels alone, with no description, and shuffle the four positions for each slot. A host without a question tool gets the same four options as a numbered text list. A typed answer that names or repeats one option counts as choosing it. Any other typed answer is graded like a short answer. For `mixed`, choose short-answer or multiple-choice independently at random for each planned slot. Do not add question-type details to the session log. When the configured count is zero, skip unseen questions. A passed Teach-back alone is sufficient to pass. With one or more slots, require a passed Teach-back and `ceil(2 × slot count / 3)` correct slots.
 
 A question exists to find the gap, not to stop the session. Nothing in this step blocks the learner.
 

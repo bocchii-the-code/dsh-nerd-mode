@@ -13,8 +13,8 @@
     if (!panels.length) return;
 
     var L = book.lang === 'en'
-      ? { search: 'Search the book', toc: 'Contents', none: 'No match', hits: ' hits', chapter: 'Chapter', section: 'Section', sections: 'sections', menu: 'Chapters', draft: 'Draft' }
-      : { search: '搜索全书', toc: '目录', none: '没有匹配', hits: ' 处', chapter: '第', section: '第', sections: '节', menu: '章节', draft: '草稿' };
+      ? { search: 'Search the book', toc: 'Contents', none: 'No match', hits: ' hits', chapter: 'Chapter', sections: 'sections', menu: 'Chapters', draft: 'Draft' }
+      : { search: '搜索全书', toc: '目录', none: '没有匹配', hits: ' 处', chapter: '第', sections: '节', menu: '章节', draft: '草稿' };
 
     var layout = document.querySelector('.am-doc-layout');
     var body = document.querySelector('.am-doc-body');
@@ -33,10 +33,8 @@
         : L.chapter + chapter.n + '章 ' + chapter.name;
     }
 
-    function sectionLabel(unit) {
-      return book.lang === 'en'
-        ? L.section + ' ' + unit.section
-        : L.section + unit.section + '节';
+    function sectionNumber(unit) {
+      return unit.chapter + '.' + unit.section;
     }
 
     function chapterCount(chapter) {
@@ -46,9 +44,7 @@
     }
 
     function sectionTitle(unit) {
-      return book.lang === 'en'
-        ? L.section + ' ' + unit.section + '. ' + unit.title
-        : L.section + unit.section + '节 ' + unit.title;
+      return sectionNumber(unit) + ' ' + unit.title;
     }
 
     var style = document.createElement('style');
@@ -70,6 +66,8 @@
       '.am-doc-body .am-md h3 { font-size: 18px; font-weight: 650; margin-top: 28px; }',
       '.am-doc-body .am-md h3:first-child { margin-top: 0; }',
       '.am-doc-body .am-md h4 { font-size: 16px; font-weight: 600; margin-top: 20px; }',
+      // am's overflow-x:auto makes overflow-y auto too; a 1px overshoot draws scrollbar arrows on Windows.
+      '.am-math-block { overflow-y: hidden; }',
       '.bk-context { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 0 0 8px; font-size: 13px; }',
       '.bk-context-chapter { color: var(--ink-2); font-weight: 600; }',
       '.bk-context-section { color: var(--ink-3); white-space: nowrap; }',
@@ -151,7 +149,7 @@
         chapter.textContent = chapterTitle(g.chapter);
         var section = document.createElement('span');
         section.className = 'bk-context-section';
-        section.innerHTML = esc(sectionLabel(u)) + draftTag(u);
+        section.innerHTML = esc(sectionNumber(u)) + draftTag(u);
         context.appendChild(chapter);
         context.appendChild(section);
         var heading = panel.querySelector('.am-panel-head');
