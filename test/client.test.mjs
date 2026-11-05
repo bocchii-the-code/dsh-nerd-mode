@@ -1460,6 +1460,19 @@ test('lists the chosen Course and its lectures by Concept number', async () => {
   assert.equal(lectureSection(tree, 'calculus'), undefined)
 })
 
+test('keeps the Course name in view above a scrolling lecture list', async () => {
+  const view = renderLectures(lectureFixture())
+  const tree = await view.settle()
+
+  assert.equal(tree.props.style.height, '100%')
+  const section = lectureSection(tree, 'algebra')
+  const [heading, scroller] = section.props.children
+  assert.equal(textOf(heading), 'algebra')
+  assert.equal(section.props.key, 'algebra')
+  assert.equal(scroller.props.style.overflowY, 'auto')
+  assert.equal(allOfType(scroller, 'ul').length, 1)
+})
+
 test('marks a draft as a draft without a date and a dated lecture with its date', async () => {
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
@@ -1509,7 +1522,7 @@ test('folds archived lectures into a collapsed group that opens on click', async
   ])
 })
 
-test('opens a lecture in the dock preview with its session file address', async () => {
+test('opens a lecture as a dock tab with its session file address', async () => {
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
 
@@ -1517,7 +1530,7 @@ test('opens a lecture in the dock preview with its session file address', async 
 
   assert.deepEqual(view.opened, [[
     'dsh-resource://file/session/session-1/study/algebra/lectures/02-groups.md',
-    { preferNewPane: true },
+    undefined,
   ]])
 })
 
@@ -1531,7 +1544,7 @@ test('opens an archived lecture from its archive path', async () => {
 
   assert.deepEqual(view.opened, [[
     'dsh-resource://file/session/session-1/study/algebra/lectures/archive/04-old-sets.md',
-    { preferNewPane: true },
+    undefined,
   ]])
 })
 
@@ -1547,7 +1560,7 @@ test('encodes a lecture file name with a space in the address', async () => {
   assert.equal(encodeURIComponent('05-a b.md'), '05-a%20b.md', 'the pinned literal is the encoder output')
   assert.deepEqual(view.opened, [[
     'dsh-resource://file/session/session-1/study/algebra/lectures/05-a%20b.md',
-    { preferNewPane: true },
+    undefined,
   ]])
 })
 

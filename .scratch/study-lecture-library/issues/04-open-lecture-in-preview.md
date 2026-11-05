@@ -85,3 +85,11 @@ Reopening dedupe is host behaviour. The plugin controls the registration shape, 
 
 Every address assertion pins the full literal string, so a changed prefix, session id, topic, folder, or encoder fails a test.
 
+## Comments
+
+2026-11-05: The preview opens as a tab in the pane that holds the list; the split request is gone. `openResource` takes only the address, so the host focuses an existing tab for the same lecture and otherwise adds one beside the list. The spec's requirement 12 and **Reading** decision carry the new behavior.
+
+```js
+const open = (entry) => tab.actions.openResource(sessionFileAddress(sessionId, entry.path));
+```
+

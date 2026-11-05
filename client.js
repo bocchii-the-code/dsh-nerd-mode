@@ -1556,6 +1556,24 @@ window.__ModuleLoader__.load({
       return model;
     }
 
+    // The page fills the dock body so the picker and course name stay in view
+    // while only the lecture rows scroll. The scrollport owns the side padding,
+    // so its bar sits at the page edge rather than inside the text.
+    const lecturesPanelStyle = { ...panelStyle, height: '100%', padding: '24px 0 0' };
+    const lecturesHeaderStyle = { ...panelHeaderStyle, padding: '0 16px' };
+    const lecturesMessageStyle = { ...panelMutedStyle, padding: '0 16px' };
+    const lecturesHeadingStyle = { ...panelHeadingStyle, padding: '0 16px' };
+    const lecturesSectionStyle = { ...panelSectionStyle, flex: 1, minHeight: 0 };
+    const lecturesScrollStyle = {
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'column',
+      gap: 10,
+      minHeight: 0,
+      overflowY: 'auto',
+      padding: '0 16px 40px',
+    };
+
     // The rows and the fold are the only elements the host cannot style for us.
     const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary, currentColor);outline-offset:2px}';
     const lectureRowStyle = {
@@ -1633,14 +1651,14 @@ window.__ModuleLoader__.load({
     function lectureTopic(group, open, onToggle, onOpen) {
       const main = group.entries.filter((entry) => entry.mark !== 'archived');
       const archived = group.entries.filter((entry) => entry.mark === 'archived');
-      const nodes = [React.createElement('h2', { key: 'heading', style: panelHeadingStyle }, group.topic)];
+      const rows = [];
       if (group.entries.length === 0) {
-        nodes.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.'));
+        rows.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.'));
       } else if (main.length > 0) {
-        nodes.push(React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))));
+        rows.push(React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))));
       }
       if (archived.length > 0) {
-        nodes.push(React.createElement('button', {
+        rows.push(React.createElement('button', {
           key: 'fold',
           type: 'button',
           className: 'lectures-fold',
@@ -1649,10 +1667,13 @@ window.__ModuleLoader__.load({
           style: lectureFoldStyle,
         }, `Archived lectures (${archived.length})`));
         if (open) {
-          nodes.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map((entry) => lectureRow(entry, onOpen))));
+          rows.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map((entry) => lectureRow(entry, onOpen))));
         }
       }
-      return React.createElement('section', { key: group.topic, style: panelSectionStyle }, ...nodes);
+      // The Course key remounts the section on a switch, so its scrollport starts at the top.
+      return React.createElement('section', { key: group.topic, style: lecturesSectionStyle },
+        React.createElement('h2', { key: 'heading', style: lecturesHeadingStyle }, group.topic),
+        React.createElement('div', { style: lecturesScrollStyle }, ...rows));
     }
 
     function LecturesPage({ useTabInfo, sessionId, workspaceFiles }) {
@@ -1680,22 +1701,21 @@ window.__ModuleLoader__.load({
         setSelected(course);
       };
 
-      const open = (entry) => tab.actions.openResource(
-        sessionFileAddress(sessionId, entry.path),
-        { preferNewPane: true },
-      );
+      // No placement option: the preview opens as a tab in this pane and the
+      // host focuses it when that lecture is already open.
+      const open = (entry) => tab.actions.openResource(sessionFileAddress(sessionId, entry.path));
 
       let nodes;
       if (content.status === 'loading') {
-        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the lectures…')];
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: lecturesMessageStyle }, 'Loading the lectures…')];
       } else if (content.error === null && !content.rootFound) {
-        nodes = [React.createElement('p', { style: panelMutedStyle }, `No Course in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
+        nodes = [React.createElement('p', { style: lecturesMessageStyle }, `No Course in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
       } else {
         nodes = content.error === null
           ? []
-          : [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The lecture library could not be read: ${content.error}.`)];
+          : [React.createElement('p', { role: 'alert', style: lecturesMessageStyle }, `The lecture library could not be read: ${content.error}.`)];
         const picker = topicPicker(content.courses, content.course ?? selected, choose);
-        if (picker !== null) nodes.push(React.createElement('div', { style: panelHeaderStyle }, picker));
+        if (picker !== null) nodes.push(React.createElement('div', { style: lecturesHeaderStyle }, picker));
         if (content.course !== null) {
           nodes.push(lectureTopic(
             { topic: content.course, entries: content.entries },
@@ -1708,7 +1728,7 @@ window.__ModuleLoader__.load({
       return React.createElement('div', {
         role: 'region',
         'aria-label': LECTURES_LABEL,
-        style: panelStyle,
+        style: lecturesPanelStyle,
       }, React.createElement('style', null, LECTURES_CSS), ...nodes);
     }
 

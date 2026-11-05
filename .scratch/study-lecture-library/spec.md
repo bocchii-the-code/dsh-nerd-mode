@@ -25,7 +25,7 @@ Add a Lectures panel to the dock. The panel opens from a card on the dock's Star
 9. As a learner, I want archived lectures folded away under their topic, so that they do not clutter the list.
 10. As a learner, I want to expand the archived group, so that I can still read a lecture whose Concept left the graph.
 11. As a learner, I want picking an entry to open the file in the dock's document preview, so that the lecture renders with headings, formulas, and figures.
-12. As a learner, I want the preview to open beside my current tab, so that I can move between the list and the lecture.
+12. As a learner, I want the preview to open as a tab beside the list, so that I can switch between the list and the lecture without losing either.
 13. As a learner in a workspace with no `study/` folder, I want a plain message naming the folder that was searched and the command that creates one, so that I am not stuck at an empty page.
 14. As a learner whose topic has no saved lectures yet, I want that topic to say so, so that an empty topic does not look broken.
 15. As a learner whose lecture file cannot be read, I want one line naming the failure, so that I can tell a permissions problem from a missing file.
@@ -52,7 +52,7 @@ Add a Lectures panel to the dock. The panel opens from a card on the dock's Star
 
 **Ordering.** Topics sort by name. Lectures sort by Concept number, ascending. Archived lectures keep their own order inside the folded group. A lecture never appears twice.
 
-**Reading.** Picking an entry opens the file in the dock's document preview by its session file address. The panel does not render Markdown itself, so headings, formulas, figures, and frontmatter display come from the shipped preview. The address is built with the same session file address the preview package uses, not assembled by string concatenation.
+**Reading.** Picking an entry opens the file in the dock's document preview as a tab in the pane that holds the list, and a lecture already open is focused instead of duplicated. It requests no split pane. The panel does not render Markdown itself, so headings, formulas, figures, and frontmatter display come from the shipped preview. The address is built with the same session file address the preview package uses, not assembled by string concatenation.
 
 **Empty and failure states.** With no `study/` folder, one line names the searched folder and the command that creates a Tracker. With no lectures in a topic, that topic carries one muted line. With a read failure, one line names the failure and the page keeps every entry it already built.
 

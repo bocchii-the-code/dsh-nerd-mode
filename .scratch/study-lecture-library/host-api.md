@@ -42,9 +42,10 @@ none of them is a `require`:
 tab.actions.openResource(address, { preferNewPane: true })
 ```
 
-`preferNewPane` asks for a split first and falls back to the target pane, which is
-what "opens beside my current tab" means. `openResource` throws when the address is
-not a `dsh-resource://` address or no type claims it.
+`preferNewPane` asks for a split first and falls back to the target pane. Omit it
+to add a tab to the active pane instead; a tab already showing the same resource
+is focused unless `revealIfOpened: false`. `openResource` throws when the address
+is not a `dsh-resource://` address or no type claims it.
 
 ## File address
 
