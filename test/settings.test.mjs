@@ -38,8 +38,10 @@ function makeCtx(active = true) {
     effect(register) {
       register()
     },
-    inject(_names, register) {
-      register({ commands: { register() {} } })
+    inject(names, register) {
+      // The fake host has the commands service and no web server, so the
+      // optional history route is skipped.
+      if (names.includes('commands')) register({ commands: { register() {} } })
     },
   }
   return { ctx, handlers, section: () => section }
