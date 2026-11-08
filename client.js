@@ -1747,6 +1747,304 @@ window.__ModuleLoader__.load({
       }],
     };
 
+    // --- Study Sessions panel ------------------------------------------------
+
+    const STUDY_SESSIONS_ID = 'study-sessions';
+    const STUDY_SESSIONS_ORDER = 30;
+    const STUDY_SESSIONS_API = '/dsh-nerd-mode/api/study-sessions';
+    const STUDY_SESSIONS_TITLE = { en: 'Study Sessions', zh: '学习会话' };
+    const STUDY_QUICK = { en: 'Quick', zh: '快速' };
+    const STUDY_DEEP = { en: 'In-depth', zh: '深入' };
+    const STUDY_PAST = { en: 'Past', zh: '过去' };
+
+    // A host without the session package still gets the page and its empty line.
+    const NO_SESSIONS_HOOK = () => null;
+
+    // A failed rescan or a remount must not blank the panel, so the last good scan outlives the component.
+    let studySessionsCache = null;
+
+    /**
+     * Read one history chunk from the host route.
+     *
+     * Returns `{ phase, done, total, sessions, cursor }`. Throws an Error whose message names the failure:
+     * a missing route (404/405 or a body that is not JSON) and any non-OK reply both count.
+     */
+    async function readSessionChunk(cursor) {
+      const response = await fetch(`${STUDY_SESSIONS_API}?cursor=${cursor}`);
+      // The static fallback owns an unregistered path, so it answers with an empty body.
+      if (response.status === 404 || response.status === 405) throw new Error('the host route is not available');
+      const body = await response.json().catch(() => null);
+      if (body === null) throw new Error('the host returned no JSON');
+      if (!response.ok) throw new Error(body?.error ?? `HTTP ${response.status}`);
+      const sessions = body?.sessions;
+      if (typeof sessions !== 'object' || sessions === null) throw new Error('the host returned no session history');
+      return {
+        phase: body.phase === 'ready' ? 'ready' : 'scanning',
+        done: Number.isFinite(body.done) ? body.done : 0,
+        total: Number.isFinite(body.total) ? body.total : 0,
+        sessions,
+        // The spec names no cursor field, so accept one or fall back to the processed count.
+        cursor: Number.isFinite(body.cursor) ? body.cursor : Number.isFinite(body.done) ? body.done : cursor,
+      };
+    }
+
+    /**
+     * Scan the host history index from cursor 0, merging each chunk into `sessions`.
+     *
+     * Calls `onChunk` after every reply so the page can move its progress line. Returns the final
+     * scan state. A host that repeats a cursor cannot make progress, so the loop stops there.
+     */
+    async function scanSessionHistory(sessions, onChunk) {
+      let state = { status: 'scanning', sessions, done: 0, total: 0, cursor: 0 };
+      let previous = 0;
+      for (;;) {
+        const chunk = await readSessionChunk(state.cursor);
+        state = {
+          status: chunk.phase,
+          // A ready reply carries the host's whole index, so it replaces stale cached ids.
+          sessions: chunk.phase === 'ready' ? chunk.sessions : { ...state.sessions, ...chunk.sessions },
+          done: chunk.done,
+          total: chunk.total,
+          cursor: chunk.cursor,
+        };
+        onChunk(state);
+        if (state.status === 'ready' || chunk.cursor <= previous) return state;
+        previous = chunk.cursor;
+      }
+    }
+
+    /** Return the last folder in a workspace path; Windows and POSIX separators both count. */
+    function workspaceName(cwd) {
+      if (typeof cwd !== 'string') return '';
+      return cwd.split(/[\\/]+/).filter((part) => part !== '').pop() ?? '';
+    }
+
+    const RELATIVE_UNITS = [
+      ['year', 31536000000],
+      ['month', 2592000000],
+      ['day', 86400000],
+      ['hour', 3600000],
+      ['minute', 60000],
+      ['second', 1000],
+    ];
+
+    /** Return a locale-aware relative time such as `2 hours ago`; a missing time reads as an empty string. */
+    function relativeTime(updatedAt, language) {
+      if (!Number.isFinite(updatedAt)) return '';
+      const elapsed = updatedAt - Date.now();
+      const [unit, size] = RELATIVE_UNITS.find(([, step]) => Math.abs(elapsed) >= step) ?? RELATIVE_UNITS[5];
+      return new Intl.RelativeTimeFormat(language, { numeric: 'auto' }).format(Math.round(elapsed / size), unit);
+    }
+
+    /** Join the live session list with the history index. A history id with no live row is dropped. */
+    function sessionRows(snapshot, history) {
+      const ids = Array.isArray(snapshot?.ids) ? snapshot.ids : [];
+      const byId = snapshot?.byId ?? {};
+      const rows = [];
+      for (const id of ids) {
+        const row = byId[id];
+        if (row === undefined || !Object.hasOwn(history, id)) continue;
+        rows.push({
+          id,
+          title: String(row.displayTitle ?? id),
+          workspace: workspaceName(row.cwd),
+          updatedAt: Number.isFinite(row.updatedAt) ? row.updatedAt : 0,
+          active: row.projectionValues?.studyMode?.active === true,
+          studyPlus: history[id]?.studyPlus === true,
+        });
+      }
+      return rows.sort((left, right) => right.updatedAt - left.updatedAt);
+    }
+
+    /** Split rows into Quick, In-depth, and Past; a missing live switch value counts as off. */
+    function groupSessionRows(rows) {
+      const groups = { quick: [], deep: [], past: [] };
+      for (const row of rows) {
+        if (!row.active) groups.past.push(row);
+        else if (row.studyPlus) groups.deep.push(row);
+        else groups.quick.push(row);
+      }
+      return groups;
+    }
+
+    // Inline because the client bundle cannot read assets/.
+    function StudySessionsIcon({ size = 16, active = false }) {
+      return React.createElement(
+        'svg',
+        {
+          'aria-hidden': 'true',
+          fill: 'none',
+          height: size,
+          stroke: 'currentColor',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          strokeWidth: active ? 2 : 1.6,
+          viewBox: '0 0 16 16',
+          width: size,
+        },
+        React.createElement('path', { d: 'M2.5 4h11M2.5 8h11M2.5 12h7' }),
+        React.createElement('circle', {
+          cx: 12.5,
+          cy: 12,
+          fill: 'currentColor',
+          opacity: active ? 1 : 0.45,
+          r: 1.2,
+          stroke: 'none',
+        }),
+      );
+    }
+
+    function StudySessionsPage({ useSessions, locale, openSession }) {
+      const t = useT(locale);
+      const language = locale.getSnapshot()?.active ?? 'en';
+      const [scan, setScan] = React.useState(() => studySessionsCache === null
+        ? { status: 'scanning', sessions: {}, done: 0, total: 0, cursor: 0 }
+        : { ...studySessionsCache, status: 'scanning' });
+      const [pastOpen, setPastOpen] = React.useState(false);
+      const snapshot = useSessions((state) => state);
+
+      React.useEffect(() => {
+        let live = true;
+        // A cached list seeds the scan, so rows stay while the host rescans.
+        scanSessionHistory(studySessionsCache?.sessions ?? {}, (chunk) => {
+          if (!live) return;
+          studySessionsCache = chunk;
+          setScan(chunk);
+        }).catch((error) => {
+          if (!live) return;
+          setScan((previous) => ({
+            ...previous,
+            status: 'failed',
+            reason: error?.message ?? 'the host did not answer',
+          }));
+        });
+        return () => { live = false; };
+      }, []);
+
+      const rows = sessionRows(snapshot, scan.sessions);
+      const grouped = groupSessionRows(rows);
+
+      // The whole row is one target; the chip is a child, so its label stays in the accessible name.
+      const rowText = (row) => {
+        const parts = [row.title];
+        if (row.workspace !== '') parts.push(row.workspace);
+        const time = relativeTime(row.updatedAt, language);
+        if (time !== '') parts.push(time);
+        return parts.join(' · ');
+      };
+      const rowNode = (row, at, past) => React.createElement('button', {
+        type: 'button',
+        key: row.id,
+        onClick: () => openSession(row.id),
+        style: at === 0 ? studyRowStyle : studySeparatorStyle,
+      },
+      rowText(row),
+      past ? ' · ' : null,
+      past
+        ? React.createElement('span', {
+            key: 'chip',
+            'data-study-chip': '',
+            style: studyChipStyle,
+          }, row.studyPlus ? t(STUDY_DEEP) : t(STUDY_QUICK))
+        : null);
+
+      const nodes = [React.createElement('h1', { key: 'title', style: studyTitleStyle }, t(STUDY_SESSIONS_TITLE))];
+      if (scan.status === 'scanning') {
+        nodes.push(React.createElement('p', {
+          key: 'progress',
+          role: 'status',
+          'aria-busy': true,
+          style: panelMutedStyle,
+        }, t({
+          en: `Scanning session history… ${scan.done} of ${scan.total}`,
+          zh: `正在扫描会话历史… ${scan.done} / ${scan.total}`,
+        })));
+      }
+      if (scan.status === 'failed') {
+        nodes.push(React.createElement('p', { key: 'failure', role: 'alert', style: panelMutedStyle }, t({
+          en: `The session index could not be read: ${scan.reason}`,
+          zh: `无法读取会话索引：${scan.reason}`,
+        })));
+      }
+      if (scan.status === 'ready' && Object.keys(scan.sessions).length === 0) {
+        nodes.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, t({
+          en: 'No study session yet. Turn on Nerd Mode from the composer bar, or run `/nerd-mode on`.',
+          zh: '还没有学习会话。在输入栏打开 Nerd Mode，或运行 `/nerd-mode on`。',
+        })));
+      }
+
+      const group = (key, label, list, past) => {
+        if (list.length === 0) return null;
+        return React.createElement('section', { key, style: studyGroupStyle },
+          React.createElement('h2', { style: panelHeadingStyle }, `${label} (${list.length})`),
+          React.createElement('div', { style: studyRowsStyle },
+            ...list.map((row, at) => rowNode(row, at, past))));
+      };
+      nodes.push(group('quick', t(STUDY_QUICK), grouped.quick, false));
+      nodes.push(group('deep', t(STUDY_DEEP), grouped.deep, false));
+      if (grouped.past.length > 0) {
+        nodes.push(React.createElement('section', { key: 'past', style: studyGroupStyle },
+          React.createElement('h2', { style: panelHeadingStyle },
+            React.createElement('button', {
+              type: 'button',
+              'aria-expanded': pastOpen,
+              onClick: () => setPastOpen((open) => !open),
+              style: studyHeadingButtonStyle,
+            }, `${t(STUDY_PAST)} (${grouped.past.length})`)),
+          pastOpen
+            ? React.createElement('div', { style: studyRowsStyle },
+                ...grouped.past.map((row, at) => rowNode(row, at, true)))
+            : null));
+      }
+
+      return React.createElement('div', {
+        role: 'region',
+        'aria-label': t(STUDY_SESSIONS_TITLE),
+        style: studyPanelStyle,
+      }, ...nodes);
+    }
+
+    const studyPanelStyle = { ...panelStyle, gap: 24 };
+    const studyTitleStyle = { fontSize: 20, fontWeight: 600, lineHeight: '28px', margin: 0 };
+    const studyGroupStyle = { display: 'flex', flexDirection: 'column', gap: 2 };
+    const studyRowsStyle = { display: 'flex', flexDirection: 'column' };
+    const studyRowStyle = {
+      background: 'none',
+      border: 'none',
+      color: 'inherit',
+      cursor: 'pointer',
+      font: 'inherit',
+      lineHeight: '22px',
+      overflowWrap: 'anywhere',
+      padding: '10px 2px',
+      textAlign: 'left',
+      whiteSpace: 'normal',
+      width: '100%',
+    };
+    const studySeparatorStyle = {
+      ...studyRowStyle,
+      borderTop: '1px solid var(--dsw-alias-border-l2)',
+    };
+    const studyChipStyle = {
+      border: '1px solid var(--dsw-alias-border-l3)',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'var(--dsw-alias-label-tertiary)',
+      display: 'inline-block',
+      fontSize: 12,
+      lineHeight: '18px',
+      padding: '0 6px',
+      whiteSpace: 'nowrap',
+    };
+    const studyHeadingButtonStyle = {
+      background: 'none',
+      border: 'none',
+      color: 'inherit',
+      cursor: 'pointer',
+      font: 'inherit',
+      padding: 0,
+      textAlign: 'left',
+    };
+
     return {
       inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'],
       apply(ctx) {
@@ -1772,6 +2070,35 @@ window.__ModuleLoader__.load({
               close,
               configForms: ctx.configForms,
               locale: localeCtx.locale,
+            })),
+          );
+          // One id addresses both seats: the sidebar row selects the keyed main page.
+          ctx.slots.inject('sidebar.panellist', () =>
+            ctx.slots.register({
+              name: 'sidebar.panellist',
+              id: STUDY_SESSIONS_ID,
+              order: STUDY_SESSIONS_ORDER,
+              // The label owns its translator: the slot's `t` prop belongs to the icon.
+              label: () => localeCtx.locale.resolveText(STUDY_SESSIONS_TITLE),
+            }, StudySessionsIcon),
+          );
+          ctx.slots.inject('main', () =>
+            ctx.slots.register({
+              name: 'main',
+              key: STUDY_SESSIONS_ID,
+              inject: () => ({
+                locale: localeCtx.locale,
+                openSession: (id) => {
+                  try {
+                    ctx.get('uiWorkspace')?.openSession(id);
+                  } catch {
+                    // A stale row must not take the panel down.
+                  }
+                },
+              }),
+            }, (props) => React.createElement(StudySessionsPage, {
+              ...props,
+              useSessions: typeof props.useSessions === 'function' ? props.useSessions : NO_SESSIONS_HOOK,
             })),
           );
         });
