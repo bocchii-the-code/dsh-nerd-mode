@@ -1754,7 +1754,7 @@ window.__ModuleLoader__.load({
     const STUDY_SESSIONS_API = '/dsh-nerd-mode/api/study-sessions';
     const STUDY_SESSIONS_TITLE = { en: 'Study Sessions', zh: '学习会话' };
     const STUDY_QUICK = { en: 'Quick', zh: '快速' };
-    const STUDY_DEEP = { en: 'In-depth', zh: '深入' };
+    const STUDY_IN_DEPTH = { en: 'In-depth', zh: '深入' };
     const STUDY_PAST = { en: 'Past', zh: '过去' };
 
     // A host without the session package still gets the page and its empty line.
@@ -1773,6 +1773,10 @@ window.__ModuleLoader__.load({
       const response = await fetch(`${STUDY_SESSIONS_API}?cursor=${cursor}`);
       // The static fallback owns an unregistered path, so it answers with an empty body.
       if (response.status === 404 || response.status === 405) throw new Error('the host route is not available');
+      // A rejected request carries plain text, so name the status before the body is parsed.
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`the host denied the request (HTTP ${response.status})`);
+      }
       const body = await response.json().catch(() => null);
       if (body === null) throw new Error('the host returned no JSON');
       if (!response.ok) throw new Error(body?.error ?? `HTTP ${response.status}`);
@@ -1858,10 +1862,10 @@ window.__ModuleLoader__.load({
 
     /** Split rows into Quick, In-depth, and Past; a missing live switch value counts as off. */
     function groupSessionRows(rows) {
-      const groups = { quick: [], deep: [], past: [] };
+      const groups = { quick: [], inDepth: [], past: [] };
       for (const row of rows) {
         if (!row.active) groups.past.push(row);
-        else if (row.studyPlus) groups.deep.push(row);
+        else if (row.studyPlus) groups.inDepth.push(row);
         else groups.quick.push(row);
       }
       return groups;
@@ -1945,7 +1949,7 @@ window.__ModuleLoader__.load({
             key: 'chip',
             'data-study-chip': '',
             style: studyChipStyle,
-          }, row.studyPlus ? t(STUDY_DEEP) : t(STUDY_QUICK))
+          }, row.studyPlus ? t(STUDY_IN_DEPTH) : t(STUDY_QUICK))
         : null);
 
       const nodes = [React.createElement('h1', { key: 'title', style: studyTitleStyle }, t(STUDY_SESSIONS_TITLE))];
@@ -1981,7 +1985,7 @@ window.__ModuleLoader__.load({
             ...list.map((row, at) => rowNode(row, at, past))));
       };
       nodes.push(group('quick', t(STUDY_QUICK), grouped.quick, false));
-      nodes.push(group('deep', t(STUDY_DEEP), grouped.deep, false));
+      nodes.push(group('inDepth', t(STUDY_IN_DEPTH), grouped.inDepth, false));
       if (grouped.past.length > 0) {
         nodes.push(React.createElement('section', { key: 'past', style: studyGroupStyle },
           React.createElement('h2', { style: panelHeadingStyle },

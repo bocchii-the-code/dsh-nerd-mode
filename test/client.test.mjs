@@ -1986,3 +1986,18 @@ test('keeps the cached rows and names the failure when the route fails', async (
   assert.match(textOf(alerts[0]), /The session index could not be read:/)
   assert.match(textOf(alerts[0]), /not available/)
 })
+
+test('names a rejected request as a denial, not a parse failure', async () => {
+  const view = renderStudySessions(SESSION_ROWS, {
+    routes: [{
+      match: SESSIONS_API,
+      respond: { ok: false, status: 403, json: async () => { throw new Error('forbidden') } },
+    }],
+  })
+  const tree = await view.settle()
+
+  const alerts = allOfType(tree, 'p').filter(({ props }) => props.role === 'alert')
+  assert.equal(alerts.length, 1)
+  assert.match(textOf(alerts[0]), /The session index could not be read:/)
+  assert.match(textOf(alerts[0]), /HTTP 403/)
+})
