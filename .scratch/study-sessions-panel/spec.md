@@ -1,6 +1,6 @@
 # Spec: Study Sessions panel
 
-Status: draft
+Status: resolved
 
 ## Problem Statement
 
@@ -36,11 +36,11 @@ Add a global panel named Study Sessions to the left sidebar, after Context Insig
 
 **Client data.** The `sessions` service is already published as a root hook. Inside the panel component, `useSessions((state) => state)` returns `{ ids, byId, phase }`, and each row carries `id`, `displayTitle`, `updatedAt`, `cwd`, `blank`, and `projectionValues`. `projectionValues.studyMode.active` is the live switch state and needs no new work. Titles and times come from this list, never from the index, so a missing title keeps the host's fallback chain.
 
-**History data.** The list knows the current state only. A host route returns the history: `GET /dsh-nerd-mode/api/study-sessions` replies `{ phase, done, total, sessions: { [id]: { studyPlus: boolean } } }`. Presence of an id means Nerd Mode was switched on at least once.
+**History data.** The list knows the current state only. A host route returns the history: `GET /dsh-nerd-mode/api/study-sessions` replies `{ phase, done, total, cursor, sessions: { [id]: { studyPlus: boolean } } }`. Presence of an id means Nerd Mode was switched on at least once. `cursor` is the next call's starting index and equals `total` once `phase` is `ready`.
 
 **Index.** The route reads `~/.dsh/study-sessions-index.json`, keyed by session id and by the log file's mtime and size. A file whose mtime and size match the index is not decoded. A changed file is decoded and its flags replace the stored ones, with one exception: the `nerd` flag is merged with `||`, because compaction can drop the original event, and a fact that disappeared from a rewritten log must not resurface as a missing session.
 
-**Scan.** Sessions live at `~/.dsh/sessions/<workspace-slug>/<session-id>/session.v4.jsonl.zstd`. The file is a chain of zstd frames, so the scan splits on the magic bytes and decodes each frame, as `docs/agents/dsh-session-api.md` describes. The scan is chunked: the route accepts `?cursor=<index>` and decodes at most 20 files per call, then replies with the next cursor. The panel calls the route until `phase` is `ready`. A cold scan of this machine's 201 files and 90 MB takes 6.3 s, spread over 11 calls.
+**Scan.** Sessions live at `~/.dsh/sessions/<workspace-slug>/<session-id>/session.v4.jsonl.zstd`. The file is a chain of zstd frames, so the scan splits on the magic bytes and decodes each frame, as `docs/agents/dsh-session-api.md` describes. The scan is chunked: the route accepts `?cursor=<index>` and decodes at most 20 files per call, then replies with the next `cursor`. The panel calls the route until `phase` is `ready`. A cold scan of this machine's 201 files and 90 MB takes 5 to 6 s, spread over 11 calls.
 
 **Classifying Nerd Mode.** A session counts when the log holds a `command/run` event with `data.name === 'nerd-mode'` and `data.args` that is absent or not `off`, paired by `commandId` with a `command/done` of kind `success`. This is the same rule `lib/fold.js` applies, so the index and the live projection cannot disagree about what counts as switching on.
 
@@ -80,7 +80,7 @@ Add a global panel named Study Sessions to the left sidebar, after Context Insig
 
 **Accessibility.** The page body is a region with an accessible name from the title. Group headings are level-two headings whose text includes the count. Rows are buttons, so Enter and Space work. The Past heading is a button with `aria-expanded`. The loading line is a status region, and the failure line is an alert. Focus order follows the visual order.
 
-**Host route.** Register in `apply` through `ctx.inject(['webServer'], …)` and `ctx.webServer.register({ kind: 'exact', path, handler })` inside `ctx.effect`, so the route disposes with the plugin. The handler calls `ctx.connection.requestRejection(req)` first, because `webServer.register` adds no auth fence, and replies 403 on rejection. Only GET is allowed. The reply sets `content-type: application/json; charset=utf-8` and `cache-control: no-store`. The client fetches the same origin, so the auth cookie travels without extra options.
+**Host route.** Register in `apply` through `ctx.inject(['webServer', 'connection'], …)` and `webCtx.webServer.register({ kind: 'exact', path, handler })` inside `ctx.effect`, so the route disposes with the plugin. The handler calls `ctx.connection.requestRejection(req)` first, because `webServer.register` adds no auth fence, and replies with the returned status, `401` or `403`. Only GET is allowed. The reply sets `content-type: application/json; charset=utf-8` and `cache-control: no-store`. The client fetches the same origin, so the auth cookie travels without extra options.
 
 **Manifest.** The client package already injects `@deepseek-ai/dsh-client-ui-conversation`. The `main` slot belongs to the layout package and `sidebar.panellist` to the sidebar package, both loaded by the shell. The host module gains `webServer` as an optional inject, so a host without it still loads the switch and the prompt section, and the panel shows the failure line.
 
@@ -92,7 +92,7 @@ The chunked route gets one resume test: 45 files, chunk size 20, three calls, an
 
 The index gets one test for the merge rule: a file that loses the Nerd Mode event still reports nerd, and a changed `studyPlus` flag is replaced.
 
-The panel gets one render test through the existing fake-context harness: a fake session list with four rows, a fake index, and assertions on the group headings, the counts, the Past chip, the empty line, and the row's accessible name.
+The panel gets render tests through the existing fake-context harness: a fake session list with four rows, a fake index, and assertions on the group headings, the counts, the Past chip, the empty line, and the row's accessible name. The failure path gets two tests: a missing route keeps the cached rows and names the failure, and a rejection names the status rather than a parse error.
 
 No test asserts internal helper names or a whole-tree snapshot. One behaviour per test, named after what the learner sees.
 

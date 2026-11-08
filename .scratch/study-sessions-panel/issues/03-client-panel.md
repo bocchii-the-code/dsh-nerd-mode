@@ -1,6 +1,6 @@
 # 03 — Add the Study Sessions sidebar entry and page
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -41,3 +41,10 @@ Out of scope: Course files, Course progress, filters, live updates, refresh cont
 ## Validation owner
 
 The implementer runs `npm test` and `npm run lint`. The merger checks the copy table and the accessibility lines against the spec. The final review checks the manifest.
+
+## Answer
+
+Delivered in `client.js`: the `sidebar.panellist` seat at order 30, the keyed `main` page, the inline SVG icon, grouping with counts, the Past fold and chips, the relative time, the chunked scan, the module-level last-good cache, and the empty, scanning, and failure lines. The `locale` namespace option is not used; both seats sit inside `ctx.inject(['locale'], …)` and use the existing `useT` helper, so no dictionary registration was needed. `package.json` is unchanged: both slots are declared by shell packages and `ctx.slots.inject` waits for them.
+
+Tests in `test/client.test.mjs` cover the groups and accessible names, the Past chip, the empty line with no `uiWorkspace`, the cached rows on a failed route, and a rejected request naming `HTTP 403`. Commits `f286510` and `62bb451`, review fix `f2102fb`; merged as `a237018`. `npm test` passes 126 client tests at merge, `npm run lint` clean.
+

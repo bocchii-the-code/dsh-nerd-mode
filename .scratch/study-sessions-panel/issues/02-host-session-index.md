@@ -1,6 +1,6 @@
 # 02 — Build the session history index and its route
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -37,3 +37,12 @@ Out of scope: the client panel, the index's UI copy, and Course files.
 ## Validation owner
 
 The implementer runs `npm test` and `npm run lint`. The merger reads the route handler and the index merge rule against the spec. Ticket 03 consumes the reply shape.
+
+## Answer
+
+Delivered in `lib/study-sessions.js` (classifier, frame decoder, index, chunked scan) and the route in `lib/index.js`. Tests are in `test/study-sessions.test.mjs`; `test/settings.test.mjs` now skips the optional route inject.
+
+The reply adds a top-level `cursor` beside `{ phase, done, total, sessions }`, because the client needs the next index and the spec's Scan section names it. The route replies with the status returned by `requestRejection` (`401` or `403`), not always `403`; see `host-api.md` item 9. The direct-command rule matches a standalone `/study-plus` token anywhere in a user message, which is the live parser's boundary.
+
+A scan over this machine's 201 logs produced 41 Nerd Mode sessions, 16 In-depth sessions, 11 chunks, and a final cursor of 201. Commits `8ba6099` and `ff4cbeb`; merged as `87288b5`. `npm test` passes 148 tests at merge, `npm run lint` clean.
+
