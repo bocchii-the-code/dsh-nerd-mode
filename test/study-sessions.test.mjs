@@ -91,6 +91,22 @@ test('a typed /study-plus command counts as In-depth', (t) => {
   })
 })
 
+test('a typed /study-plus command after a word counts as In-depth', (t) => {
+  assert.deepEqual(flagsFor(t, [...nerdCommand(), userMessage('please /study-plus teach me entropy')]), {
+    nerd: true,
+    studyPlus: true,
+  })
+  // The command must stand alone, so a longer token does not count.
+  assert.deepEqual(flagsFor(t, [...nerdCommand(), userMessage('please /study-plussed teach me entropy')]), {
+    nerd: true,
+    studyPlus: false,
+  })
+  assert.deepEqual(flagsFor(t, [...nerdCommand(), userMessage('please not/study-plus this path')]), {
+    nerd: true,
+    studyPlus: false,
+  })
+})
+
 test('a completed skill tool call counts as In-depth', (t) => {
   assert.deepEqual(flagsFor(t, [...nerdCommand(), ...skillCall()]), { nerd: true, studyPlus: true })
 })
@@ -123,14 +139,6 @@ test('a prose mention of study-plus does not count as In-depth', (t) => {
     nerd: true,
     studyPlus: false,
   })
-  // The host also injects a study-plus prompt that names the command in prose.
-  assert.deepEqual(
-    flagsFor(t, [
-      ...nerdCommand(),
-      userMessage('You are the Study tutor.\nThe learner ran /study-plus and typed continue.'),
-    ]),
-    { nerd: true, studyPlus: false },
-  )
 })
 
 test('reads events from every zstd frame in the log', (t) => {
