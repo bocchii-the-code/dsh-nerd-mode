@@ -1924,13 +1924,12 @@ window.__ModuleLoader__.load({
       const rows = sessionRows(snapshot, scan.sessions);
       const grouped = groupSessionRows(rows);
 
-      // The whole row is one target, so its text is also its accessible name.
-      const rowText = (row, past) => {
+      // The whole row is one target; the chip is a child, so its label stays in the accessible name.
+      const rowText = (row) => {
         const parts = [row.title];
         if (row.workspace !== '') parts.push(row.workspace);
         const time = relativeTime(row.updatedAt, language);
         if (time !== '') parts.push(time);
-        if (past) parts.push(row.studyPlus ? t(STUDY_DEEP) : t(STUDY_QUICK));
         return parts.join(' · ');
       };
       const rowNode = (row, at, past) => React.createElement('button', {
@@ -1938,7 +1937,16 @@ window.__ModuleLoader__.load({
         key: row.id,
         onClick: () => openSession(row.id),
         style: at === 0 ? studyRowStyle : studySeparatorStyle,
-      }, rowText(row, past));
+      },
+      rowText(row),
+      past ? ' · ' : null,
+      past
+        ? React.createElement('span', {
+            key: 'chip',
+            'data-study-chip': '',
+            style: studyChipStyle,
+          }, row.studyPlus ? t(STUDY_DEEP) : t(STUDY_QUICK))
+        : null);
 
       const nodes = [React.createElement('h1', { key: 'title', style: studyTitleStyle }, t(STUDY_SESSIONS_TITLE))];
       if (scan.status === 'scanning') {
@@ -2016,6 +2024,16 @@ window.__ModuleLoader__.load({
     const studySeparatorStyle = {
       ...studyRowStyle,
       borderTop: '1px solid var(--dsw-alias-border-l2)',
+    };
+    const studyChipStyle = {
+      border: '1px solid var(--dsw-alias-border-l3)',
+      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      color: 'var(--dsw-alias-label-tertiary)',
+      display: 'inline-block',
+      fontSize: 12,
+      lineHeight: '18px',
+      padding: '0 6px',
+      whiteSpace: 'nowrap',
     };
     const studyHeadingButtonStyle = {
       background: 'none',

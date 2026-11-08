@@ -1932,6 +1932,7 @@ test('renders Quick, In-depth, and a collapsed Past group with counts', async ()
   assert.ok(past, 'the Past heading is a collapsed control')
   assert.equal(textOf(past), 'Past (2)')
   assert.equal(rowStarting(tree, 'Limits'), undefined)
+  assert.equal(allOfType(tree, 'span').some(({ props }) => props['data-study-chip'] !== undefined), false)
 
   assert.equal(
     textOf(rowStarting(tree, 'Vector spaces')),
@@ -1945,6 +1946,10 @@ test('renders Quick, In-depth, and a collapsed Past group with counts', async ()
   past.props.onClick()
   const opened = await view.settle()
 
+  const chipOf = (tree, rowText) => allOfType(rowStarting(tree, rowText), 'span')
+    .find(({ props }) => props['data-study-chip'] !== undefined)
+  assert.equal(textOf(chipOf(opened, 'Limits')), 'In-depth')
+  assert.equal(textOf(chipOf(opened, 'Quiz recap')), 'Quick')
   assert.equal(textOf(rowStarting(opened, 'Limits')), 'Limits · calc · 4 hours ago · In-depth')
   assert.equal(textOf(rowStarting(opened, 'Quiz recap')), 'Quiz recap · physics · 5 hours ago · Quick')
   assert.equal(allOfType(opened, 'button').find(({ props }) => props['aria-expanded'] === true) !== undefined, true)
@@ -1954,6 +1959,7 @@ test('renders Quick, In-depth, and a collapsed Past group with counts', async ()
 
   assert.deepEqual(headingsOf(translated), ['快速 (1)', '深入 (1)', '过去 (2)'])
   assert.equal(textOf(rowStarting(translated, 'Vector spaces')), 'Vector spaces · math · 3小时前')
+  assert.equal(textOf(chipOf(translated, 'Limits')), '深入')
 })
 
 test('shows the empty line when no session ever had Nerd Mode', async () => {
