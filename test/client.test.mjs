@@ -32,20 +32,21 @@ afterEach(() => {
 })
 
 // The host locale service: one active key, a subscriber list, an English fallback.
+// The snapshot carries the active locale, the selectable locales, and a revision.
 function fakeLocale(language = 'en') {
-  let active = language
+  let snapshot = { active: language, locales: ['en', 'zh'], revision: 0 }
   const listeners = new Set()
   return {
-    getSnapshot: () => active,
+    getSnapshot: () => snapshot,
     subscribe(listener) {
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
     resolveText(text) {
-      return text[active] ?? text.en
+      return text[snapshot.active] ?? text.en
     },
     switchTo(next) {
-      active = next
+      snapshot = { ...snapshot, active: next, revision: snapshot.revision + 1 }
       for (const listener of listeners) listener()
     },
   }
@@ -244,11 +245,15 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
     },
   }
   const dockTypes = []
+  const opened = []
   const locale = fakeLocale(configOptions.locale ?? 'en')
   const fetchCalls = stubFetch(configOptions.market ?? [])
   const ctx = {
     effect(fn) {
       return fn()
+    },
+    get(name) {
+      return name.split('.').reduce((value, key) => value?.[key], ctx)
     },
     inject(deps, callback) {
       const has = (name) => name.split('.').reduce((value, key) => value?.[key], ctx) !== undefined
@@ -263,6 +268,9 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
           return () => {}
         },
       },
+    }),
+    ...(configOptions.uiWorkspace === false ? {} : {
+      uiWorkspace: configOptions.uiWorkspace ?? { openSession: (id) => opened.push(id) },
     }),
     slots: {
       inject(_name, fn) {
@@ -294,7 +302,7 @@ function mount(executeImpl, initialSettings = {}, configOptions = {}) {
   }
   // Cordis has a scoped inject, but apply itself always runs.
   client.apply(ctx)
-  return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description, locale, fetchCalls }
+  return { registers, dockTypes, executed, mutations, scope, getCalls: () => getCalls, description, locale, fetchCalls, opened }
 }
 
 function render(active, executeImpl) {
@@ -1841,4 +1849,134 @@ test('gives a Course with no lectures its empty line and reads no other Course',
   assert.equal(allOfType(tree, 'select').length, 0)
   assert.equal(view.files.calls.every(([, , path]) => path === 'study' || path.startsWith('study/solo/')), true)
   assert.deepEqual(view.files.calls.filter(([method]) => method === 'read'), [])
+})
+
+// --- Study Sessions panel ----------------------------------------------------
+// The history route answers `{ phase, done, total, sessions }`; an id's presence
+// means Nerd Mode was switched on at least once.
+
+const SESSIONS_API = '/dsh-nerd-mode/api/study-sessions'
+
+function sessionRow(id, title, { cwd, hoursAgo = 1, active } = {}) {
+  return {
+    id,
+    displayTitle: title,
+    running: false,
+    retainedBy: null,
+    blank: false,
+    updatedAt: Date.now() - hoursAgo * 3600000,
+    ...(cwd === undefined ? {} : { cwd }),
+    ...(active === undefined ? {} : { projectionValues: { studyMode: { active } } }),
+  }
+}
+
+const SESSION_ROWS = [
+  sessionRow('s1', 'Gradient descent', { cwd: 'C:\\work\\ml', hoursAgo: 2, active: true }),
+  sessionRow('s2', 'Vector spaces', { cwd: 'C:\\work\\math', hoursAgo: 3, active: true }),
+  sessionRow('s3', 'Limits', { cwd: 'C:\\work\\calc', hoursAgo: 4, active: false }),
+  sessionRow('s4', 'Quiz recap', { cwd: 'C:\\work\\physics', hoursAgo: 5 }),
+]
+
+const SESSION_HISTORY = {
+  s1: { studyPlus: true },
+  s2: { studyPlus: false },
+  s3: { studyPlus: true },
+  s4: { studyPlus: false },
+}
+
+const historyRoute = (sessions = SESSION_HISTORY) => [{
+  match: SESSIONS_API,
+  respond: jsonResponse({ phase: 'ready', done: 4, total: 4, sessions }),
+}]
+
+function renderStudySessions(rows, { routes = [], uiWorkspace } = {}) {
+  const mounted = mount(undefined, {}, { uiWorkspace })
+  const registration = mounted.registers.find(({ options }) => options.name === 'main')
+  assert.ok(registration, 'the client registers a Study Sessions page')
+  stubFetch(routes)
+  const byId = {}
+  for (const row of rows) byId[row.id] = row
+  const snapshot = { ids: rows.map(({ id }) => id), byId, phase: 'ready' }
+  const injected = registration.options.inject()
+  resetHooks()
+  const renderer = createRenderer(registration.component, () => ({
+    ...injected,
+    useSessions: (select) => select(snapshot),
+  }))
+  return {
+    ...mounted,
+    registration,
+    get tree() { return renderer.tree },
+    rerender: () => renderer.render(),
+    async settle() {
+      for (let turn = 0; turn < 60; turn += 1) {
+        await new Promise((resolve) => queueMicrotask(resolve))
+      }
+      return renderer.tree
+    },
+  }
+}
+
+const headingsOf = (tree) => allOfType(tree, 'h2').map(textOf)
+const rowStarting = (tree, text) => allOfType(tree, 'button').find((node) => textOf(node).startsWith(text))
+
+test('renders Quick, In-depth, and a collapsed Past group with counts', async () => {
+  const view = renderStudySessions(SESSION_ROWS, { routes: historyRoute() })
+  const tree = await view.settle()
+
+  assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Study Sessions'), true)
+  assert.equal(textOf(allOfType(tree, 'h1')[0]), 'Study Sessions')
+  assert.deepEqual(headingsOf(tree), ['Quick (1)', 'In-depth (1)', 'Past (2)'])
+
+  const past = allOfType(tree, 'button').find(({ props }) => props['aria-expanded'] === false)
+  assert.ok(past, 'the Past heading is a collapsed control')
+  assert.equal(textOf(past), 'Past (2)')
+  assert.equal(rowStarting(tree, 'Limits'), undefined)
+
+  assert.equal(
+    textOf(rowStarting(tree, 'Vector spaces')),
+    'Vector spaces · math · 3 hours ago',
+  )
+  assert.equal(
+    textOf(rowStarting(tree, 'Gradient descent')),
+    'Gradient descent · ml · 2 hours ago',
+  )
+
+  past.props.onClick()
+  const opened = await view.settle()
+
+  assert.equal(textOf(rowStarting(opened, 'Limits')), 'Limits · calc · 4 hours ago · In-depth')
+  assert.equal(textOf(rowStarting(opened, 'Quiz recap')), 'Quiz recap · physics · 5 hours ago · Quick')
+  assert.equal(allOfType(opened, 'button').find(({ props }) => props['aria-expanded'] === true) !== undefined, true)
+
+  view.locale.switchTo('zh')
+  const translated = await view.settle()
+
+  assert.deepEqual(headingsOf(translated), ['快速 (1)', '深入 (1)', '过去 (2)'])
+  assert.equal(textOf(rowStarting(translated, 'Vector spaces')), 'Vector spaces · math · 3小时前')
+})
+
+test('shows the empty line when no session ever had Nerd Mode', async () => {
+  const view = renderStudySessions(SESSION_ROWS, { routes: historyRoute({}), uiWorkspace: false })
+  const tree = await view.settle()
+
+  assert.match(textOf(tree), /No study session yet/)
+  assert.match(textOf(tree), /\/nerd-mode on/)
+  assert.deepEqual(headingsOf(tree), [])
+})
+
+test('keeps the cached rows and names the failure when the route fails', async () => {
+  const first = renderStudySessions(SESSION_ROWS, { routes: historyRoute() })
+  await first.settle()
+  assert.match(textOf(first.tree), /Vector spaces/)
+
+  const second = renderStudySessions(SESSION_ROWS)
+  const tree = await second.settle()
+
+  assert.match(textOf(tree), /Vector spaces/)
+  assert.match(textOf(tree), /Gradient descent/)
+  const alerts = allOfType(tree, 'p').filter(({ props }) => props.role === 'alert')
+  assert.equal(alerts.length, 1)
+  assert.match(textOf(alerts[0]), /The session index could not be read:/)
+  assert.match(textOf(alerts[0]), /not available/)
 })
