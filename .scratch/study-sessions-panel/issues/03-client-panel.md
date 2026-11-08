@@ -15,10 +15,10 @@ Deliver in `client.js`:
 
 1. Two slot seats with id/key `study-sessions`:
    - `sidebar.panellist`: `id: 'study-sessions'`, `order: 30`, a label resolved through the active locale (`Study Sessions` / `学习会话`), and an inline SVG icon component that uses the `size` and `active` props. No `assets/` read.
-   - `main`: `key: 'study-sessions'`, `locale`, and `inject`. The host swaps the main area through `ctx.layout.selectPanel(id)`, so the panel adds no route and no modal.
+   - `main`: `name: 'main'`, `key: 'study-sessions'`, and `inject`. Do not pass a `locale` namespace option unless you also register it with `ctx.locale.register`; the plugin's existing copy helper takes the `locale` service directly. Wrap both seats in `ctx.inject(['locale'], ...)` and use `useT(locale)` as the Settings section does. The host swaps the main area through `ctx.layout.selectPanel(id)`, so the panel adds no route and no modal.
 2. The page component:
    - read the live list with `useSessions((state) => state)`; rows come from `ids`/`byId`, never from the index;
-   - fetch `/dsh-nerd-mode/api/study-sessions?cursor=<n>` on mount and continue until `phase === 'ready'`, updating the progress line between calls;
+   - fetch `/dsh-nerd-mode/api/study-sessions?cursor=<n>` on mount and continue until `phase === 'ready'`, updating the progress line between calls. Treat `404`, `405`, an empty body, and a non-JSON body as a missing route and show the failure line (`host-api.md` item 6);
    - group `active && studyPlus` as In-depth, `active && !studyPlus` as Quick, and `!active` as Past. A missing live value counts as `active: false`;
    - Past is collapsed by default, with `aria-expanded` on its heading button, and each Past row keeps a Quick/In-depth chip;
    - each group heading is a level-two heading whose text includes the count, and a group with no rows is not rendered;

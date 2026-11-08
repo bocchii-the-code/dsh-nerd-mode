@@ -1,6 +1,6 @@
 # 01 — Verify the host surfaces the panel uses
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: none
 
 ## Question
@@ -42,3 +42,17 @@ If a surface does not exist in the installed host, say so and name the smallest 
 ## Validation owner
 
 The orchestrator reads `host-api.md`. Tickets 02 and 03 quote it.
+
+## Answer
+
+All eight items are verified. Evidence and line numbers are in `.scratch/study-sessions-panel/host-api.md`.
+
+The load-bearing corrections:
+
+- Both slot registrations also need `name`, and the `label` closure must own its translator.
+- `useSessions` adds `projectionsBySession`; `cwd` and `projectionValues` are optional on a row.
+- `requestRejection` returns `401` or `403`, so the route replies with the returned code.
+- The optional `webServer` is a `ctx.inject` fork, not a top-level `inject` entry.
+- An unregistered route answers `404` with an empty body, so the client treats `404`, `405`, empty, and non-JSON replies as a missing route.
+- The `main` `locale` option is a namespace name and needs `ctx.locale.register`, so ticket 03 injects the `locale` service and keeps the existing `useT` helper.
+
