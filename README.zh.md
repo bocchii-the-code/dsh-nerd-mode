@@ -48,7 +48,8 @@
 - **有评分的检查。** 没见过的题加上要评分的复述，评分标准在出题之前就写好。只有你自己答出来的内容才会改写记录。
 - **记录比对话活得久。** 概念图、状态和带日期的日志能跨重启保留，HTML 书支持全文搜索。
 - **不用翻文件就能看进度。** Study 标签页读当前对话的记录文件，显示进度百分比，上一节、当前节、下一节三格，状态是 shaky 的概念，以及最近三轮概念循环。它只读，不写。
-- **讲义找得回来。** Lectures 标签页按选中的 Course 列出保存过的讲义，并标出已读、未读和已归档的行。
+- **讲义找得回来。** Lectures 标签页把课程下拉放在页头，只列出真实存在的 Course，并把每份讲义标成草稿、带日期或已归档。已归档的讲义收在一个折叠区里，标题旁显示数量。
+- **学习会话都在一处。** 左侧边栏的 Study Sessions 面板列出所有至少打开过一次 Nerd Mode 的会话，分「深入」「快速」「过去」三组。每组都能点标题折叠，深入和快速默认展开，过去默认收起，点一行就打开那个会话。
 
 ## 安装
 
@@ -225,10 +226,11 @@ package.json
 │     ├── dsh-nerd-mode → lib/index.js
 │     │     ├── session projection — 开关状态，从会话日志折叠出来
 │     │     ├── prompt section — assets/section.md，顺序 550，只在开着时注入
-│     │     └── /nerd-mode — 开关
+│     │     ├── /nerd-mode — 开关
+│     │     └── GET /api/study-sessions — 只读的学习会话索引
 │     ├── study-plus-skills — skills/ 作为文件系统技能来源
 │     └── goal packages — 已禁用
-└── dsh.client → client.js：胶囊、Study 标签页、Lectures 标签页、设置页
+└── dsh.client → client.js：胶囊、Study 标签页、Lectures 标签页、Study Sessions 面板、设置页
 ```
 
 **状态**存在一个 session projection 里，从会话日志折叠出来，所以压缩上下文、恢复会话、分叉都不丢。只有那个状态是「开着」时，提示段落才有内容。
@@ -236,6 +238,8 @@ package.json
 **提示文字**就是 `assets/section.md`，也是插件唯一加进提示的文本，所以 profile 补丁里不会留一份过期的副本。配置里的 `section` 可以替换它。
 
 **设置**只在带记录的会话里，以一小段默认值附在那段提示后面。它们从不改变工具目录。
+
+**会话历史**是第二份只读记录。`lib/study-sessions.js` 分块扫描会话日志，按文件大小和修改时间记账，写到 `~/.dsh/study-sessions-index.json`，这个文件在每个工作区之外。面板通过一条路由读它：只接受 GET，没有会话 cookie 的请求返回 401，主机名或来源不对返回 403。
 
 **补丁范围**覆盖整个 profile。补丁用 `!!js` 表达式加载 `skills/`，改之前要按宿主进程代码来审。补丁还禁用了三个 goal 包，因为内置的 goal 工具会把一次讲解变成自动续跑的循环。
 
@@ -277,9 +281,10 @@ npm run check
 
 | 路径 | 内容 |
 |---|---|
-| `lib/index.js` | 插件入口：投影、提示段落、命令、会话默认值 |
+| `lib/index.js` | 插件入口：投影、提示段落、命令、会话默认值、会话索引路由 |
 | `lib/fold.js` | 状态折叠与常量 |
-| `client.js` | 输入框胶囊、Study 与 Lectures 标签页、设置页 |
+| `lib/study-sessions.js` | 会话历史扫描与索引 |
+| `client.js` | 输入框胶囊、Study 与 Lectures 标签页、Study Sessions 面板、设置页 |
 | `assets/section.md` | 教学策略提示词 |
 | `skills/` | 随包的技能 |
 | `test/` | 每个界面一个文件，由 `node --test` 运行 |

@@ -48,7 +48,8 @@ A chat lesson ends when the answer arrives. Nothing checks that you understood i
 - **Graded checks.** Unseen questions and a graded teach-back, with the rubric written before the question. Only an answer you produced changes the record.
 - **A record that outlives the chat.** Graph, states, and dated log survive restarts, and the HTML Book has full-text search.
 - **Progress without opening a file.** The Study tab reads the Tracker for this conversation and shows one progress percentage, the previous, current, and next Section, the shaky Concepts, and the three most recent Concept cycles. It never writes.
-- **Lectures you can find again.** The Lectures tab lists the saved lectures for the selected Course, and marks read, unread, and archived rows.
+- **Lectures you can find again.** The Lectures tab keeps the course picker in the page header, lists only the courses that exist, and marks each lecture as a draft, a dated lecture, or an archived one. The archived lectures fold behind a count.
+- **Your study conversations in one place.** The Study Sessions panel in the left sidebar lists every conversation where Nerd Mode was switched on at least once, in three groups: In-depth, Quick, and Past. Each group folds from its heading, In-depth and Quick start open, Past starts closed, and a click opens that conversation.
 
 ## Install
 
@@ -225,10 +226,11 @@ package.json
 │     ├── dsh-nerd-mode → lib/index.js
 │     │     ├── session projection — on/off state, folded from the session log
 │     │     ├── prompt section — assets/section.md at order 550, while on
-│     │     └── /nerd-mode — the switch
+│     │     ├── /nerd-mode — the switch
+│     │     └── GET /api/study-sessions — the read-only session index
 │     ├── study-plus-skills — skills/ as a filesystem skill provider
 │     └── goal packages — disabled
-└── dsh.client → client.js: pill, Study tab, Lectures tab, Settings section
+└── dsh.client → client.js: pill, Study tab, Lectures tab, Study Sessions panel, Settings section
 ```
 
 **State** lives in a session projection. It folds from the session log, so compaction, resume, and fork keep it. The prompt section has text only while that state is on.
@@ -236,6 +238,8 @@ package.json
 **Prompt text** is `assets/section.md`, the only prompt text the plugin adds, so a profile patch never carries a stale copy. A `section` config value replaces it.
 
 **Settings** reach the model as a short defaults block appended to that section, only during a tracked session. They never change the tool set.
+
+**Session history** is a second, read-only store. `lib/study-sessions.js` scans the conversation logs in chunks, keys each file by its size and modification time, and writes `~/.dsh/study-sessions-index.json`, which sits outside every workspace. The panel reads it through one route that answers only GET, refuses a request with no session cookie (401) and a foreign host or origin (403).
 
 **Patch scope** covers the whole profile. It loads `skills/` with a `!!js` expression, so review patch changes as host-process code. It also disables the three goal packages, because the built-in goal tool turns one study answer into an auto-continuing run.
 
@@ -277,9 +281,10 @@ npm run check
 
 | Path | Holds |
 |---|---|
-| `lib/index.js` | plugin entry: projection, prompt section, command, session defaults |
+| `lib/index.js` | plugin entry: projection, prompt section, command, session defaults, session index route |
 | `lib/fold.js` | the state fold and its constants |
-| `client.js` | composer pill, Study and Lectures tabs, Settings section |
+| `lib/study-sessions.js` | the session history scan and its index |
+| `client.js` | composer pill, Study and Lectures tabs, Study Sessions panel, Settings section |
 | `assets/section.md` | the teaching policy prompt |
 | `skills/` | bundled skills |
 | `test/` | one file per surface, run by `node --test` |
