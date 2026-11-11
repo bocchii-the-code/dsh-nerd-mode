@@ -1400,22 +1400,17 @@ function renderLectures(fixture) {
   }
 }
 
-const headingOf = (section) => textOf(section.props.children.find((child) => child?.type === 'h2'))
+const headingOf = (section) => textOf(allOfType(section, 'h2')[0])
 const lectureTopics = (tree) => allOfType(tree, 'section').map(headingOf)
 const lectureSection = (tree, topic) => allOfType(tree, 'section').find((section) => headingOf(section) === topic)
 const lectureLists = (tree, topic) => allOfType(lectureSection(tree, topic), 'ul')
-const lectureRows = (tree, topic) => {
-  const main = lectureLists(tree, topic)[0]
-  return main === undefined ? [] : allOfType(main, 'li').map(textOf)
-}
-const lectureArchiveRows = (tree, topic) => {
-  const archived = lectureLists(tree, topic)[1]
-  return archived === undefined ? [] : allOfType(archived, 'li').map(textOf)
-}
+const labelsOf = (list) => (list === undefined ? [] : allOfType(list, 'button').map(({ props }) => props['aria-label']))
+const lectureRows = (tree, topic) => labelsOf(lectureLists(tree, topic)[0])
+const lectureArchiveRows = (tree, topic) => labelsOf(lectureLists(tree, topic)[1])
 const lectureFold = (tree, topic) => allOfType(lectureSection(tree, topic), 'button')
   .find(({ props }) => props['aria-expanded'] !== undefined)
 const lectureEntry = (tree, topic, number) => allOfType(lectureSection(tree, topic), 'button')
-  .find((node) => textOf(node).startsWith(`${number} · `))
+  .find(({ props }) => String(props['aria-label'] ?? '').startsWith(`${number}, `))
 
 const lectureFixture = (overrides = {}) => ({
   dirs: {
@@ -1461,9 +1456,9 @@ test('lists the chosen Course and its lectures by Concept number', async () => {
   assert.equal(courseSelect(tree).props.value, 'algebra')
   assert.deepEqual(lectureTopics(tree), ['algebra'])
   assert.deepEqual(lectureRows(tree, 'algebra'), [
-    '01 · Sets and Their Laws · Draft',
-    '02 · Groups and Homomorphisms · 28 Oct 2026',
-    '100 · Review of Groups · 2 Nov 2026',
+    '01, Sets and Their Laws, Draft',
+    '02, Groups and Homomorphisms, 28 Oct 2026',
+    '100, Review of Groups, 2 Nov 2026',
   ])
   assert.equal(lectureSection(tree, 'calculus'), undefined)
 })
@@ -1472,12 +1467,12 @@ test('keeps the Course name in view above a scrolling lecture list', async () =>
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
 
-  assert.equal(tree.props.style.height, '100%')
+  assert.equal(tree.props.className, 'lectures-page')
   const section = lectureSection(tree, 'algebra')
-  const [heading, scroller] = section.props.children
-  assert.equal(textOf(heading), 'algebra')
+  const [head, scroller] = section.props.children
+  assert.equal(textOf(allOfType(head, 'h2')[0]), 'algebra')
   assert.equal(section.props.key, 'algebra')
-  assert.equal(scroller.props.style.overflowY, 'auto')
+  assert.equal(scroller.props.className, 'lectures-scroll')
   assert.equal(allOfType(scroller, 'ul').length, 1)
 })
 
@@ -1485,19 +1480,19 @@ test('marks a draft as a draft without a date and a dated lecture with its date'
   const view = renderLectures(lectureFixture())
   const tree = await view.settle()
 
-  const draft = textOf(lectureEntry(tree, 'algebra', '01'))
-  assert.equal(draft, '01 · Sets and Their Laws · Draft')
+  const draft = lectureEntry(tree, 'algebra', '01').props['aria-label']
+  assert.equal(draft, '01, Sets and Their Laws, Draft')
   assert.doesNotMatch(draft, /\d{4}-\d{2}-\d{2}/)
 
-  const dated = textOf(lectureEntry(tree, 'algebra', '02'))
-  assert.equal(dated, '02 · Groups and Homomorphisms · 28 Oct 2026')
+  const dated = lectureEntry(tree, 'algebra', '02').props['aria-label']
+  assert.equal(dated, '02, Groups and Homomorphisms, 28 Oct 2026')
 
   const select = courseSelect(tree)
   select.props.onChange({ target: { value: 'calculus' } })
   const switched = await view.settle()
 
-  const plain = textOf(lectureEntry(switched, 'calculus', '10'))
-  assert.equal(plain, '10 · Limits')
+  const plain = lectureEntry(switched, 'calculus', '10').props['aria-label']
+  assert.equal(plain, '10, Limits')
 
   // Put the shared selection back for the tests that read the first Course.
   courseSelect(switched).props.onChange({ target: { value: 'algebra' } })
@@ -1513,20 +1508,20 @@ test('folds archived lectures into a collapsed group that opens on click', async
   const fold = lectureFold(tree, 'algebra')
   assert.equal(fold.props.type, 'button')
   assert.equal(fold.props['aria-expanded'], false)
-  assert.equal(textOf(fold), 'Archived lectures (2)')
+  assert.equal(fold.props['aria-label'], 'Archived lectures 2')
 
   fold.props.onClick()
   const opened = await view.settle()
 
   assert.equal(lectureFold(opened, 'algebra').props['aria-expanded'], true)
   assert.deepEqual(lectureArchiveRows(opened, 'algebra'), [
-    '04 · Old Sets · Archived',
-    '50 · Retired Group Theory · Archived',
+    '04, Old Sets, Archived',
+    '50, Retired Group Theory, Archived',
   ])
   assert.deepEqual(lectureRows(opened, 'algebra'), [
-    '01 · Sets and Their Laws · Draft',
-    '02 · Groups and Homomorphisms · 28 Oct 2026',
-    '100 · Review of Groups · 2 Nov 2026',
+    '01, Sets and Their Laws, Draft',
+    '02, Groups and Homomorphisms, 28 Oct 2026',
+    '100, Review of Groups, 2 Nov 2026',
   ])
 })
 
@@ -1626,11 +1621,12 @@ test('keeps the empty line off a Course whose only lectures are archived', async
   const section = lectureSection(tree, 'algebra')
   assert.doesNotMatch(textOf(section), /No lectures yet/)
   assert.doesNotMatch(textOf(section), /Old Sets/)
-  assert.equal(textOf(lectureFold(tree, 'algebra')), 'Archived lectures (1)')
+  assert.equal(lectureFold(tree, 'algebra').props['aria-label'], 'Archived lectures 1')
 
   lectureFold(tree, 'algebra').props.onClick()
   const opened = await view.settle()
-  assert.deepEqual(allOfType(lectureSection(opened, 'algebra'), 'li').map(textOf), ['04 · Old Sets · Archived'])
+  assert.deepEqual(allOfType(lectureSection(opened, 'algebra'), 'li')
+    .map((row) => allOfType(row, 'button')[0].props['aria-label']), ['04, Old Sets, Archived'])
 })
 
 test('keeps a lecture whose frontmatter will not parse, with no mark', async () => {
@@ -1642,8 +1638,8 @@ test('keeps a lecture whose frontmatter will not parse, with no mark', async () 
   })
   const tree = await view.settle()
 
-  assert.deepEqual(lectureRows(tree, 'algebra'), ['03 · Broken but Listed'])
-  assert.equal(textOf(lectureEntry(tree, 'algebra', '03')), '03 · Broken but Listed')
+  assert.deepEqual(lectureRows(tree, 'algebra'), ['03, Broken but Listed'])
+  assert.equal(lectureEntry(tree, 'algebra', '03').props['aria-label'], '03, Broken but Listed')
 })
 
 test('treats a draft that also carries a teaching date as malformed', async () => {
@@ -1657,7 +1653,7 @@ test('treats a draft that also carries a teaching date as malformed', async () =
   })
   const tree = await view.settle()
 
-  assert.deepEqual(lectureRows(tree, 'algebra'), ['03 · Mixed Signals'])
+  assert.deepEqual(lectureRows(tree, 'algebra'), ['03, Mixed Signals'])
 })
 
 test('renders one Lectures region with a button inside a list for each entry', async () => {
@@ -1667,7 +1663,7 @@ test('renders one Lectures region with a button inside a list for each entry', a
   const regions = allOfType(tree, 'div')
     .filter(({ props }) => props.role === 'region' && props['aria-label'] === 'Lectures')
   assert.equal(regions.length, 1)
-  assert.match(textOf(allOfType(regions[0], 'style')[0]), /outline:2px solid var\(--dsw-alias-state-business-primary, currentColor\)/)
+  assert.match(textOf(allOfType(regions[0], 'style')[0]), /\.lectures-row:focus-visible::after\{[^}]*outline:2px solid/)
 
   const rows = allOfType(lectureLists(tree, 'algebra')[0], 'li')
   assert.equal(rows.length, 3)
@@ -1676,8 +1672,9 @@ test('renders one Lectures region with a button inside a list for each entry', a
     assert.equal(buttons.length, 1)
     assert.equal(buttons[0].props.type, 'button')
     assert.equal(textOf(buttons[0]), textOf(row))
+    assert.ok(buttons[0].props['aria-label'] !== undefined && buttons[0].props['aria-label'] !== '')
   }
-  assert.equal(textOf(rows[0]), '01 · Sets and Their Laws · Draft')
+  assert.equal(allOfType(rows[0], 'button')[0].props['aria-label'], '01, Sets and Their Laws, Draft')
 })
 
 test('leaves the Book and tracker files out of the list', async () => {
@@ -1715,8 +1712,8 @@ test('keeps the entries it built when a read fails and names the failure', async
 
   assert.deepEqual(lectureTopics(tree), ['algebra'])
   assert.deepEqual(lectureRows(tree, 'algebra'), [
-    '01 · Sets and Their Laws · Draft',
-    '100 · Review of Groups · 2 Nov 2026',
+    '01, Sets and Their Laws, Draft',
+    '100, Review of Groups, 2 Nov 2026',
   ])
 
   const alerts = allOfType(tree, 'p').filter(({ props }) => props.role === 'alert')
@@ -1800,7 +1797,7 @@ test('shares one Course selection between the Study tab and the Lectures tab', a
 
   assert.equal(courseSelect(after).props.value, 'ratios')
   assert.deepEqual(lectureTopics(after), ['ratios'])
-  assert.deepEqual(lectureRows(after, 'ratios'), ['01 · Ratios lecture'])
+  assert.deepEqual(lectureRows(after, 'ratios'), ['01, Ratios lecture'])
   assert.equal(lectureSection(after, 'proportions'), undefined)
 })
 
@@ -1819,7 +1816,7 @@ test('lists the second Course lectures only after the picker selects it', async 
 
   assert.equal(courseSelect(switched).props.value, 'statistics')
   assert.deepEqual(lectureTopics(switched), ['statistics'])
-  assert.deepEqual(lectureRows(switched, 'statistics'), ['01 · Statistics lecture'])
+  assert.deepEqual(lectureRows(switched, 'statistics'), ['01, Statistics lecture'])
   assert.equal(lectureSection(switched, 'probability'), undefined)
   assert.equal(view.files.calls.some(([, , path]) => path.includes('/probability/')), false)
 })
@@ -1917,49 +1914,87 @@ function renderStudySessions(rows, { routes = [], uiWorkspace } = {}) {
   }
 }
 
-const headingsOf = (tree) => allOfType(tree, 'h2').map(textOf)
-const rowStarting = (tree, text) => allOfType(tree, 'button').find((node) => textOf(node).startsWith(text))
+const groupButton = (tree, label) => allOfType(tree, 'button')
+  .find(({ props }) => props.className === 'study-ss-fold' && props['aria-label'] === label)
+const groupLabels = (tree) => allOfType(tree, 'button')
+  .filter(({ props }) => props.className === 'study-ss-fold')
+  .map(({ props }) => props['aria-label'])
+const rowButton = (tree, label) => allOfType(tree, 'button')
+  .find(({ props }) => props.className === 'study-ss-row' && props['aria-label'] === label)
+const chipOf = (row) => allOfType(row, 'span')
+  .find(({ props }) => props['data-study-chip'] !== undefined)
+const countOf = (tree, label) => textOf(allOfType(groupButton(tree, label), 'span')
+  .find(({ props }) => props.className === 'study-ss-count'))
 
-test('renders Quick, In-depth, and a collapsed Past group with counts', async () => {
+test('opens on In-depth and Quick, and folds Past with its count', async () => {
   const view = renderStudySessions(SESSION_ROWS, { routes: historyRoute() })
   const tree = await view.settle()
 
   assert.equal(allOfType(tree, 'div').some(({ props }) => props.role === 'region' && props['aria-label'] === 'Study Sessions'), true)
   assert.equal(textOf(allOfType(tree, 'h1')[0]), 'Study Sessions')
-  assert.deepEqual(headingsOf(tree), ['Quick (1)', 'In-depth (1)', 'Past (2)'])
+  assert.match(textOf(tree), /Every conversation where Nerd Mode was on\./)
 
-  const past = allOfType(tree, 'button').find(({ props }) => props['aria-expanded'] === false)
-  assert.ok(past, 'the Past heading is a collapsed control')
-  assert.equal(textOf(past), 'Past (2)')
-  assert.equal(rowStarting(tree, 'Limits'), undefined)
+  assert.deepEqual(groupLabels(tree), ['In-depth 1', 'Quick 1', 'Past 2'])
+  assert.deepEqual(
+    ['In-depth 1', 'Quick 1', 'Past 2'].map((label) => groupButton(tree, label).props['aria-expanded']),
+    [true, true, false],
+  )
+  assert.equal(countOf(tree, 'Past 2'), '2')
+
+  assert.ok(rowButton(tree, 'Vector spaces, math, 3 hours ago'))
+  assert.ok(rowButton(tree, 'Gradient descent, ml, 2 hours ago'))
+  assert.equal(rowButton(tree, 'Limits, calc, 4 hours ago, In-depth'), undefined)
   assert.equal(allOfType(tree, 'span').some(({ props }) => props['data-study-chip'] !== undefined), false)
+})
 
-  assert.equal(
-    textOf(rowStarting(tree, 'Vector spaces')),
-    'Vector spaces · math · 3 hours ago',
-  )
-  assert.equal(
-    textOf(rowStarting(tree, 'Gradient descent')),
-    'Gradient descent · ml · 2 hours ago',
-  )
+test('opens Past on click and names each past row its mode', async () => {
+  const view = renderStudySessions(SESSION_ROWS, { routes: historyRoute() })
+  const tree = await view.settle()
 
-  past.props.onClick()
+  groupButton(tree, 'Past 2').props.onClick()
   const opened = await view.settle()
 
-  const chipOf = (tree, rowText) => allOfType(rowStarting(tree, rowText), 'span')
-    .find(({ props }) => props['data-study-chip'] !== undefined)
-  assert.equal(textOf(chipOf(opened, 'Limits')), 'In-depth')
-  assert.equal(textOf(chipOf(opened, 'Quiz recap')), 'Quick')
-  assert.equal(textOf(rowStarting(opened, 'Limits')), 'Limits · calc · 4 hours ago · In-depth')
-  assert.equal(textOf(rowStarting(opened, 'Quiz recap')), 'Quiz recap · physics · 5 hours ago · Quick')
-  assert.equal(allOfType(opened, 'button').find(({ props }) => props['aria-expanded'] === true) !== undefined, true)
+  const limits = rowButton(opened, 'Limits, calc, 4 hours ago, In-depth')
+  const recap = rowButton(opened, 'Quiz recap, physics, 5 hours ago, Quick')
+  assert.ok(limits)
+  assert.ok(recap)
+  assert.equal(textOf(chipOf(limits)), 'In-depth')
+  assert.equal(textOf(chipOf(recap)), 'Quick')
+  assert.equal(groupButton(opened, 'Past 2').props['aria-expanded'], true)
+  assert.equal(groupButton(opened, 'In-depth 1').props['aria-expanded'], true)
+})
+
+test('folds Quick alone and keeps its count while In-depth stays open', async () => {
+  const view = renderStudySessions(SESSION_ROWS, { routes: historyRoute() })
+  const tree = await view.settle()
+
+  groupButton(tree, 'Quick 1').props.onClick()
+  const folded = await view.settle()
+
+  assert.equal(groupButton(folded, 'Quick 1').props['aria-expanded'], false)
+  assert.equal(countOf(folded, 'Quick 1'), '1')
+  assert.equal(rowButton(folded, 'Vector spaces, math, 3 hours ago'), undefined)
+  assert.equal(groupButton(folded, 'In-depth 1').props['aria-expanded'], true)
+  assert.ok(rowButton(folded, 'Gradient descent, ml, 2 hours ago'))
+  assert.equal(allOfType(folded, 'ul').length, 1)
+})
+
+test('names the groups and rows in Chinese', async () => {
+  const view = renderStudySessions(SESSION_ROWS, { routes: historyRoute() })
+  await view.settle()
 
   view.locale.switchTo('zh')
-  const translated = await view.settle()
+  const tree = await view.settle()
 
-  assert.deepEqual(headingsOf(translated), ['快速 (1)', '深入 (1)', '过去 (2)'])
-  assert.equal(textOf(rowStarting(translated, 'Vector spaces')), 'Vector spaces · math · 3小时前')
-  assert.equal(textOf(chipOf(translated, 'Limits')), '深入')
+  assert.match(textOf(tree), /开启过 Nerd Mode 的会话都在这里。/)
+  assert.deepEqual(groupLabels(tree), ['深入 1', '快速 1', '过去 2'])
+  assert.ok(rowButton(tree, 'Vector spaces, math, 3小时前'))
+
+  assert.equal(groupButton(tree, '过去 2').props['aria-expanded'], false)
+  groupButton(tree, '过去 2').props.onClick()
+  const opened = await view.settle()
+
+  assert.equal(textOf(chipOf(rowButton(opened, 'Limits, calc, 4小时前, 深入'))), '深入')
 })
 
 test('shows the empty line when no session ever had Nerd Mode', async () => {
@@ -1968,7 +2003,7 @@ test('shows the empty line when no session ever had Nerd Mode', async () => {
 
   assert.match(textOf(tree), /No study session yet/)
   assert.match(textOf(tree), /\/nerd-mode on/)
-  assert.deepEqual(headingsOf(tree), [])
+  assert.deepEqual(groupLabels(tree), [])
 })
 
 test('keeps the cached rows and names the failure when the route fails', async () => {

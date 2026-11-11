@@ -1,6 +1,7 @@
 # Spec: Study Sessions panel
 
 Status: resolved
+Revised: 2026-11-10. The layout and rows changed to the approved tile-row design with foldable groups. Data and behaviour did not change.
 
 ## Problem Statement
 
@@ -8,7 +9,7 @@ Nerd Mode is a per-conversation switch. Outside a conversation, nothing shows wh
 
 ## Solution
 
-Add a global panel named Study Sessions to the left sidebar, after Context Insights. It lists every conversation where Nerd Mode was switched on at least once, in three groups: Quick, In-depth, and a collapsed Past group. A row shows the session title, its workspace, and when it last changed. A click opens that conversation. The panel reads no Course files and shows no learner progress. It answers one question: which conversations are my study conversations.
+Add a global panel named Study Sessions to the left sidebar, after Context Insights. It lists every conversation where Nerd Mode was switched on at least once, in three groups: In-depth, Quick, and Past. Every group heading folds; Past starts folded. A row shows the session title, its workspace, and when it last changed. A click opens that conversation. The panel reads no Course files and shows no learner progress. It answers one question: which conversations are my study conversations.
 
 ## User Stories
 
@@ -46,9 +47,9 @@ Add a global panel named Study Sessions to the left sidebar, after Context Insig
 
 **Classifying In-depth.** A session counts as In-depth when at least one completed `/study-plus` invocation appears: a message with `source.kind === 'skill-invocation'` and `source.name === 'study-plus'`, a user message whose text holds `/study-plus` as a standalone command, a `tool/call` named `skill` whose arguments name `study-plus` and which has a successful `tool/result` with the same `callId`, or a `tool/ptc-dispatch` named `skill` with `arguments.name === 'study-plus'` and `isError !== true`. Prose that mentions study-plus must not count. On this machine a substring match finds 73 sessions, these rules find 25, and only 16 of the 41 Nerd Mode sessions qualify.
 
-**Grouping.** `active && studyPlus` goes to In-depth, `active && !studyPlus` goes to Quick, and `!active` goes to Past. The Past group is collapsed by default and keeps a chip on each row. A row with no live projection value counts as `active: false`.
+**Grouping.** `active && studyPlus` goes to In-depth, `active && !studyPlus` goes to Quick, and `!active` goes to Past. The panel renders them in that order. Past starts folded and keeps a chip on each row. A row with no live projection value counts as `active: false`.
 
-**Row.** A button with three parts: title, workspace name from `basename(cwd)`, and a relative time from `updatedAt`. The whole row is one click target. `uiWorkspace.openSession(id)` runs on click, and the main area then shows the conversation, so the panel needs no close call.
+**Row.** A full-width button led by a 32-pixel tile: a book for In-depth, a speech bubble for Quick, a clock for Past. Two text lines: the title at 14/20 weight 500, then the workspace name from `basename(cwd)` and, in Past, a Quick or In-depth chip at 13/18 tertiary. The relative time from `updatedAt` sits at the right edge at 12/18 tertiary. The whole row is one click target, and its `aria-label` names the title, workspace, time, and chip. At a content width of 520 pixels or less, a container query moves the time onto the metadata line and gives the title the full width. `uiWorkspace.openSession(id)` runs on click, and the main area then shows the conversation, so the panel needs no close call.
 
 **Refresh.** The panel fetches once when it mounts. The shell unmounts a panel when another one is selected, so returning to Study Sessions reads again. No timer, no watcher, no refresh control.
 
@@ -58,8 +59,8 @@ Add a global panel named Study Sessions to the left sidebar, after Context Insig
 |---|---|
 | No session ever had Nerd Mode | One line: turn Nerd Mode on from the composer bar, or run `/nerd-mode on` |
 | A group has no rows | The group is not rendered |
-| First scan running, no cached rows | A loading line with `done` of `total` |
-| First scan running, cached rows present | The cached rows, plus the same loading line |
+| First scan running, no cached rows | A loading line with `done` of `total`, and a 2-pixel progress track |
+| First scan running, cached rows present | The cached rows, plus the same loading line and track |
 | Route failed, cached rows present | The rows, plus one line naming the failure |
 | Route failed, no cached rows | One line naming the failure |
 | A stored session no longer exists | No row, because rows come from the session list |
@@ -69,6 +70,7 @@ Add a global panel named Study Sessions to the left sidebar, after Context Insig
 | Key | English | Chinese |
 |---|---|---|
 | Sidebar item and page title | Study Sessions | 学习会话 |
+| Page intro | Every conversation where Nerd Mode was on. | 开启过 Nerd Mode 的会话都在这里。 |
 | Quick heading | Quick | 快速 |
 | In-depth heading | In-depth | 深入 |
 | Past heading | Past | 过去 |
@@ -76,9 +78,9 @@ Add a global panel named Study Sessions to the left sidebar, after Context Insig
 | Scanning line | Scanning session history… 40 of 201 | 正在扫描会话历史… 40 / 201 |
 | Failure line | The session index could not be read: {reason} | 无法读取会话索引：{reason} |
 
-**Layout.** One column, maximum width 720 pixels, matching the Settings section. A heading row, then the three groups. Group headings sit above their rows and carry the count as text, not as a badge. Rows are full-width buttons with a 1-pixel separator. The Past heading is an expand control. Theme alias variables only, no new colours.
+**Layout.** The page fills the main area: full height, its own scroll, a 960-pixel content column, side padding of `clamp(24px, 4vw, 48px)`, 28 pixels above the header, and 48 pixels below the content. The header holds the title at 20/28 weight 500 and one intro line at 13/20 secondary. Groups start 32 pixels below. Every group heading is a level-two heading around a fold button that carries the count as quiet text; In-depth and Quick start open, Past starts folded, and a folded group keeps its count. Rows are full-width buttons with 2-pixel gaps, 8-pixel padding, an 8-pixel negative margin so the hover fill bleeds past the text, and a 20-pixel radius. Theme alias variables only, no new colours. Hover uses `interactive-bg-hover`; focus uses the host ring on an inset overlay.
 
-**Accessibility.** The page body is a region with an accessible name from the title. Group headings are level-two headings whose text includes the count. Rows are buttons, so Enter and Space work. The Past heading is a button with `aria-expanded`. The loading line is a status region, and the failure line is an alert. Focus order follows the visual order.
+**Accessibility.** The page body is a region with an accessible name from the title. Each group heading is a level-two heading around a button with `aria-expanded`; `aria-controls` is set only while that group's list exists. The button's accessible name carries the group name and count. Rows are buttons with a comma-separated `aria-label` naming the title, workspace, time, and any chip, so Enter and Space work and the two-line visual structure stays readable by a screen reader. The loading line is a status region, and the failure line is an alert. Focus order follows the visual order.
 
 **Host route.** Register in `apply` through `ctx.inject(['webServer', 'connection'], …)` and `webCtx.webServer.register({ kind: 'exact', path, handler })` inside `ctx.effect`, so the route disposes with the plugin. The handler calls `ctx.connection.requestRejection(req)` first, because `webServer.register` adds no auth fence, and replies with the returned status, `401` or `403`. Only GET is allowed. The reply sets `content-type: application/json; charset=utf-8` and `cache-control: no-store`. The client fetches the same origin, so the auth cookie travels without extra options.
 
@@ -104,6 +106,7 @@ No test asserts internal helper names or a whole-tree snapshot. One behaviour pe
 - Live updates while the panel stays open.
 - A refresh control.
 - Marking a session as Quick or In-depth by hand.
+- Remembering a folded group across panel visits; the default fold returns on every open.
 - Sessions that never had Nerd Mode.
 - A mobile layout.
 

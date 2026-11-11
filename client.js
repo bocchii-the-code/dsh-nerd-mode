@@ -1556,52 +1556,37 @@ window.__ModuleLoader__.load({
       return model;
     }
 
-    // The page fills the dock body so the picker and course name stay in view
-    // while only the lecture rows scroll. The scrollport owns the side padding,
-    // so its bar sits at the page edge rather than inside the text.
-    const lecturesPanelStyle = { ...panelStyle, height: '100%', padding: '24px 0 0' };
-    const lecturesHeaderStyle = { ...panelHeaderStyle, padding: '0 16px' };
-    const lecturesMessageStyle = { ...panelMutedStyle, padding: '0 16px' };
-    const lecturesHeadingStyle = { ...panelHeadingStyle, padding: '0 16px' };
-    const lecturesSectionStyle = { ...panelSectionStyle, flex: 1, minHeight: 0 };
-    const lecturesScrollStyle = {
-      display: 'flex',
-      flex: 1,
-      flexDirection: 'column',
-      gap: 10,
-      minHeight: 0,
-      overflowY: 'auto',
-      padding: '0 16px 40px',
-    };
-
-    // The rows and the fold are the only elements the host cannot style for us.
-    const LECTURES_CSS = '.lectures-entry:focus-visible,.lectures-fold:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary, currentColor);outline-offset:2px}';
-    const lectureRowStyle = {
-      background: 'none',
-      border: 'none',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
-      color: 'inherit',
-      cursor: 'pointer',
-      font: 'inherit',
-      lineHeight: '22px',
-      overflowWrap: 'anywhere',
-      padding: '2px 4px',
-      textAlign: 'left',
-      whiteSpace: 'normal',
-      width: '100%',
-    };
-    const lectureFoldStyle = {
-      background: 'none',
-      border: '1px solid var(--dsw-alias-border-l2)',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
-      color: 'var(--dsw-alias-label-tertiary)',
-      cursor: 'pointer',
-      font: 'inherit',
-      lineHeight: '22px',
-      padding: '6px 10px',
-      textAlign: 'left',
-      width: '100%',
-    };
+    // The picker and Course name stay in view while only the lecture rows
+    // scroll. The scroller owns the side padding, so its bar sits at the page
+    // edge rather than inside the text.
+    const LECTURES_CSS = `.lectures-page{box-sizing:border-box;height:100%;display:flex;flex-direction:column;color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit)}
+.lectures-head{display:flex;align-items:center;gap:12px;padding:24px 32px 0}
+.lectures-picker{display:flex;align-items:center;gap:8px;flex:1;min-width:0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+.lectures-select{flex:1;min-width:0;height:32px;padding:0 8px;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm,8px);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit}
+.lectures-group{display:flex;flex-direction:column;flex:1;min-height:0}
+.lectures-group-head{display:flex;align-items:center;gap:8px;padding:20px 32px 8px}
+.lectures-group-title{margin:0;font-size:14px;line-height:22px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lectures-count{flex:none;font-size:13px;line-height:20px;font-weight:400;color:var(--dsw-alias-label-tertiary)}
+.lectures-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:0 32px 32px}
+.lectures-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.lectures-item{margin:0 -8px}
+.lectures-row{position:relative;width:100%;box-sizing:border-box;display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-areas:"tile title" "tile meta";column-gap:12px;row-gap:2px;align-items:start;padding:8px;border:none;border-radius:var(--dsw-radius-xl,20px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;white-space:normal}
+.lectures-row:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.lectures-row:focus-visible{outline:none}
+.lectures-row:focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.lectures-tile{grid-area:tile;align-self:center;width:28px;height:28px;display:grid;place-items:center;border-radius:6px;background:var(--dsw-alias-fill-tsp-secondary);color:var(--dsw-alias-label-secondary);font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.lectures-title{grid-area:title;font-size:14px;line-height:20px;font-weight:500;overflow-wrap:anywhere}
+.lectures-meta{grid-area:meta;display:flex;align-items:center;gap:6px;min-width:0;font-size:13px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.lectures-chip{display:inline-flex;align-items:center;height:18px;padding:0 7px;font-size:11px;line-height:17px;border:.5px solid var(--dsw-alias-border-l3);border-radius:999px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
+.lectures-fold{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:0;border:none;background:none;font-size:14px;line-height:22px;font-weight:500;color:var(--dsw-alias-label-primary);cursor:pointer}
+.lectures-fold:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.lectures-chev{color:var(--dsw-alias-label-tertiary);transition:transform 120ms}
+.lectures-fold[aria-expanded="false"] .lectures-chev{transform:rotate(-90deg)}
+.lectures-status{margin:0;padding:8px 32px;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+.lectures-error{display:flex;align-items:center;gap:8px;margin:0;padding:8px 32px;font-size:13px;line-height:20px;color:var(--dsw-alias-state-error-primary)}
+.lectures-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor}
+.lectures-empty{margin:0;padding:48px 20px;text-align:center;font-size:14px;line-height:22px;color:var(--dsw-alias-label-tertiary)}
+.lectures-empty code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:18px;background:var(--dsw-alias-bg-layer-2);border-radius:6px;padding:1px 6px}`;
 
     const LECTURE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -1636,26 +1621,38 @@ window.__ModuleLoader__.load({
       return `${FILE_ADDRESS_PREFIX}session/${encodeSegment(sessionId)}/${encodePath(normalized)}`;
     }
 
-    // The whole row is the button, so its text is also its accessible name.
+    // The visible title is clipped, so the label repeats it in full.
     function lectureRow(entry, onOpen) {
       const mark = lectureMark(entry);
-      return React.createElement('li', { key: entry.number },
+      const label = mark === null
+        ? `${entry.number}, ${entry.title}`
+        : `${entry.number}, ${entry.title}, ${mark}`;
+      return React.createElement('li', { key: entry.number, className: 'lectures-item' },
         React.createElement('button', {
           type: 'button',
-          className: 'lectures-entry',
+          className: 'lectures-row',
+          'aria-label': label,
           onClick: () => onOpen(entry),
-          style: lectureRowStyle,
-        }, `${entry.number} · ${entry.title}${mark === null ? '' : ` · ${mark}`}`));
+        },
+        React.createElement('span', { className: 'lectures-tile', 'aria-hidden': 'true' }, entry.number),
+        React.createElement('span', { className: 'lectures-title' }, entry.title),
+        mark === null
+          ? null
+          : React.createElement('span', { className: 'lectures-meta' },
+              entry.mark === 'dated'
+                ? mark
+                : React.createElement('span', { className: 'lectures-chip' }, mark))));
     }
 
     function lectureTopic(group, open, onToggle, onOpen) {
       const main = group.entries.filter((entry) => entry.mark !== 'archived');
       const archived = group.entries.filter((entry) => entry.mark === 'archived');
+      const archiveId = `lectures-archive-${group.topic}`;
       const rows = [];
       if (group.entries.length === 0) {
-        rows.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, 'No lectures yet.'));
+        rows.push(React.createElement('p', { key: 'empty', className: 'lectures-empty' }, 'No lectures yet.'));
       } else if (main.length > 0) {
-        rows.push(React.createElement('ul', { key: 'main', style: panelListStyle }, ...main.map((entry) => lectureRow(entry, onOpen))));
+        rows.push(React.createElement('ul', { key: 'main', className: 'lectures-rows' }, ...main.map((entry) => lectureRow(entry, onOpen))));
       }
       if (archived.length > 0) {
         rows.push(React.createElement('button', {
@@ -1663,17 +1660,35 @@ window.__ModuleLoader__.load({
           type: 'button',
           className: 'lectures-fold',
           'aria-expanded': open,
+          // A closed fold has no list to control, so the reference would dangle.
+          'aria-controls': open ? archiveId : undefined,
+          'aria-label': `Archived lectures ${archived.length}`,
           onClick: () => onToggle(group.topic),
-          style: lectureFoldStyle,
-        }, `Archived lectures (${archived.length})`));
+        },
+        React.createElement('span', null, 'Archived lectures'),
+        React.createElement('span', { className: 'lectures-count' }, String(archived.length)),
+        React.createElement('svg', {
+          'aria-hidden': 'true',
+          className: 'lectures-chev',
+          fill: 'none',
+          height: 12,
+          stroke: 'currentColor',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          strokeWidth: 1.6,
+          viewBox: '0 0 16 16',
+          width: 12,
+        }, React.createElement('path', { d: 'M3.5 6 8 10.5 12.5 6' }))));
         if (open) {
-          rows.push(React.createElement('ul', { key: 'archive', style: panelListStyle }, ...archived.map((entry) => lectureRow(entry, onOpen))));
+          rows.push(React.createElement('ul', { key: 'archive', className: 'lectures-rows', id: archiveId }, ...archived.map((entry) => lectureRow(entry, onOpen))));
         }
       }
       // The Course key remounts the section on a switch, so its scrollport starts at the top.
-      return React.createElement('section', { key: group.topic, style: lecturesSectionStyle },
-        React.createElement('h2', { key: 'heading', style: lecturesHeadingStyle }, group.topic),
-        React.createElement('div', { style: lecturesScrollStyle }, ...rows));
+      return React.createElement('section', { key: group.topic, className: 'lectures-group' },
+        React.createElement('div', { className: 'lectures-group-head' },
+          React.createElement('h2', { className: 'lectures-group-title' }, group.topic),
+          React.createElement('span', { className: 'lectures-count' }, String(main.length))),
+        React.createElement('div', { className: 'lectures-scroll' }, ...rows));
     }
 
     function LecturesPage({ useTabInfo, sessionId, workspaceFiles }) {
@@ -1707,15 +1722,18 @@ window.__ModuleLoader__.load({
 
       let nodes;
       if (content.status === 'loading') {
-        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: lecturesMessageStyle }, 'Loading the lectures…')];
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, className: 'lectures-status' }, 'Loading the lectures…')];
       } else if (content.error === null && !content.rootFound) {
-        nodes = [React.createElement('p', { style: lecturesMessageStyle }, `No Course in ${TRACKER_ROOT}/. Run /study-plus to create one.`)];
+        nodes = [React.createElement('p', { className: 'lectures-empty' },
+          `No Course in ${TRACKER_ROOT}/. Run `,
+          React.createElement('code', null, '/study-plus'),
+          ' to create one.')];
       } else {
         nodes = content.error === null
           ? []
-          : [React.createElement('p', { role: 'alert', style: lecturesMessageStyle }, `The lecture library could not be read: ${content.error}.`)];
-        const picker = topicPicker(content.courses, content.course ?? selected, choose);
-        if (picker !== null) nodes.push(React.createElement('div', { style: lecturesHeaderStyle }, picker));
+          : [React.createElement('p', { role: 'alert', className: 'lectures-error' },
+              React.createElement('span', { className: 'lectures-dot', 'aria-hidden': 'true' }),
+              `The lecture library could not be read: ${content.error}.`)];
         if (content.course !== null) {
           nodes.push(lectureTopic(
             { topic: content.course, entries: content.entries },
@@ -1725,11 +1743,24 @@ window.__ModuleLoader__.load({
           ));
         }
       }
+
+      // One Course needs no picker: the page already shows that Course.
+      const courses = content.courses ?? [];
+      const picker = courses.length < 2 ? null : React.createElement('label', { className: 'lectures-picker' },
+        React.createElement('span', null, 'Course'),
+        React.createElement('select', {
+          'aria-label': 'Course',
+          className: 'lectures-select',
+          value: content.course ?? selected,
+          onChange: (event) => choose(event.target.value),
+        }, ...courses.map((course) => React.createElement('option', { key: course, value: course }, course))));
       return React.createElement('div', {
         role: 'region',
         'aria-label': LECTURES_LABEL,
-        style: lecturesPanelStyle,
-      }, React.createElement('style', null, LECTURES_CSS), ...nodes);
+        className: 'lectures-page',
+      }, React.createElement('style', null, LECTURES_CSS),
+      React.createElement('header', { className: 'lectures-head' }, picker),
+      ...nodes);
     }
 
     // A page type names no resource pattern and no `multiple`, so the host
@@ -1871,6 +1902,31 @@ window.__ModuleLoader__.load({
       return groups;
     }
 
+    // The tile is decoration; the group heading and the row label carry the meaning.
+    function studyTile(kind) {
+      const glyph = (children) => React.createElement('svg', {
+        fill: 'none',
+        height: 16,
+        stroke: 'currentColor',
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        strokeWidth: 1.6,
+        viewBox: '0 0 16 16',
+        width: 16,
+      }, ...children);
+      if (kind === 'book') return glyph(BOOK.props.children);
+      if (kind === 'quick') {
+        return glyph([
+          React.createElement('path', { d: 'M13.4 8.9a3.7 3.7 0 0 1-3.7 3.7H6.4L3.4 14.6v-2.5A3.7 3.7 0 0 1 1.8 9V7.5a3.7 3.7 0 0 1 3.7-3.7h4.2a3.7 3.7 0 0 1 3.7 3.7Z' }),
+          React.createElement('path', { d: 'M5.2 7.3h5.6M5.2 9.3h3.4' }),
+        ]);
+      }
+      return glyph([
+        React.createElement('circle', { cx: 8, cy: 8, r: 5.6 }),
+        React.createElement('path', { d: 'M8 5.2V8l1.9 1.3' }),
+      ]);
+    }
+
     // Inline because the client bundle cannot read assets/.
     function StudySessionsIcon({ size = 16, active = false }) {
       return React.createElement(
@@ -1904,7 +1960,8 @@ window.__ModuleLoader__.load({
       const [scan, setScan] = React.useState(() => studySessionsCache === null
         ? { status: 'scanning', sessions: {}, done: 0, total: 0, cursor: 0 }
         : { ...studySessionsCache, status: 'scanning' });
-      const [pastOpen, setPastOpen] = React.useState(false);
+      // Only a folded key reads true: In-depth and Quick start open, Past starts folded.
+      const [folded, setFolded] = React.useState({ inDepth: false, quick: false, past: true });
       const snapshot = useSessions((state) => state);
 
       React.useEffect(() => {
@@ -1925,129 +1982,160 @@ window.__ModuleLoader__.load({
         return () => { live = false; };
       }, []);
 
-      const rows = sessionRows(snapshot, scan.sessions);
-      const grouped = groupSessionRows(rows);
+      const grouped = groupSessionRows(sessionRows(snapshot, scan.sessions));
 
-      // The whole row is one target; the chip is a child, so its label stays in the accessible name.
-      const rowText = (row) => {
-        const parts = [row.title];
-        if (row.workspace !== '') parts.push(row.workspace);
+      // The row is one target, so its label names the title, workspace, time, and mode.
+      const rowNode = (row, past) => {
         const time = relativeTime(row.updatedAt, language);
-        if (time !== '') parts.push(time);
-        return parts.join(' · ');
+        const chip = past ? t(row.studyPlus ? STUDY_IN_DEPTH : STUDY_QUICK) : null;
+        const label = [row.title, row.workspace, time, chip]
+          .filter((part) => part !== '' && part !== null)
+          .join(', ');
+        return React.createElement('li', { className: 'study-ss-item', key: row.id },
+          React.createElement('button', {
+            type: 'button',
+            className: 'study-ss-row',
+            'aria-label': label,
+            onClick: () => openSession(row.id),
+          },
+          React.createElement('span', { className: 'study-ss-tile', 'aria-hidden': 'true' },
+            studyTile(past ? 'past' : row.studyPlus ? 'book' : 'quick')),
+          React.createElement('span', { className: 'study-ss-title' }, row.title),
+          React.createElement('span', { className: 'study-ss-meta' },
+            row.workspace === '' ? null : React.createElement('span', { className: 'study-ss-workspace' }, row.workspace),
+            chip === null ? null : React.createElement('span', {
+              className: 'study-ss-chip',
+              'data-study-chip': '',
+            }, chip)),
+          time === '' ? null : React.createElement('span', { className: 'study-ss-time' }, time)));
       };
-      const rowNode = (row, at, past) => React.createElement('button', {
-        type: 'button',
-        key: row.id,
-        onClick: () => openSession(row.id),
-        style: at === 0 ? studyRowStyle : studySeparatorStyle,
-      },
-      rowText(row),
-      past ? ' · ' : null,
-      past
-        ? React.createElement('span', {
-            key: 'chip',
-            'data-study-chip': '',
-            style: studyChipStyle,
-          }, row.studyPlus ? t(STUDY_IN_DEPTH) : t(STUDY_QUICK))
-        : null);
 
-      const nodes = [React.createElement('h1', { key: 'title', style: studyTitleStyle }, t(STUDY_SESSIONS_TITLE))];
+      const nodes = [];
       if (scan.status === 'scanning') {
-        nodes.push(React.createElement('p', {
-          key: 'progress',
-          role: 'status',
-          'aria-busy': true,
-          style: panelMutedStyle,
-        }, t({
-          en: `Scanning session history… ${scan.done} of ${scan.total}`,
-          zh: `正在扫描会话历史… ${scan.done} / ${scan.total}`,
-        })));
+        const percent = scan.total > 0 ? Math.round((scan.done / scan.total) * 100) : 0;
+        nodes.push(React.createElement('div', { key: 'progress', className: 'study-ss-scan' },
+          React.createElement('p', {
+            role: 'status',
+            'aria-busy': true,
+            className: 'study-ss-status',
+          }, t({
+            en: `Scanning session history… ${scan.done} of ${scan.total}`,
+            zh: `正在扫描会话历史… ${scan.done} / ${scan.total}`,
+          })),
+          React.createElement('div', { className: 'study-ss-track', 'aria-hidden': 'true' },
+            React.createElement('div', { className: 'study-ss-fill', style: { width: `${percent}%` } }))));
       }
       if (scan.status === 'failed') {
-        nodes.push(React.createElement('p', { key: 'failure', role: 'alert', style: panelMutedStyle }, t({
+        nodes.push(React.createElement('p', {
+          key: 'failure',
+          role: 'alert',
+          className: 'study-ss-error',
+        },
+        React.createElement('span', { className: 'study-ss-dot', 'aria-hidden': 'true' }),
+        t({
           en: `The session index could not be read: ${scan.reason}`,
           zh: `无法读取会话索引：${scan.reason}`,
         })));
       }
       if (scan.status === 'ready' && Object.keys(scan.sessions).length === 0) {
-        nodes.push(React.createElement('p', { key: 'empty', style: panelMutedStyle }, t({
-          en: 'No study session yet. Turn on Nerd Mode from the composer bar, or run `/nerd-mode on`.',
-          zh: '还没有学习会话。在输入栏打开 Nerd Mode，或运行 `/nerd-mode on`。',
-        })));
+        nodes.push(React.createElement('p', { key: 'empty', className: 'study-ss-empty' },
+          t({
+            en: 'No study session yet. Turn on Nerd Mode from the composer bar, or run',
+            zh: '还没有学习会话。在输入栏打开 Nerd Mode，或运行',
+          }),
+          ' ',
+          React.createElement('code', null, '/nerd-mode on'),
+          t({ en: '.', zh: '。' })));
       }
 
       const group = (key, label, list, past) => {
         if (list.length === 0) return null;
-        return React.createElement('section', { key, style: studyGroupStyle },
-          React.createElement('h2', { style: panelHeadingStyle }, `${label} (${list.length})`),
-          React.createElement('div', { style: studyRowsStyle },
-            ...list.map((row, at) => rowNode(row, at, past))));
-      };
-      nodes.push(group('quick', t(STUDY_QUICK), grouped.quick, false));
-      nodes.push(group('inDepth', t(STUDY_IN_DEPTH), grouped.inDepth, false));
-      if (grouped.past.length > 0) {
-        nodes.push(React.createElement('section', { key: 'past', style: studyGroupStyle },
-          React.createElement('h2', { style: panelHeadingStyle },
+        const open = folded[key] === false;
+        const listId = `study-ss-rows-${key}`;
+        return React.createElement('section', { key, className: 'study-ss-group' },
+          React.createElement('h2', { className: 'study-ss-group-title' },
             React.createElement('button', {
               type: 'button',
-              'aria-expanded': pastOpen,
-              onClick: () => setPastOpen((open) => !open),
-              style: studyHeadingButtonStyle,
-            }, `${t(STUDY_PAST)} (${grouped.past.length})`)),
-          pastOpen
-            ? React.createElement('div', { style: studyRowsStyle },
-                ...grouped.past.map((row, at) => rowNode(row, at, true)))
-            : null));
-      }
+              className: 'study-ss-fold',
+              'aria-expanded': open,
+              // A folded group has no list to control, so the reference would dangle.
+              'aria-controls': open ? listId : undefined,
+              'aria-label': `${t(label)} ${list.length}`,
+              onClick: () => setFolded((previous) => ({ ...previous, [key]: !previous[key] })),
+            },
+            React.createElement('span', null, t(label)),
+            React.createElement('span', { className: 'study-ss-count' }, String(list.length)),
+            React.createElement('svg', {
+              'aria-hidden': 'true',
+              className: 'study-ss-chev',
+              fill: 'none',
+              height: 12,
+              stroke: 'currentColor',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
+              strokeWidth: 1.6,
+              viewBox: '0 0 16 16',
+              width: 12,
+            }, React.createElement('path', { d: 'M3.5 6 8 10.5 12.5 6' })))),
+          open
+            ? React.createElement('ul', { className: 'study-ss-rows', id: listId },
+                ...list.map((row) => rowNode(row, past)))
+            : null);
+      };
+      nodes.push(group('inDepth', STUDY_IN_DEPTH, grouped.inDepth, false));
+      nodes.push(group('quick', STUDY_QUICK, grouped.quick, false));
+      nodes.push(group('past', STUDY_PAST, grouped.past, true));
 
       return React.createElement('div', {
         role: 'region',
         'aria-label': t(STUDY_SESSIONS_TITLE),
-        style: studyPanelStyle,
-      }, ...nodes);
+        className: 'study-ss-page',
+      }, React.createElement('style', null, STUDY_SESSIONS_CSS),
+      React.createElement('header', { className: 'study-ss-head', 'data-window-drag': '' },
+        React.createElement('h1', { className: 'study-ss-title' }, t(STUDY_SESSIONS_TITLE)),
+        React.createElement('p', { className: 'study-ss-intro' }, t({
+          en: 'Every conversation where Nerd Mode was on.',
+          zh: '开启过 Nerd Mode 的会话都在这里。',
+        }))),
+      ...nodes);
     }
 
-    const studyPanelStyle = { ...panelStyle, gap: 24 };
-    const studyTitleStyle = { fontSize: 20, fontWeight: 600, lineHeight: '28px', margin: 0 };
-    const studyGroupStyle = { display: 'flex', flexDirection: 'column', gap: 2 };
-    const studyRowsStyle = { display: 'flex', flexDirection: 'column' };
-    const studyRowStyle = {
-      background: 'none',
-      border: 'none',
-      color: 'inherit',
-      cursor: 'pointer',
-      font: 'inherit',
-      lineHeight: '22px',
-      overflowWrap: 'anywhere',
-      padding: '10px 2px',
-      textAlign: 'left',
-      whiteSpace: 'normal',
-      width: '100%',
-    };
-    const studySeparatorStyle = {
-      ...studyRowStyle,
-      borderTop: '1px solid var(--dsw-alias-border-l2)',
-    };
-    const studyChipStyle = {
-      border: '1px solid var(--dsw-alias-border-l3)',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
-      color: 'var(--dsw-alias-label-tertiary)',
-      display: 'inline-block',
-      fontSize: 12,
-      lineHeight: '18px',
-      padding: '0 6px',
-      whiteSpace: 'nowrap',
-    };
-    const studyHeadingButtonStyle = {
-      background: 'none',
-      border: 'none',
-      color: 'inherit',
-      cursor: 'pointer',
-      font: 'inherit',
-      padding: 0,
-      textAlign: 'left',
-    };
+    // The page shell, rows, and fold live in CSS so a container query can fold
+    // the time under the title on narrow panes. Tokens come from the host theme.
+    const STUDY_SESSIONS_CSS = `.study-ss-page{box-sizing:border-box;height:100%;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:32px;padding:0 clamp(24px,4vw,48px) 48px;color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);container-type:inline-size}
+.study-ss-page>*{width:100%;max-width:960px}
+.study-ss-head{display:flex;flex-direction:column;padding-top:28px}
+[data-platform="darwin"] .study-ss-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}
+.study-ss-title{font-size:20px;line-height:28px;font-weight:500;margin:0}
+.study-ss-intro{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary);margin:4px 0 0}
+.study-ss-group{display:flex;flex-direction:column;gap:8px}
+.study-ss-group-title{font-size:14px;line-height:22px;font-weight:500;margin:0}
+.study-ss-fold{display:inline-flex;align-items:center;gap:8px;padding:0;background:none;border:none;font:inherit;color:inherit;cursor:pointer}
+.study-ss-fold:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.study-ss-count{font-size:13px;line-height:20px;font-weight:400;color:var(--dsw-alias-label-tertiary)}
+.study-ss-chev{color:var(--dsw-alias-label-tertiary);transition:transform 120ms}
+.study-ss-fold[aria-expanded="false"] .study-ss-chev{transform:rotate(-90deg)}
+.study-ss-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.study-ss-item{margin:0 -8px}
+.study-ss-row{position:relative;width:100%;box-sizing:border-box;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:"tile title time" "tile meta time";column-gap:12px;row-gap:2px;align-items:start;padding:8px;border:none;border-radius:var(--dsw-radius-xl,20px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;white-space:normal}
+.study-ss-row:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.study-ss-row:focus-visible{outline:none}
+.study-ss-row:focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.study-ss-tile{grid-area:tile;align-self:center;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 10%,transparent);color:var(--dsw-alias-state-business-primary)}
+.study-ss-title{grid-area:title;font-size:14px;line-height:20px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.study-ss-meta{grid-area:meta;display:flex;align-items:center;gap:6px;min-width:0;font-size:13px;line-height:18px;color:var(--dsw-alias-label-tertiary);flex-wrap:wrap}
+.study-ss-workspace{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.study-ss-time{grid-area:time;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;margin-top:2px}
+.study-ss-chip{display:inline-flex;align-items:center;height:18px;padding:0 7px;font-size:11px;line-height:17px;border:.5px solid var(--dsw-alias-border-l3);border-radius:999px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
+@container (max-width:520px){.study-ss-row{grid-template-areas:"tile title title" "tile meta time"}.study-ss-time{margin-top:0}}
+.study-ss-scan{display:flex;flex-direction:column;gap:10px}
+.study-ss-status{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary);margin:0}
+.study-ss-track{height:2px;background:var(--dsw-alias-border-l3);border-radius:999px;overflow:hidden}
+.study-ss-fill{height:100%;background:var(--dsw-alias-state-business-primary)}
+.study-ss-error{display:flex;align-items:center;gap:8px;font-size:13px;line-height:20px;color:var(--dsw-alias-state-error-primary);margin:0}
+.study-ss-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor}
+.study-ss-empty{text-align:center;padding:48px 20px;font-size:14px;line-height:22px;color:var(--dsw-alias-label-tertiary);margin:0}
+.study-ss-empty code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:18px;background:var(--dsw-alias-bg-layer-2);border-radius:6px;padding:1px 6px}`;
 
     return {
       inject: ['slots', 'remote', 'remote.commands', 'remote.workspaceFiles', 'configForms'],

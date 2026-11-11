@@ -166,5 +166,5 @@ A table at the head of a lecture that lists only the symbols several formulas sh
 _Avoid_: glossary, notation table
 
 **Study Sessions** (学习会话):
-The global panel that lists every conversation where Nerd Mode was switched on at least once, split into Quick, In-depth, and Past. It is a session index, not a Course record, and it shows no learner progress.
+The global panel that lists every conversation where Nerd Mode was switched on at least once, split into In-depth, Quick, and Past. It is a session index, not a Course record, and it shows no learner progress.
 _Avoid_: Course Status, study list, history panel, study tab
