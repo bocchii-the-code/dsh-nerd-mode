@@ -2,6 +2,20 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.5.0] - 2026-11-11
+
+### Added
+
+- A Study Sessions panel in the left sidebar, after Context Insights. It lists every conversation where Nerd Mode was switched on at least once, in three groups: In-depth, Quick, and Past. A row shows the conversation title, its workspace, and when it last changed. A click opens that conversation.
+- The panel keeps its own record of past conversations in `~/.dsh/study-sessions-index.json`, so a conversation stays listed after it closes. The first scan of 201 conversations takes about 6 seconds, runs in chunks, and shows progress.
+- The panel reads through a read-only route. It answers only GET, and it refuses a request with no session cookie (401) or a foreign host or origin (403).
+
+### Changed
+
+- Each group on the Study Sessions page folds from its heading, and a folded group keeps its count. In-depth and Quick start open, and Past starts closed with a mode chip on each row.
+- The Study Sessions and Lectures pages share one row layout: an icon, the title, a metadata line, and the time at the right edge. In a narrow pane the time moves under the title.
+- The Lectures page keeps the course picker in its header and lists only the courses that exist. The archived lectures fold shows its count and a chevron.
+
 ## [0.4.6] - 2026-11-05
 
 ### Fixed

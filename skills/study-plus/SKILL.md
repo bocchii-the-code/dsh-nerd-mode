@@ -1,6 +1,6 @@
 ---
 name: study-plus
-description: "[v0.4.6] Run one tracked session against a dated learning record. Load for an explicit command or after the user chooses tracked study in the upper router."
+description: "[v0.5.0] Run one tracked session against a dated learning record. Load for an explicit command or after the user chooses tracked study in the upper router."
 argument-hint: "<course-slug>, or empty to continue the current Course"
 ---
 # Study Plus
