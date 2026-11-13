@@ -2,6 +2,37 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.5.2] - 2026-11-13
+
+### Changed
+
+- The About group reads the newest release from npm through the plugin's own host route. It no longer needs DSH Market.
+- A GitHub install updates too: the check reads the official repository at the tracked ref, and the button re-resolves the spec. A pinned ref and a fork are not checked.
+- The check reads both npm and the official GitHub repository. The higher version wins, and the update moves the install source to that channel.
+- The update button installs by running `pnpm add dsh-nerd-mode@<version> --save-exact` in the profile, then asks for a DSH restart.
+- A `github:` install explains that one reinstall in Settings → Plugins switches it to npm. A `link:` install keeps the git note.
+
+### Removed
+
+- The restart button and the DSH Market capability, update, operation, and restart calls.
+
+## [0.5.1] - 2026-11-12
+
+### Changed
+
+- The settings panel, the Study view, the Lectures pane, and the Study Sessions page share one visual scale: spacing at 4, 8, 12, 16, 24, and 32, controls 32px high, radii 6 and 10, text at 12, 13, and 15. Each group is a card on the theme surface, so a long form reads as separate blocks instead of one dense list.
+- Every color still comes from the host theme tokens, so light and dark both follow the host. No hex value reaches the UI.
+- The Study view and the Lectures pane follow the interface language. Their labels, empty states, failure lines, and slot names now have Chinese text.
+
+### Fixed
+
+- The settings group with question count and type aligns its title with its controls. The title no longer floats to the middle of the card.
+- The English interface no longer shows a Chinese subtitle under the recall setting. It reads "Recall Session" in English and "课前回忆" in Chinese.
+
+### Removed
+
+- Four packages no file imported: `@astryxdesign/core`, `@astryxdesign/theme-neutral`, `@stylexjs/stylex`, and `@astryxdesign/cli`. The install no longer carries them.
+
 ## [0.5.0] - 2026-11-11
 
 ### Added
