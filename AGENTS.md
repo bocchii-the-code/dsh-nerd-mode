@@ -21,6 +21,32 @@ Single-context: `GLOSSARY.md` at the repo root, plus decisions in `docs/adr/`. S
 One agent per working tree. Before a read or write that depends on the branch,
 run `git branch --show-current`.
 
+### Publishing
+
+A pushed `v<version>` tag is the only release action. The `publish` workflow
+checks the tag, runs `npm run check`, publishes with npm trusted publishing,
+and creates a GitHub Release. The repository holds no npm token. Tag creation
+is limited to administrators.
+
+Before a tag, put the version bump, the `## [<version>]` changelog section, and
+both skill description markers in one commit. Run `npm run check`, push `main`,
+then tag that commit:
+
+```bash
+git tag v0.5.2
+git push origin v0.5.2
+```
+
+The run refuses a prerelease tag, a tag that differs from `package.json`, a
+missing changelog section, a commit outside `main`, an already published
+version, or a failed check. Never run `npm publish` locally.
+
+If the run fails before the upload, fix the commit and move the tag. A
+published version cannot be replaced: deprecate it and publish a patch. Use
+`npm unpublish` only inside the 72-hour window. Details:
+`docs/releasing.md`. Decision:
+`docs/adr/0024-publish-from-a-tag-with-trusted-publishing.md`.
+
 <!-- ASTRYX:START -->
 Astryx v0.7.13 · 174 components
 CLI: run every command as `npx astryx <cmd>` (shown below as `astryx ...`).
