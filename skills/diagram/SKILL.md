@@ -9,6 +9,14 @@ A picture earns its place when the reader has to hold two things at once: the pa
 
 Do not draw a list. If the content is a sequence of steps with no branching, a numbered list reads faster. One figure carries one idea; split rather than crowd.
 
+## Before you draw
+
+Name the one relation the figure must show, in one sentence. List the nodes and the arrows between them. If the list passes 12 nodes, split the figure.
+
+Pick the shape from the relation, not from the topic. Decide the one accent: which node or arrow is the point. Every accent class you use gets a role you can name; most figures need one, a comparison may need two.
+
+When the figure would need a second paragraph to explain, draw two figures.
+
 ## Pick the shape
 
 - **Flow**: what happens in order. Three to five boxes left to right, an arrow between each, a dashed return edge for the retry path.
@@ -31,17 +39,24 @@ Write the SVG file first, then talk about it.
 
 The Markdown path is resolved against the working directory and served from disk, so it must be a file that exists when the message renders. Write the file before the sentence that shows it. No query string, no fragment, no `data:` URL: the renderer rejects all three and shows the alt text instead. To revise a figure, overwrite the file; if the learner still sees the old picture, write a new name.
 
-## File contract
+## The floor
 
-The file must carry:
+Non-negotiable, every figure:
 
-- `xmlns="http://www.w3.org/2000/svg"`, `viewBox`, and `width`/`height` in pixels.
-- `role="img"` and an `aria-label` that states what the figure shows.
-- One `<style>` block with the palette classes below, so a dark background can override the light default.
-- `font-family="Segoe UI, Inter, system-ui, sans-serif"` on every text group.
-- Arrowheads as `<marker>` in `<defs>`, referenced with `marker-end`.
+- The canvas is 720 wide. The root carries `xmlns`, `viewBox`, `width` and `height` in pixels, `role="img"`, and a non-empty `aria-label`.
+- One `<style>` block holds the palette classes and the dark-mode override. No other style block.
+- `font-family="Segoe UI, Inter, system-ui, sans-serif"` sits on every text group.
+- Arrowheads are `<marker>` elements in `<defs>`, referenced with `marker-end`.
+- Colors come only from the palette classes. No raw hex or named color outside `<style>`. No gradients, shadows, 3D, icons, emoji, or decorative marks.
+- One accent class, one meaning, for the whole figure. At most four accent classes; most figures need one.
+- Every label fits its box: 13px, at most two lines. At 13px a Latin line runs about 7.2px per character and a CJK line about 13px. A box needs `7.2 × Latin characters + 13 × CJK characters + 36`.
+- Every arrow lands on a border with clearance. No wire crosses a label. No orphan node.
+- No relation the source does not state. No invented number, name, or arrow.
+- No `<script>`, `<foreignObject>`, external `href`, `@import`, animation, or LaTeX delimiter. Formulas are plain Unicode text inside `<text>`.
+- The `aria-label`, the Markdown alt text, and the caption sentence agree.
+- The figure says one thing.
 
-The file must not carry `<script>`, `<foreignObject>`, external `href` or `url(...)` fonts, LaTeX delimiters, or animation. A browser renders it as an isolated image: it inherits no page CSS and no page font, so every color and every glyph has to be stated in the file. Formulas become plain Unicode text inside `<text>`: `θ`, `∇f(x)`, `x²`, `≤`.
+A browser renders the file as an isolated image. It inherits no page CSS and no page font, so every color and every glyph has to be stated in the file.
 
 ## Layout budget
 
@@ -51,7 +66,7 @@ Work in a 720 wide canvas; height is whatever the content needs plus 40.
 - Title at 15px bold, baseline `y=40`, left margin 28.
 - Node: 60 tall, `rx="8"`, 42 to 50 of gap between nodes. Three across fit as 180 wide boxes at x=28, 270, 512.
 - Node label 13px, sub-label 12 to 13px in the muted color, both anchored `middle`.
-- Measure before you place: at 13px Segoe UI a line runs about 7.2px per character. A box must be at least `7.2 × characters + 36` wide, and a node holds at most two lines.
+- Measure before you place: at 13px Segoe UI a Latin line runs about 7.2px per character, a CJK line about 13px. A box must be at least `7.2 × Latin characters + 13 × CJK characters + 36` wide, and a node holds at most two lines.
 - Arrows land on a box edge with a few pixels of clearance, never inside the box.
 - Keep it under about 12 nodes. Past that the figure stops being readable at chat width.
 
@@ -67,6 +82,7 @@ Copy these classes verbatim and use them; they carry the dark-mode overrides.
   .sub { fill: #475569; }
   .note { fill: #64748b; }
   .wire { stroke: #94a3b8; }
+  .head { fill: #94a3b8; }
   .b1 { fill: #2563eb; fill-opacity: .08; stroke: #2563eb; }
   .b2 { fill: #b45309; fill-opacity: .08; stroke: #b45309; }
   .b3 { fill: #15803d; fill-opacity: .08; stroke: #15803d; }
@@ -87,7 +103,7 @@ Copy these classes verbatim and use them; they carry the dark-mode overrides.
 </style>
 ```
 
-Class `b1` to `b4` mark four distinct things. Give one class one meaning for the whole figure, and when the figure has a legend, build it from the same classes. `note` is for edge labels and footnotes; `wire` styles connectors.
+Class `b1` to `b4` mark four distinct things. Give one class one meaning for the whole figure, and when the figure has a legend, build it from the same classes. `note` is for edge labels and footnotes; `wire` styles connectors; `head` fills the arrowhead.
 
 ## Starter
 
@@ -96,7 +112,7 @@ Class `b1` to `b4` mark four distinct things. Give one class one meaning for the
   <style>…the palette above…</style>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path class="head" d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
     </marker>
   </defs>
   <rect class="panel" x="0.75" y="0.75" width="718.5" height="248.5" rx="12" stroke-width="1.5"/>
@@ -109,11 +125,11 @@ Class `b1` to `b4` mark four distinct things. Give one class one meaning for the
 
     <rect class="b2" x="270" y="72" width="180" height="60" rx="8" stroke-width="1.5"/>
     <text class="label" x="360" y="98" text-anchor="middle" font-weight="600">Name the gap</text>
-    <text class="sub" x="360" y="117" text-anchor="middle">without fixing it yet</text>
+    <text class="sub" x="360" y="117" text-anchor="middle">without fixing yet</text>
 
     <rect class="b3" x="512" y="72" width="180" height="60" rx="8" stroke-width="1.5"/>
     <text class="label" x="602" y="98" text-anchor="middle" font-weight="600">Explain again</text>
-    <text class="sub" x="602" y="117" text-anchor="middle">with the fix in place</text>
+    <text class="sub" x="602" y="117" text-anchor="middle">after the fix</text>
   </g>
 
   <g class="wire" stroke-width="1.5" fill="none">
@@ -125,10 +141,18 @@ Class `b1` to `b4` mark four distinct things. Give one class one meaning for the
 </svg>
 ```
 
-## Check before you send
+## Verify
 
-- Every arrow touches a border at both ends, and no label touches a border.
-- The `aria-label`, the Markdown alt text, and the caption sentence agree.
-- Colors come only from the palette classes, so the figure survives a theme switch.
-- The file path in the image line matches the file you wrote, character for character.
-- The figure says one thing. If it needs a second paragraph of explanation, draw two figures.
+Run the checker after writing the file:
+
+```text
+node <skill-dir>/scripts/check-svg.mjs diagrams/<name>.svg
+```
+
+`<skill-dir>` is the folder that holds this SKILL.md.
+
+Fix every FAIL and run it once more. A WARN is a question: fix it, or say why it is intentional.
+
+The checker measures text, not pixels. When a browser is available, open the SVG and look at it. Check it at 720 wide and at 360 wide: the whole figure scales by half, so a 13px label reads at 6.5px. If that is too small for the material, split the figure or draw a simpler one. Do not shrink the text below 13px at 720.
+
+A clean lint is not a good figure. The last check is the reader's: can they name the one thing the figure shows without reading the caption?
