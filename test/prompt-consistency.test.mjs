@@ -102,10 +102,49 @@ test('the opening question keeps every fixed choice', () => {
   assert.match(read('skills/study/SKILL.md'), /brief from an upper layer is final/i)
 })
 
+// Each goal and background option carries a fixed depth description. A lost
+// description lets the model invent a claim the level table does not support.
+const OPENING_DESCRIPTIONS = [
+  /偏全：按考点讲全，不逐句铺开/,
+  /偏推导：讲清概念之间的关系/,
+  /偏快：一段讲完，例子从简/,
+  /偏慢：分步讲，术语逐个解释/,
+  /偏慢：术语首次出现就解释/,
+  /标准：基础名词不再逐个解释/,
+  /偏快：重复内容略过/,
+  /偏快：跳过直觉，从定义起讲/,
+  /Path options carry no description/,
+]
+
+test('the opening question keeps every depth description', () => {
+  const section = read('assets/section.md')
+  for (const description of OPENING_DESCRIPTIONS) {
+    assert.match(section, description, `assets/section.md lost ${description}`)
+  }
+})
+
+
 test('the graph approval keeps the table out of the question text', () => {
   const skill = read('skills/study-plus/SKILL.md')
   assert.match(skill, /full graph and chapter layout in the reply before the approval question/i)
   assert.match(skill, /Do not put the table in the question text/i)
+})
+
+// Four lecture rules: a concrete opening, an adjacent figure, a chapter map, and no decorative text.
+const LECTURE_RULES = [
+  /Start from one concrete instance/,
+  /Put the figure next to the paragraph it explains/,
+  /When no honest figure exists/,
+  /open each chapter with one figure/,
+  /Delete asides, restatements, and footnotes/,
+  /Skip the intuition and the concrete opening/,
+]
+
+test('the lecture standard keeps the visual and concrete rules', () => {
+  const skill = read('skills/study/SKILL.md')
+  for (const pattern of LECTURE_RULES) {
+    assert.match(skill, pattern, `skills/study/SKILL.md lost ${pattern}`)
+  }
 })
 
 test('a new Course asks for its name and handles a name collision', () => {
