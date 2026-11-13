@@ -1,0 +1,102 @@
+name: publish
+
+# One tag push publishes one version. The tag is the only release action.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+# Two tags pushed together must not race. The second run waits.
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write  # npm trusted publishing
+      contents: write  # GitHub Release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check the tag, the changelog, and the target commit
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag $TAG is not a stable version tag such as v1.2.3."
+            exit 1
+          fi
+          if [[ "$TAG" != "v$version" ]]; then
+            echo "::error::Tag $TAG does not match the package version $version."
+            exit 1
+          fi
+          if ! grep -Fq "## [$version]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section for $version."
+            exit 1
+          fi
+
+          # The published commit must already be part of main.
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+            echo "::error::Tag $TAG points at a commit that is not on main."
+            exit 1
+          fi
+
+          # A published version cannot be replaced, so never try to upload it twice.
+          if npm view "dsh-nerd-mode@$version" version >/dev/null 2>&1; then
+            echo "::error::dsh-nerd-mode@$version is already published. Bump the version."
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint and test
+        run: npm run check
+
+      - name: Publish to npm
+        # Trusted publishing exchanges the GitHub OIDC token for a short-lived npm
+        # credential and attaches provenance automatically. No secret is read.
+        run: npm publish
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          notes="$(mktemp)"
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { inside = 1; next }
+            inside && /^## \[/ { exit }
+            inside { print }
+          ' CHANGELOG.md > "$notes"
+
+          if ! grep -q '[^[:space:]]' "$notes"; then
+            echo "The changelog section is empty. Use the release title only."
+            printf 'See CHANGELOG.md.\n' > "$notes"
+          fi
+
+          # The version is already live on npm. A Release failure must not fail the
+          # run, because a re-run would stop at the version check.
+          gh release create "$TAG" --title "$TAG" --notes-file "$notes" || {
+            echo "::warning::npm publish succeeded, but the GitHub Release was not created. Create it by hand for $TAG."
+          }

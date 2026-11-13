@@ -168,3 +168,15 @@ _Avoid_: glossary, notation table
 **Study Sessions** (学习会话):
 The global panel that lists every conversation where Nerd Mode was switched on at least once, split into In-depth, Quick, and Past. It is a session index, not a Course record, and it shows no learner progress.
 _Avoid_: Course Status, study list, history panel, study tab
+
+**Release**:
+The commit that sets the package version, adds its changelog section, and updates both skill descriptions. It is not a publish. A release can sit unpublished.
+_Avoid_: version bump, cut
+
+**Publish**:
+The upload of one version to the npm registry. A published version cannot be replaced.
+_Avoid_: release, deploy, ship
+
+**Tag** (`v<version>`):
+The git ref that starts a publish. Only an administrator creates one, and it must point at a commit on `main`.
+_Avoid_: release tag, label
