@@ -59,11 +59,10 @@ window.__ModuleLoader__.load({
         && left.unseenQuestionType === right.unseenQuestionType;
     }
 
-    const MARKET_API = '/dsh-market/api/v1';
-    const PACKAGE = 'dsh-nerd-mode';
-    const UPDATE_SCHEMA = 'dsh-market/update-api/v1';
-    const REQUEST_TIMEOUT = 10000;
-    const POLL_INTERVAL = 1000;
+    const UPDATE_API = '/dsh-nerd-mode/api/update';
+    const CHECK_TIMEOUT = 10000;
+    // An install runs npm on the host, which can take minutes.
+    const INSTALL_TIMEOUT = 300000;
 
     function useT(locale) {
       React.useSyncExternalStore(
@@ -72,68 +71,6 @@ window.__ModuleLoader__.load({
         () => locale.getSnapshot(),
       );
       return (text) => locale.resolveText(text);
-    }
-
-    // Every Market call carries the session cookies and gives up after 10 s.
-    async function marketRequest(url, options = {}, life = null) {
-      const controller = new AbortController();
-      if (life !== null) life.controller = controller;
-      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-      try {
-        const response = await fetch(url, {
-          credentials: 'same-origin',
-          ...options,
-          signal: controller.signal,
-        });
-        const body = await response.json().catch(() => null);
-        return { ok: response.ok, status: response.status, body };
-      } catch (error) {
-        if (controller.signal.aborted) throw new Error('DSH Market did not answer within 10 seconds.');
-        throw error;
-      } finally {
-        clearTimeout(timer);
-        if (life !== null && life.controller === controller) life.controller = null;
-      }
-    }
-
-    function marketFailure(result, fallback) {
-      const body = result?.body ?? {};
-      return body.error
-        ?? body.failure?.message
-        ?? body.failure?.code
-        ?? `${fallback} (HTTP ${result?.status ?? 0}).`;
-    }
-
-    // The schema is optional on the operation endpoints, but a wrong one is a different API.
-    const wrongSchema = (body) => body?.schema !== undefined && body.schema !== UPDATE_SCHEMA;
-
-    async function readCapabilities(life) {
-      const result = await marketRequest(`${MARKET_API}/capabilities`, {}, life);
-      const body = result.body ?? {};
-      if (!result.ok) throw new Error(marketFailure(result, 'DSH Market did not answer'));
-      if (body.schema !== UPDATE_SCHEMA || body.features?.update !== true) {
-        throw new Error('DSH Market does not support plugin updates.');
-      }
-      const endpoints = body.endpoints ?? {};
-      if (typeof endpoints.updates !== 'string' || typeof endpoints.operations !== 'string') {
-        throw new Error('DSH Market returned no update endpoints.');
-      }
-      return {
-        endpoints: { updates: endpoints.updates, operations: endpoints.operations },
-        profile: typeof body.profile === 'string' ? body.profile : null,
-        restart: body.features.restart === true && typeof endpoints.restart === 'string' ? endpoints.restart : null,
-      };
-    }
-
-    async function readRelease(market, force, life) {
-      const url = `${market.endpoints.updates}?name=${encodeURIComponent(PACKAGE)}${force ? '&force=1' : ''}`;
-      const result = await marketRequest(url, {}, life);
-      const body = result.body ?? {};
-      if (!result.ok) throw new Error(marketFailure(result, 'DSH Market did not check for an update'));
-      if (body.schema !== UPDATE_SCHEMA || typeof body.package !== 'object' || body.package === null) {
-        throw new Error('DSH Market returned no release for this plugin.');
-      }
-      return body.package;
     }
 
     const VERSION = /^(\d+)\.(\d+)\.(\d+)$/;
@@ -149,8 +86,6 @@ window.__ModuleLoader__.load({
       }
       return 0;
     }
-
-    const manualCommand = (profile) => `dsh plugin --profile ${profile ?? '<profile>'} add ${PACKAGE}`;
 
     function NerdModeSettingsEntry({ configForms, close, locale }) {
       return React.createElement(
@@ -289,13 +224,13 @@ window.__ModuleLoader__.load({
           'header',
           { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
           React.createElement('h2', {
-            style: { fontSize: 16, fontWeight: 600, lineHeight: '24px', margin: 0 },
+            style: { fontSize: 15, fontWeight: 600, lineHeight: '22px', margin: 0 },
           }, t({ en: 'Nerd Mode', zh: 'Nerd Mode' })),
           React.createElement('p', {
             style: {
               color: 'var(--dsw-alias-label-tertiary)',
-              fontSize: 14,
-              lineHeight: '22px',
+              fontSize: 13,
+              lineHeight: '20px',
               margin: 0,
             },
           }, t({ en: 'Profile defaults for new study-plus sessions.', zh: '新 study-plus 会话的 profile 默认值。' })),
@@ -309,7 +244,7 @@ window.__ModuleLoader__.load({
           React.createElement(
             'div',
             { style: { minWidth: 0 } },
-            React.createElement('h3', { style: groupTitleStyle }, t({ en: 'Recall Session / 课前回忆', zh: '课前回忆' })),
+            React.createElement('h3', { style: groupTitleStyle }, t({ en: 'Recall Session', zh: '课前回忆' })),
             React.createElement('p', { style: groupDescriptionStyle }, t({ en: 'One ungraded recall question before teaching.', zh: '讲授前的一次不计分课前回忆。' })),
           ),
           React.createElement(
@@ -344,7 +279,9 @@ window.__ModuleLoader__.load({
           'section',
           {
             'data-settings-group': 'post-lecture-questions',
-            style: groupStyle,
+            // The field grid is taller than the text block, so this row aligns to
+            // the top. Centering floats the title into the middle of the card.
+            style: { ...groupStyle, alignItems: 'flex-start' },
           },
           React.createElement(
             'div',
@@ -406,7 +343,7 @@ window.__ModuleLoader__.load({
               flexWrap: 'wrap',
               gap: 12,
               justifyContent: 'space-between',
-              paddingTop: 16,
+              paddingTop: 24,
             },
           },
           React.createElement('button', {
@@ -446,7 +383,7 @@ window.__ModuleLoader__.load({
 
     function AboutGroup({ locale }) {
       const t = useT(locale);
-      const [life] = React.useState(() => ({ cancelled: false, timer: null, controller: null }));
+      const [life] = React.useState(() => ({ cancelled: false, controller: null }));
       const [view, setView] = React.useState({ phase: 'checking' });
 
       // An answer that arrives after the panel closed writes nothing.
@@ -454,127 +391,100 @@ window.__ModuleLoader__.load({
         if (!life.cancelled) setView(next);
       };
 
+      // The newest request is the one unmount aborts; the buttons prevent a
+      // second request while one runs.
+      async function call(url, options, timeout, timeoutText) {
+        const controller = new AbortController();
+        life.controller = controller;
+        const timer = setTimeout(() => controller.abort(), timeout);
+        try {
+          const response = await fetch(url, {
+            credentials: 'same-origin',
+            ...options,
+            signal: controller.signal,
+          });
+          const body = await response.json().catch(() => null);
+          return { ok: response.ok, status: response.status, body: body ?? {} };
+        } catch (error) {
+          if (controller.signal.aborted) throw new Error(timeoutText);
+          throw error;
+        } finally {
+          clearTimeout(timer);
+          if (life.controller === controller) life.controller = null;
+        }
+      }
+
       async function check(force) {
         setView({ phase: 'checking' });
-        let market;
         try {
-          market = await readCapabilities(life);
-        } catch {
-          show({ phase: 'unavailable' });
-          return;
-        }
-        try {
-          const release = await readRelease(market, force, life);
-          show({ phase: 'ready', market, release, confirming: false, linkedNote: false });
-        } catch (error) {
-          show({
-            phase: 'failed',
-            market,
-            release: null,
-            message: error?.message ?? 'The update check failed.',
-            retry: 'check',
-            force: false,
-          });
-        }
-      }
-
-      function follow(market, operationId, release) {
-        return new Promise((resolve, reject) => {
-          const tick = async () => {
-            if (life.cancelled) {
-              resolve(null);
-              return;
-            }
-            let result;
-            try {
-              result = await marketRequest(`${market.endpoints.operations}?operationId=${encodeURIComponent(operationId)}`, {}, life);
-            } catch (error) {
-              reject(error);
-              return;
-            }
-            if (life.cancelled) {
-              resolve(null);
-              return;
-            }
-            if (!result.ok || wrongSchema(result.body)) {
-              reject(new Error(marketFailure(result, 'The update could not be followed')));
-              return;
-            }
-            const operation = result.body?.operation ?? {};
-            if (operation.state === 'succeeded') {
-              resolve(operation);
-              return;
-            }
-            if (operation.state === 'failed' || operation.state === 'cancelled' || operation.state === 'rolled-back') {
-              const error = new Error(operation.failure?.message ?? operation.failure?.code ?? `The update ${operation.state}.`);
-              error.code = operation.failure?.code ?? null;
-              reject(error);
-              return;
-            }
-            show({ phase: 'updating', market, release, progress: operation.state ?? 'running' });
-            life.timer = setTimeout(tick, POLL_INTERVAL);
-          };
-          tick();
-        });
-      }
-
-      async function install(market, release, force) {
-        setView({ phase: 'updating', market, release, progress: 'queued' });
-        try {
-          const result = await marketRequest(market.endpoints.updates, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ packageName: PACKAGE, ...(force ? { force: true } : {}) }),
-          }, life);
-          if (!result.ok || wrongSchema(result.body)) {
-            const error = new Error(marketFailure(result, 'The update did not start'));
-            error.code = result.body?.failure?.code ?? null;
-            throw error;
+          const result = await call(
+            `${UPDATE_API}${force ? '?force=1' : ''}`,
+            {},
+            CHECK_TIMEOUT,
+            t({ en: 'The update check did not answer within 10 seconds.', zh: '更新检查在 10 秒内没有响应。' }),
+          );
+          const body = result.body;
+          // A 404 is the host still running the previous build: the route is
+          // registered at startup, so only a restart can add it.
+          if (result.status === 404) {
+            show({
+              phase: 'failed',
+              info: null,
+              installedVersion: null,
+              restartNeeded: true,
+              message: t({
+                en: 'This copy of DSH has not loaded the update route. Restart DSH.',
+                zh: '这个 DSH 还没有加载更新接口。请重启 DSH。',
+              }),
+            });
+            return;
           }
-          const operationId = result.body?.operation?.operationId;
-          if (typeof operationId !== 'string') throw new Error('DSH Market returned no operation to follow.');
-          const operation = await follow(market, operationId, release);
-          if (operation === null) return;
-          show({
-            phase: 'installed',
-            market,
-            release,
-            version: operation.installedVersion ?? release.latestVersion,
-            restartNeeded: operation.outcome?.restartRequired === true,
-            restarting: false,
-            restartSent: false,
-          });
+          const failure = typeof body.error === 'string' ? body.error : null;
+          if (!result.ok || failure !== null) {
+            throw new Error(failure ?? t({
+              en: `The update check failed (HTTP ${result.status}).`,
+              zh: `更新检查失败（HTTP ${result.status}）。`,
+            }));
+          }
+          const installedVersion = String(body.installedVersion ?? '');
+          if (installedVersion === '') {
+            throw new Error(t({ en: 'The host returned no installed version.', zh: '主机没有返回已安装版本。' }));
+          }
+          show({ phase: 'ready', info: body, installedVersion });
         } catch (error) {
-          const code = error?.code ?? null;
           show({
             phase: 'failed',
-            market,
-            release,
-            message: error?.message ?? 'The update failed.',
-            retry: 'install',
-            force: code === 'RELEASE_TOO_FRESH' || code === 'VERSION_UNCHANGED',
+            info: null,
+            installedVersion: null,
+            message: error?.message || t({ en: 'The update check failed.', zh: '更新检查失败。' }),
           });
         }
       }
 
-      async function restart(current) {
-        setView({ ...current, restarting: true });
+      async function install(current) {
+        const version = String(current.info.latestVersion ?? '');
+        setView({ ...current, phase: 'installing' });
         try {
-          const result = await marketRequest(current.market.restart, {
+          const result = await call(UPDATE_API, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: '{}',
-          }, life);
-          if (!result.ok) throw new Error(marketFailure(result, 'DSH could not restart'));
-          show({ ...current, restarting: false, restartSent: true });
+            body: JSON.stringify({ version, channel: current.info.channel }),
+          }, INSTALL_TIMEOUT, t({ en: 'The update did not finish within 5 minutes.', zh: '更新在 5 分钟内没有完成。' }));
+          const body = result.body;
+          const failure = typeof body.error === 'string' ? body.error : null;
+          if (!result.ok || failure !== null) {
+            throw new Error(failure ?? t({
+              en: `The update failed (HTTP ${result.status}).`,
+              zh: `更新失败（HTTP ${result.status}）。`,
+            }));
+          }
+          show({ ...current, phase: 'installed', installedVersion: String(body.installedVersion ?? version) });
         } catch (error) {
           show({
             phase: 'failed',
-            market: current.market,
-            release: current.release,
-            message: error?.message ?? 'DSH could not restart.',
-            retry: 'check',
-            force: false,
+            info: current.info,
+            installedVersion: current.installedVersion,
+            message: error?.message || t({ en: 'The update failed.', zh: '更新失败。' }),
           });
         }
       }
@@ -583,23 +493,21 @@ window.__ModuleLoader__.load({
         check(false);
         return () => {
           life.cancelled = true;
-          if (life.timer !== null) clearTimeout(life.timer);
           if (life.controller !== null) life.controller.abort();
         };
       }, []);
 
-      const busy = view.phase === 'checking' || view.phase === 'updating' || view.restarting === true;
+      const busy = view.phase === 'checking' || view.phase === 'installing';
       const button = (text, onClick, disabled = false, primary = false) => React.createElement('button', {
         type: 'button',
         disabled,
         onClick,
         style: primary ? primaryButtonStyle : secondaryButtonStyle,
       }, text);
-      const code = (text) => React.createElement('code', { style: commandStyle }, text);
-      const checkAgain = button(t({ en: 'Check again', zh: '重新检查' }), () => check(true));
-      const versions = (release) => t({
-        en: `Installed v${release.installedVersion} · latest v${release.latestVersion}`,
-        zh: `已安装 v${release.installedVersion} · 最新 v${release.latestVersion}`,
+      const checkAgain = () => button(t({ en: 'Check again', zh: '重新检查' }), () => check(true));
+      const versions = () => t({
+        en: `Installed v${view.installedVersion} · latest v${view.info.latestVersion}`,
+        zh: `已安装 v${view.installedVersion} · 最新 v${view.info.latestVersion}`,
       });
 
       let versionLine = null;
@@ -608,76 +516,76 @@ window.__ModuleLoader__.load({
 
       if (view.phase === 'checking') {
         versionLine = t({ en: 'Checking…', zh: '正在检查…' });
-      } else if (view.phase === 'unavailable') {
-        feedback.push(t({
-          en: 'DSH Market is not available on this host, so Nerd Mode cannot check for updates. Run this command in a terminal:',
-          zh: '此主机上没有 DSH Market，因此 Nerd Mode 无法检查更新。请在终端运行：',
-        }));
-        feedback.push(code(manualCommand(null)));
       } else if (view.phase === 'failed') {
-        if (view.release !== null) versionLine = versions(view.release);
-        feedback.push(t({ en: 'The update did not finish: ', zh: '更新未完成：' }));
+        if (view.info !== null) versionLine = versions();
         feedback.push(view.message);
-        feedback.push(t({ en: ' Install it by hand with:', zh: ' 可手动安装：' }));
-        feedback.push(code(manualCommand(view.market?.profile ?? null)));
-        actions = [button(t({ en: 'Try again', zh: '重试' }), () => {
-          if (view.retry === 'install') install(view.market, view.release, view.force === true);
-          else check(true);
-        })];
+        if (view.restartNeeded !== true) {
+          feedback.push(' ');
+          feedback.push(t({ en: 'Open Settings → Plugins to update there.', zh: '请在 设置 → 插件 中更新。' }));
+        }
+        actions = [checkAgain()];
       } else if (view.phase === 'installed') {
-        versionLine = t({ en: `Installed v${view.version}`, zh: `已安装 v${view.version}` });
-        feedback.push(view.restartSent
-          ? t({ en: `DSH is restarting to load v${view.version}.`, zh: `DSH 正在重启以加载 v${view.version}。` })
-          : t({ en: `Restart DSH to use v${view.version}.`, zh: `重启 DSH 以使用 v${view.version}。` }));
-        actions = view.restartNeeded && view.market.restart !== null && view.restartSent !== true
-          ? [button(
-              t({ en: view.restarting ? 'Restarting…' : 'Restart now', zh: view.restarting ? '正在重启…' : '立即重启' }),
-              () => restart(view),
-              view.restarting === true,
-              true,
-            )]
-          : [checkAgain];
-      } else if (view.release.source === 'linked') {
-        versionLine = t({ en: `Local v${view.release.installedVersion}`, zh: `本地 v${view.release.installedVersion}` });
+        versionLine = t({ en: `Installed v${view.installedVersion}`, zh: `已安装 v${view.installedVersion}` });
+        feedback.push(t({ en: `Restart DSH to use v${view.installedVersion}.`, zh: `重启 DSH 以使用 v${view.installedVersion}。` }));
+      } else if (view.info.source === 'link') {
+        versionLine = t({ en: `Local v${view.installedVersion}`, zh: `本地 v${view.installedVersion}` });
         actions = [button(t({ en: 'About local installs', zh: '关于本地安装' }), () => {
-          setView({ ...view, linkedNote: view.linkedNote !== true });
+          setView({ ...view, note: view.note !== true });
         })];
-        if (view.linkedNote === true) {
+        if (view.note === true) {
           feedback.push(t({ en: 'This copy is linked to a folder. Update it with git, not npm.', zh: '此副本链接到本地文件夹。请用 git 更新，不要用 npm。' }));
         }
-      } else if (view.phase === 'updating') {
-        versionLine = versions(view.release);
-        feedback.push(t({ en: `Update in progress (${view.progress}).`, zh: `更新进行中（${view.progress}）。` }));
-        actions = [button(t({ en: 'Updating…', zh: '正在更新…' }), () => {}, true)];
-      } else if (view.release.updateAvailable === true) {
-        versionLine = versions(view.release);
-        if (view.confirming === true) {
-          feedback.push(t({
-            en: `Install v${view.release.latestVersion} and restart DSH afterwards?`,
-            zh: `安装 v${view.release.latestVersion} 并在之后重启 DSH？`,
+      } else if (view.info.source === 'github' && view.info.github?.pinned === true) {
+        versionLine = t({ en: `Installed v${view.installedVersion}`, zh: `已安装 v${view.installedVersion}` });
+        feedback.push(t({
+          en: `Pinned to ${view.info.github.ref}. No update check.`,
+          zh: `已固定到 ${view.info.github.ref}，不检查更新。`,
+        }));
+      } else if (view.info.source === 'github' && view.info.github?.official !== true) {
+        versionLine = t({ en: `Installed v${view.installedVersion}`, zh: `已安装 v${view.installedVersion}` });
+        feedback.push(view.info.github?.repo == null
+          ? t({ en: 'This copy comes from a repository that cannot be checked.', zh: '这个副本来自一个无法检查的仓库。' })
+          : t({
+            en: `Installed from ${view.info.github.repo}. Updates are checked against the official repository only.`,
+            zh: `来自 ${view.info.github.repo}。更新只查官方仓库。`,
           }));
-          actions = [
-            button(t({ en: 'Cancel', zh: '取消' }), () => setView({ ...view, confirming: false })),
-            button(t({ en: 'Update', zh: '更新' }), () => install(view.market, view.release, false), false, true),
-          ];
-        } else {
-          actions = [button(
-            t({ en: `Update to v${view.release.latestVersion}`, zh: `更新到 v${view.release.latestVersion}` }),
-            () => setView({ ...view, confirming: true }),
-            false,
-            true,
-          )];
-        }
-      } else if (compareVersions(view.release.installedVersion, view.release.latestVersion) > 0) {
+      } else if (view.phase === 'installing') {
+        versionLine = versions();
+        feedback.push(t({ en: `Installing v${view.info.latestVersion}…`, zh: `正在安装 v${view.info.latestVersion}…` }));
+        actions = [button(t({ en: 'Installing…', zh: '正在安装…' }), () => {}, true)];
+      } else if (view.phase === 'confirming') {
+        versionLine = versions();
+        const from = view.info.channel === 'github' ? 'GitHub' : 'npm';
+        feedback.push(t({
+          en: `Install v${view.info.latestVersion} from ${from} and restart DSH afterwards?`,
+          zh: `从 ${from} 安装 v${view.info.latestVersion}，并在之后重启 DSH？`,
+        }));
+        actions = [
+          button(t({ en: 'Cancel', zh: '取消' }), () => setView({ ...view, phase: 'ready' })),
+          button(t({ en: 'Update', zh: '更新' }), () => install(view), false, true),
+        ];
+      } else if (typeof view.info.latestVersion !== 'string') {
+        // A host without a latest version cannot offer an update, but it still checked.
+        versionLine = t({ en: `Installed v${view.installedVersion}`, zh: `已安装 v${view.installedVersion}` });
+        actions = [checkAgain()];
+      } else if (compareVersions(view.installedVersion, view.info.latestVersion) > 0) {
         versionLine = t({
-          en: `Local v${view.release.installedVersion} · npm v${view.release.latestVersion}`,
-          zh: `本地 v${view.release.installedVersion} · npm v${view.release.latestVersion}`,
+          en: `Local v${view.installedVersion} · npm v${view.info.latestVersion}`,
+          zh: `本地 v${view.installedVersion} · npm v${view.info.latestVersion}`,
         });
         feedback.push(t({ en: 'This copy is newer than npm. No update.', zh: '此副本比 npm 上的版本更新，无需更新。' }));
-        actions = [checkAgain];
+        actions = [checkAgain()];
+      } else if (compareVersions(view.installedVersion, view.info.latestVersion) < 0) {
+        versionLine = versions();
+        actions = [button(
+          t({ en: `Update to v${view.info.latestVersion}`, zh: `更新到 v${view.info.latestVersion}` }),
+          () => setView({ ...view, phase: 'confirming' }),
+          false,
+          true,
+        )];
       } else {
-        versionLine = versions(view.release);
-        actions = [checkAgain];
+        versionLine = versions();
+        actions = [checkAgain()];
       }
 
       return React.createElement(
@@ -712,7 +620,7 @@ window.__ModuleLoader__.load({
       display: 'flex',
       flexDirection: 'column',
       fontFamily: 'var(--dsw-font-family, inherit)',
-      gap: 16,
+      gap: 24,
       maxWidth: 720,
       paddingBottom: 24,
       width: '100%',
@@ -722,15 +630,15 @@ window.__ModuleLoader__.load({
       alignItems: 'center',
       background: 'var(--dsw-alias-bg-layer-1)',
       border: '1px solid var(--dsw-alias-border-l2)',
-      borderRadius: 'var(--dsw-radius-sm)',
+      borderRadius: 10,
       display: 'flex',
       flexWrap: 'wrap',
-      gap: 18,
+      gap: 16,
       justifyContent: 'space-between',
-      padding: 20,
+      padding: 24,
     };
     const groupTitleStyle = {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: 600,
       lineHeight: '22px',
       margin: 0,
@@ -739,24 +647,25 @@ window.__ModuleLoader__.load({
       color: 'var(--dsw-alias-label-tertiary)',
       fontSize: 13,
       lineHeight: '20px',
-      margin: '3px 0 0',
+      margin: '4px 0 0',
     };
     const fieldLabelStyle = {
       display: 'flex',
       flexDirection: 'column',
       fontSize: 13,
       fontWeight: 500,
-      gap: 7,
+      gap: 8,
       minWidth: 0,
     };
     const fieldControlStyle = {
       background: 'var(--dsw-alias-bg-layer-1)',
       border: '1px solid var(--dsw-alias-border-l3)',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      borderRadius: 6,
       boxSizing: 'border-box',
       color: 'var(--dsw-alias-label-primary)',
       font: 'inherit',
-      height: 38,
+      fontSize: 13,
+      height: 32,
       minWidth: 0,
       padding: '0 10px',
       width: '100%',
@@ -770,11 +679,13 @@ window.__ModuleLoader__.load({
     const secondaryButtonStyle = {
       background: 'transparent',
       border: '1px solid var(--dsw-alias-border-l3)',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      borderRadius: 10,
       color: 'var(--dsw-alias-label-primary)',
       cursor: 'pointer',
       font: 'inherit',
-      minHeight: 36,
+      fontSize: 13,
+      fontWeight: 500,
+      minHeight: 32,
       padding: '0 12px',
     };
     const primaryButtonStyle = {
@@ -790,16 +701,6 @@ window.__ModuleLoader__.load({
       lineHeight: '20px',
       margin: 0,
     };
-    const commandStyle = {
-      background: 'var(--dsw-alias-bg-layer-2)',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
-      display: 'inline-block',
-      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-      fontSize: 12,
-      lineHeight: '18px',
-      padding: '2px 6px',
-      wordBreak: 'break-all',
-    };
 
     function switchStyle(active, disabled) {
       const accent = 'var(--dsw-alias-state-business-primary)';
@@ -807,17 +708,19 @@ window.__ModuleLoader__.load({
         alignItems: 'center',
         background: active ? 'var(--dsw-alias-state-business-tertiary)' : 'var(--dsw-alias-bg-layer-2)',
         border: `1px solid ${active ? accent : 'var(--dsw-alias-border-l3)'}`,
-        borderRadius: 'var(--dsw-radius-sm, 6px)',
+        borderRadius: 10,
         color: active ? accent : 'var(--dsw-alias-label-secondary)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'inline-flex',
         flexShrink: 0,
         font: 'inherit',
+        fontSize: 13,
         gap: 8,
         justifyContent: 'center',
-        minHeight: 36,
-        minWidth: 72,
-        padding: '0 10px',
+        marginLeft: 'auto',
+        minHeight: 32,
+        minWidth: 76,
+        padding: '0 12px',
         transition: 'background 120ms ease, border-color 120ms ease, color 120ms ease',
       };
     }
@@ -960,7 +863,7 @@ window.__ModuleLoader__.load({
     // Live build orders: chat 0, trajectory 10, context 20, fleet 30.
     const VIEW_SLOT = 'conversation.view';
     const VIEW_ID = 'study';
-    const VIEW_LABEL = 'Study';
+    const VIEW_LABEL = { en: 'Study', zh: '学习' };
     const VIEW_ORDER = 100;
     const TRACKER_ROOT = 'study';
     // One selection shared by the Study tab and the Lectures tab. This is a
@@ -1193,23 +1096,29 @@ window.__ModuleLoader__.load({
 
     // --- Study view ----------------------------------------------------------
 
-    const conceptLabel = (concept) => `${concept.chapterTitle} · Section ${concept.section} · ${concept.name}`;
+    const conceptLabel = (concept, t) => `${concept.chapterTitle} · ${t({
+      en: `Section ${concept.section}`,
+      zh: `第 ${concept.section} 节`,
+    })} · ${concept.name}`;
 
-    function progressBlock(snapshot) {
+    function progressBlock(snapshot, t) {
       if (snapshot.percentage === null) {
         return React.createElement('div', { 'data-study-progress': 'none', style: panelProgressStyle },
           React.createElement('p', { style: panelFigureStyle }, DASH),
-          React.createElement('p', { style: panelMutedStyle }, 'Every Concept is skipped.'));
+          React.createElement('p', { style: panelMutedStyle }, t({ en: 'Every Concept is skipped.', zh: '所有概念都已跳过。' })));
       }
-      const text = `${snapshot.percentage}% of the Book`;
+      const text = t({
+        en: `${snapshot.percentage}% of the Book`,
+        zh: `本书已完成 ${snapshot.percentage}%`,
+      });
       return React.createElement('div', { style: panelProgressStyle },
         React.createElement('p', { style: panelFigureRowStyle },
           React.createElement('span', { style: panelFigureStyle }, `${snapshot.percentage}%`),
           ' ',
-          React.createElement('span', { style: panelFigureUnitStyle }, 'of the Book')),
+          React.createElement('span', { style: panelFigureUnitStyle }, t({ en: 'of the Book', zh: '已完成' }))),
         React.createElement('div', {
           role: 'progressbar',
-          'aria-label': 'Book progress',
+          'aria-label': t({ en: 'Book progress', zh: '本书进度' }),
           'aria-valuemin': 0,
           'aria-valuemax': 100,
           'aria-valuenow': snapshot.percentage,
@@ -1219,19 +1128,19 @@ window.__ModuleLoader__.load({
           style: { ...panelFillStyle, width: `${snapshot.percentage}%` },
         })),
         snapshot.current === null
-          ? React.createElement('p', { style: panelMutedStyle }, 'No evidence yet')
+          ? React.createElement('p', { style: panelMutedStyle }, t({ en: 'No evidence yet', zh: '还没有证据记录' }))
           : null);
     }
 
-    function stripBlock(snapshot) {
+    function stripBlock(snapshot, t) {
       const slots = [
-        { label: 'Previous', value: snapshot.previous === null ? DASH : conceptLabel(snapshot.previous), muted: snapshot.previous === null },
-        { label: 'Current', value: snapshot.current === null ? 'No lesson recorded yet' : conceptLabel(snapshot.current), muted: snapshot.current === null, current: true },
+        { label: t({ en: 'Previous', zh: '上一个' }), value: snapshot.previous === null ? DASH : conceptLabel(snapshot.previous, t), muted: snapshot.previous === null },
+        { label: t({ en: 'Current', zh: '当前' }), value: snapshot.current === null ? t({ en: 'No lesson recorded yet', zh: '还没有课程记录' }) : conceptLabel(snapshot.current, t), muted: snapshot.current === null, current: true },
         {
-          label: 'Next',
+          label: t({ en: 'Next', zh: '下一个' }),
           value: snapshot.next !== null
-            ? conceptLabel(snapshot.next)
-            : snapshot.nextState === 'all-skipped' ? 'Everything left is skipped' : 'End of Book',
+            ? conceptLabel(snapshot.next, t)
+            : snapshot.nextState === 'all-skipped' ? t({ en: 'Everything left is skipped', zh: '剩下的概念都已跳过' }) : t({ en: 'End of Book', zh: '本书已结束' }),
           muted: snapshot.next === null,
         },
       ];
@@ -1246,57 +1155,65 @@ window.__ModuleLoader__.load({
           }, slot.value))));
     }
 
-    function topicPicker(topics, value, onTopic) {
+    function topicPicker(topics, value, onTopic, t) {
       if (topics.length < 2) return null;
       return React.createElement('label', { style: panelFieldStyle },
-        React.createElement('span', null, 'Course'),
+        React.createElement('span', null, t({ en: 'Course', zh: '课程' })),
         React.createElement('select', {
-          'aria-label': 'Course',
+          'aria-label': t({ en: 'Course', zh: '课程' }),
           value,
           onChange: (event) => onTopic(event.target.value),
           style: panelSelectStyle,
         }, ...topics.map((topic) => React.createElement('option', { key: topic, value: topic }, topic))));
     }
 
-    function readyBody(snapshot, error, topics, onTopic) {
+    function readyBody(snapshot, error, topics, onTopic, t) {
       const nodes = [
         React.createElement('div', { style: panelHeaderStyle },
           React.createElement('h2', { style: panelTitleStyle }, snapshot.bookTitle),
-          topicPicker(topics, snapshot.topic, onTopic)),
+          topicPicker(topics, snapshot.topic, onTopic, t)),
       ];
       if (error) {
-        nodes.push(React.createElement('p', { role: 'alert', style: panelMutedStyle },
-          `The Course could not be read: ${error}.`));
+        nodes.push(React.createElement('p', { role: 'alert', style: panelMutedStyle }, t({
+          en: `The Course could not be read: ${error}.`,
+          zh: `无法读取课程：${error}。`,
+        })));
       }
-      nodes.push(progressBlock(snapshot), stripBlock(snapshot));
+      nodes.push(progressBlock(snapshot, t), stripBlock(snapshot, t));
 
       const shown = snapshot.shaky.slice(0, 5);
       nodes.push(React.createElement('section', { 'data-study-section': 'shaky', style: panelSectionStyle },
-        React.createElement('h3', { style: panelHeadingStyle }, 'Shaky Concepts'),
+        React.createElement('h3', { style: panelHeadingStyle }, t({ en: 'Shaky Concepts', zh: '薄弱概念' })),
         shown.length === 0
-          ? React.createElement('p', { style: panelMutedStyle }, 'No shaky Concepts.')
+          ? React.createElement('p', { style: panelMutedStyle }, t({ en: 'No shaky Concepts.', zh: '没有薄弱概念。' }))
           : React.createElement('ul', { style: panelListStyle },
-              ...shown.map((concept) => React.createElement('li', { key: concept.name }, conceptLabel(concept)))),
+              ...shown.map((concept) => React.createElement('li', { key: concept.name }, conceptLabel(concept, t)))),
         snapshot.shakyTotal > shown.length
-          ? React.createElement('p', { style: panelMutedStyle }, `${snapshot.shakyTotal - shown.length} more not shown.`)
+          ? React.createElement('p', { style: panelMutedStyle }, t({
+              en: `${snapshot.shakyTotal - shown.length} more not shown.`,
+              zh: `另有 ${snapshot.shakyTotal - shown.length} 个未显示。`,
+            }))
           : null));
 
       nodes.push(React.createElement('section', { 'data-study-section': 'cycles', style: panelSectionStyle },
-        React.createElement('h3', { style: panelHeadingStyle }, 'Recent cycles'),
+        React.createElement('h3', { style: panelHeadingStyle }, t({ en: 'Recent cycles', zh: '最近几轮' })),
         snapshot.cycles.length === 0
-          ? React.createElement('p', { style: panelMutedStyle }, 'No cycles yet.')
+          ? React.createElement('p', { style: panelMutedStyle }, t({ en: 'No cycles yet.', zh: '还没有记录轮次。' }))
           : React.createElement('ul', { style: panelListStyle },
               ...snapshot.cycles.map((cycle, index) => React.createElement('li', { key: `${cycle.date}-${index}` },
                 `${cycle.date} · ${cycle.label}`)))));
 
       if (snapshot.malformed > 0) {
-        nodes.push(React.createElement('p', { role: 'status', style: panelMutedStyle },
-          `${snapshot.malformed} malformed ${snapshot.malformed === 1 ? 'row was' : 'rows were'} ignored.`));
+        nodes.push(React.createElement('p', { role: 'status', style: panelMutedStyle }, t({
+          en: `${snapshot.malformed} malformed ${snapshot.malformed === 1 ? 'row was' : 'rows were'} ignored.`,
+          zh: `已忽略 ${snapshot.malformed} 行格式错误的记录。`,
+        })));
       }
       return nodes;
     }
 
-    function StudyView({ sessionId, workspaceFiles }) {
+    function StudyView({ sessionId, workspaceFiles, locale }) {
+      const t = useT(locale);
       const [topics, setTopics] = React.useState([]);
       const [selected, setSelected] = React.useState(null);
       const [content, setContent] = React.useState({ status: 'loading' });
@@ -1331,22 +1248,28 @@ window.__ModuleLoader__.load({
 
       let nodes;
       if (content.status === 'loading') {
-        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, 'Loading the Course…')];
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, style: panelMutedStyle }, t({ en: 'Loading the Course…', zh: '正在加载课程…' }))];
       } else if (content.status === 'failed') {
-        nodes = [React.createElement('p', { role: 'alert', style: panelMutedStyle }, `The Course could not be read: ${content.error}.`)];
+        nodes = [React.createElement('p', { role: 'alert', style: panelMutedStyle }, t({
+          en: `The Course could not be read: ${content.error}.`,
+          zh: `无法读取课程：${content.error}。`,
+        }))];
       } else if (content.status === 'empty') {
         const searched = content.topic ? `${TRACKER_ROOT}/${content.topic}` : `${TRACKER_ROOT}/`;
-        const picker = topicPicker(topics, content.topic ?? selected, choose);
+        const picker = topicPicker(topics, content.topic ?? selected, choose, t);
         nodes = [
           picker === null ? null : React.createElement('div', { style: panelHeaderStyle }, picker),
-          React.createElement('p', { style: panelMutedStyle }, `No Course in ${searched}. Run /study-plus to create one.`),
+          React.createElement('p', { style: panelMutedStyle }, t({
+            en: `No Course in ${searched}. Run /study-plus to create one.`,
+            zh: `${searched} 中没有课程。运行 /study-plus 创建一个。`,
+          })),
         ];
       } else {
-        nodes = readyBody(content.snapshot, content.error, topics, choose);
+        nodes = readyBody(content.snapshot, content.error, topics, choose, t);
       }
       return React.createElement('div', {
         role: 'region',
-        'aria-label': VIEW_LABEL,
+        'aria-label': t(VIEW_LABEL),
         style: panelStyle,
       }, ...nodes);
     }
@@ -1357,20 +1280,28 @@ window.__ModuleLoader__.load({
       display: 'flex',
       flexDirection: 'column',
       fontFamily: 'var(--dsw-font-family, inherit)',
-      gap: 28,
+      gap: 24,
       maxWidth: 720,
       // The conversation view area carries no padding of its own.
-      padding: '24px 16px 40px',
+      padding: '24px 32px 32px',
       width: '100%',
     };
     const panelHeaderStyle = { alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' };
-    const panelTitleStyle = { fontSize: 16, fontWeight: 600, lineHeight: '24px', margin: 0 };
+    const panelTitleStyle = { fontSize: 15, fontWeight: 600, lineHeight: '22px', margin: 0 };
     const panelMutedStyle = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 13, lineHeight: '20px', margin: 0 };
-    const panelHeadingStyle = { fontSize: 14, fontWeight: 600, lineHeight: '22px', margin: 0 };
-    const panelSectionStyle = { display: 'flex', flexDirection: 'column', gap: 10 };
+    const panelHeadingStyle = { fontSize: 15, fontWeight: 600, lineHeight: '22px', margin: 0 };
+    const panelSectionStyle = {
+      background: 'var(--dsw-alias-bg-layer-1)',
+      border: '1px solid var(--dsw-alias-border-l2)',
+      borderRadius: 10,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      padding: 24,
+    };
     const panelListStyle = { display: 'flex', flexDirection: 'column', gap: 8, listStyle: 'none', margin: 0, padding: 0 };
-    const panelProgressStyle = { display: 'flex', flexDirection: 'column', gap: 10 };
-    const panelFigureRowStyle = { lineHeight: '34px', margin: 0 };
+    const panelProgressStyle = { display: 'flex', flexDirection: 'column', gap: 12 };
+    const panelFigureRowStyle = { lineHeight: '24px', margin: 0 };
     const panelFigureUnitStyle = {
       color: 'var(--dsw-alias-label-tertiary)',
       fontSize: 13,
@@ -1379,7 +1310,7 @@ window.__ModuleLoader__.load({
     };
     const panelTrackStyle = {
       background: 'var(--dsw-alias-border-l3)',
-      borderRadius: 999,
+      borderRadius: 6,
       height: 8,
       overflow: 'hidden',
       width: '100%',
@@ -1394,11 +1325,11 @@ window.__ModuleLoader__.load({
     };
     const panelStripCellStyle = {
       border: '1px solid var(--dsw-alias-border-l2)',
-      borderRadius: 'var(--dsw-radius-sm)',
+      borderRadius: 10,
       display: 'flex',
       flexDirection: 'column',
-      gap: 6,
-      padding: '12px 14px',
+      gap: 8,
+      padding: '12px 16px',
     };
     // The Current cell is the answer to "where am I", so it is the only filled cell.
     const panelStripCellCurrentStyle = {
@@ -1413,19 +1344,20 @@ window.__ModuleLoader__.load({
       color: 'var(--dsw-alias-label-tertiary)',
     };
     const panelFigureStyle = {
-      fontSize: 28,
+      fontSize: 15,
       fontWeight: 600,
       fontVariantNumeric: 'tabular-nums',
-      lineHeight: '34px',
+      lineHeight: '24px',
       margin: 0,
     };
     const panelFieldStyle = { alignItems: 'center', display: 'flex', fontSize: 13, gap: 8 };
     const panelSelectStyle = {
       background: 'var(--dsw-alias-bg-layer-1)',
       border: '1px solid var(--dsw-alias-border-l3)',
-      borderRadius: 'var(--dsw-radius-sm, 6px)',
+      borderRadius: 6,
       color: 'var(--dsw-alias-label-primary)',
       font: 'inherit',
+      fontSize: 13,
       height: 32,
       padding: '0 8px',
     };
@@ -1433,7 +1365,7 @@ window.__ModuleLoader__.load({
     // --- Lectures dock page --------------------------------------------------
     const LECTURES_ID = 'dsh-nerd-mode/lectures';
     const LECTURES_KIND = 'lectures';
-    const LECTURES_LABEL = 'Lectures';
+    const LECTURES_LABEL = { en: 'Lectures', zh: '讲义' };
     const LECTURES_GUIDE_ORDER = 40;
 
     // Same 16px book as the composer pill, drawn at the size the guide asks for.
@@ -1562,45 +1494,49 @@ window.__ModuleLoader__.load({
     const LECTURES_CSS = `.lectures-page{box-sizing:border-box;height:100%;display:flex;flex-direction:column;color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit)}
 .lectures-head{display:flex;align-items:center;gap:12px;padding:24px 32px 0}
 .lectures-picker{display:flex;align-items:center;gap:8px;flex:1;min-width:0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
-.lectures-select{flex:1;min-width:0;height:32px;padding:0 8px;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm,8px);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit}
+.lectures-select{flex:1;min-width:0;height:32px;padding:0 8px;border:1px solid var(--dsw-alias-border-l3);border-radius:6px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px}
 .lectures-group{display:flex;flex-direction:column;flex:1;min-height:0}
-.lectures-group-head{display:flex;align-items:center;gap:8px;padding:20px 32px 8px}
-.lectures-group-title{margin:0;font-size:14px;line-height:22px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lectures-count{flex:none;font-size:13px;line-height:20px;font-weight:400;color:var(--dsw-alias-label-tertiary)}
-.lectures-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:0 32px 32px}
-.lectures-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.lectures-item{margin:0 -8px}
-.lectures-row{position:relative;width:100%;box-sizing:border-box;display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-areas:"tile title" "tile meta";column-gap:12px;row-gap:2px;align-items:start;padding:8px;border:none;border-radius:var(--dsw-radius-xl,20px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;white-space:normal}
+.lectures-group-head{display:flex;align-items:center;gap:8px;padding:16px 32px 12px}
+.lectures-group-title{margin:0;font-size:13px;line-height:20px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lectures-count{flex:none;font-size:12px;line-height:18px;font-weight:400;color:var(--dsw-alias-label-tertiary)}
+.lectures-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:0 32px 32px}
+.lectures-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.lectures-item{margin:0}
+.lectures-row{position:relative;width:100%;box-sizing:border-box;display:grid;grid-template-columns:32px minmax(0,1fr);grid-template-areas:"tile title" "tile meta";column-gap:12px;row-gap:4px;align-items:start;padding:10px 12px;border:none;border-radius:10px;background:var(--dsw-alias-bg-layer-1);color:inherit;font:inherit;text-align:left;cursor:pointer;white-space:normal}
 .lectures-row:hover{background:var(--dsw-alias-interactive-bg-hover)}
 .lectures-row:focus-visible{outline:none}
 .lectures-row:focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
-.lectures-tile{grid-area:tile;align-self:center;width:28px;height:28px;display:grid;place-items:center;border-radius:6px;background:var(--dsw-alias-fill-tsp-secondary);color:var(--dsw-alias-label-secondary);font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
-.lectures-title{grid-area:title;font-size:14px;line-height:20px;font-weight:500;overflow-wrap:anywhere}
-.lectures-meta{grid-area:meta;display:flex;align-items:center;gap:6px;min-width:0;font-size:13px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
-.lectures-chip{display:inline-flex;align-items:center;height:18px;padding:0 7px;font-size:11px;line-height:17px;border:.5px solid var(--dsw-alias-border-l3);border-radius:999px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
-.lectures-fold{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:0;border:none;background:none;font-size:14px;line-height:22px;font-weight:500;color:var(--dsw-alias-label-primary);cursor:pointer}
+.lectures-tile{grid-area:tile;align-self:center;width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:var(--dsw-alias-fill-tsp-secondary);color:var(--dsw-alias-label-secondary);font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.lectures-title{grid-area:title;font-size:13px;line-height:20px;font-weight:500;overflow-wrap:anywhere}
+.lectures-meta{grid-area:meta;display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.lectures-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;font-size:12px;line-height:16px;border:.5px solid var(--dsw-alias-border-l3);border-radius:6px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
+.lectures-fold{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:0;border:none;background:none;font-size:15px;line-height:22px;font-weight:600;color:var(--dsw-alias-label-primary);cursor:pointer}
 .lectures-fold:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
 .lectures-chev{color:var(--dsw-alias-label-tertiary);transition:transform 120ms}
 .lectures-fold[aria-expanded="false"] .lectures-chev{transform:rotate(-90deg)}
 .lectures-status{margin:0;padding:8px 32px;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
 .lectures-error{display:flex;align-items:center;gap:8px;margin:0;padding:8px 32px;font-size:13px;line-height:20px;color:var(--dsw-alias-state-error-primary)}
 .lectures-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor}
-.lectures-empty{margin:0;padding:48px 20px;text-align:center;font-size:14px;line-height:22px;color:var(--dsw-alias-label-tertiary)}
+.lectures-empty{margin:0;padding:32px 16px;text-align:center;font-size:13px;line-height:20px;color:var(--dsw-alias-label-tertiary)}
 .lectures-empty code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:18px;background:var(--dsw-alias-bg-layer-2);border-radius:6px;padding:1px 6px}`;
 
     const LECTURE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     // `2026-10-28` reads as `28 Oct 2026`: shorter than the ISO form and still one date.
-    function lectureDate(value) {
+    function lectureDate(value, t) {
       const [year, month, day] = value.split('-');
       const name = LECTURE_MONTHS[Number(month) - 1];
-      return name === undefined ? value : `${Number(day)} ${name} ${year}`;
+      if (name === undefined) return value;
+      return t({
+        en: `${Number(day)} ${name} ${year}`,
+        zh: `${year} 年 ${Number(month)} 月 ${Number(day)} 日`,
+      });
     }
 
-    function lectureMark(entry) {
-      if (entry.mark === 'archived') return 'Archived';
-      if (entry.mark === 'draft') return 'Draft';
-      if (entry.mark === 'dated' && entry.date !== null) return lectureDate(entry.date);
+    function lectureMark(entry, t) {
+      if (entry.mark === 'archived') return t({ en: 'Archived', zh: '已归档' });
+      if (entry.mark === 'draft') return t({ en: 'Draft', zh: '草稿' });
+      if (entry.mark === 'dated' && entry.date !== null) return lectureDate(entry.date, t);
       return null;
     }
 
@@ -1622,8 +1558,8 @@ window.__ModuleLoader__.load({
     }
 
     // The visible title is clipped, so the label repeats it in full.
-    function lectureRow(entry, onOpen) {
-      const mark = lectureMark(entry);
+    function lectureRow(entry, onOpen, t) {
+      const mark = lectureMark(entry, t);
       const label = mark === null
         ? `${entry.number}, ${entry.title}`
         : `${entry.number}, ${entry.title}, ${mark}`;
@@ -1644,15 +1580,15 @@ window.__ModuleLoader__.load({
                 : React.createElement('span', { className: 'lectures-chip' }, mark))));
     }
 
-    function lectureTopic(group, open, onToggle, onOpen) {
+    function lectureTopic(group, open, onToggle, onOpen, t) {
       const main = group.entries.filter((entry) => entry.mark !== 'archived');
       const archived = group.entries.filter((entry) => entry.mark === 'archived');
       const archiveId = `lectures-archive-${group.topic}`;
       const rows = [];
       if (group.entries.length === 0) {
-        rows.push(React.createElement('p', { key: 'empty', className: 'lectures-empty' }, 'No lectures yet.'));
+        rows.push(React.createElement('p', { key: 'empty', className: 'lectures-empty' }, t({ en: 'No lectures yet.', zh: '还没有讲义。' })));
       } else if (main.length > 0) {
-        rows.push(React.createElement('ul', { key: 'main', className: 'lectures-rows' }, ...main.map((entry) => lectureRow(entry, onOpen))));
+        rows.push(React.createElement('ul', { key: 'main', className: 'lectures-rows' }, ...main.map((entry) => lectureRow(entry, onOpen, t))));
       }
       if (archived.length > 0) {
         rows.push(React.createElement('button', {
@@ -1662,10 +1598,10 @@ window.__ModuleLoader__.load({
           'aria-expanded': open,
           // A closed fold has no list to control, so the reference would dangle.
           'aria-controls': open ? archiveId : undefined,
-          'aria-label': `Archived lectures ${archived.length}`,
+          'aria-label': `${t({ en: 'Archived lectures', zh: '已归档讲义' })} ${archived.length}`,
           onClick: () => onToggle(group.topic),
         },
-        React.createElement('span', null, 'Archived lectures'),
+        React.createElement('span', null, t({ en: 'Archived lectures', zh: '已归档讲义' })),
         React.createElement('span', { className: 'lectures-count' }, String(archived.length)),
         React.createElement('svg', {
           'aria-hidden': 'true',
@@ -1680,7 +1616,7 @@ window.__ModuleLoader__.load({
           width: 12,
         }, React.createElement('path', { d: 'M3.5 6 8 10.5 12.5 6' }))));
         if (open) {
-          rows.push(React.createElement('ul', { key: 'archive', className: 'lectures-rows', id: archiveId }, ...archived.map((entry) => lectureRow(entry, onOpen))));
+          rows.push(React.createElement('ul', { key: 'archive', className: 'lectures-rows', id: archiveId }, ...archived.map((entry) => lectureRow(entry, onOpen, t))));
         }
       }
       // The Course key remounts the section on a switch, so its scrollport starts at the top.
@@ -1691,7 +1627,8 @@ window.__ModuleLoader__.load({
         React.createElement('div', { className: 'lectures-scroll' }, ...rows));
     }
 
-    function LecturesPage({ useTabInfo, sessionId, workspaceFiles }) {
+    function LecturesPage({ useTabInfo, sessionId, workspaceFiles, locale }) {
+      const t = useT(locale);
       const { tab } = useTabInfo();
       const [content, setContent] = React.useState({ status: 'loading' });
       const [selected, setSelected] = React.useState(null);
@@ -1722,24 +1659,28 @@ window.__ModuleLoader__.load({
 
       let nodes;
       if (content.status === 'loading') {
-        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, className: 'lectures-status' }, 'Loading the lectures…')];
+        nodes = [React.createElement('p', { role: 'status', 'aria-busy': true, className: 'lectures-status' }, t({ en: 'Loading the lectures…', zh: '正在加载讲义…' }))];
       } else if (content.error === null && !content.rootFound) {
         nodes = [React.createElement('p', { className: 'lectures-empty' },
-          `No Course in ${TRACKER_ROOT}/. Run `,
+          t({ en: `No Course in ${TRACKER_ROOT}/. Run `, zh: `${TRACKER_ROOT}/ 中没有课程。运行 ` }),
           React.createElement('code', null, '/study-plus'),
-          ' to create one.')];
+          t({ en: ' to create one.', zh: ' 创建一个。' }))];
       } else {
         nodes = content.error === null
           ? []
           : [React.createElement('p', { role: 'alert', className: 'lectures-error' },
               React.createElement('span', { className: 'lectures-dot', 'aria-hidden': 'true' }),
-              `The lecture library could not be read: ${content.error}.`)];
+              t({
+                en: `The lecture library could not be read: ${content.error}.`,
+                zh: `无法读取讲义库：${content.error}。`,
+              }))];
         if (content.course !== null) {
           nodes.push(lectureTopic(
             { topic: content.course, entries: content.entries },
             foldOpen,
             () => setFoldOpen((previous) => !previous),
             open,
+            t,
           ));
         }
       }
@@ -1747,16 +1688,16 @@ window.__ModuleLoader__.load({
       // One Course needs no picker: the page already shows that Course.
       const courses = content.courses ?? [];
       const picker = courses.length < 2 ? null : React.createElement('label', { className: 'lectures-picker' },
-        React.createElement('span', null, 'Course'),
+        React.createElement('span', null, t({ en: 'Course', zh: '课程' })),
         React.createElement('select', {
-          'aria-label': 'Course',
+          'aria-label': t({ en: 'Course', zh: '课程' }),
           className: 'lectures-select',
           value: content.course ?? selected,
           onChange: (event) => choose(event.target.value),
         }, ...courses.map((course) => React.createElement('option', { key: course, value: course }, course))));
       return React.createElement('div', {
         role: 'region',
-        'aria-label': LECTURES_LABEL,
+        'aria-label': t(LECTURES_LABEL),
         className: 'lectures-page',
       }, React.createElement('style', null, LECTURES_CSS),
       React.createElement('header', { className: 'lectures-head' }, picker),
@@ -1765,18 +1706,21 @@ window.__ModuleLoader__.load({
 
     // A page type names no resource pattern and no `multiple`, so the host
     // records it at one fixed page address and a reopen focuses that tab.
-    const LECTURES_DEFINITION = {
+    const LECTURES_DEFINITION = (locale) => ({
       id: LECTURES_ID,
       kind: LECTURES_KIND,
-      title: () => LECTURES_LABEL,
+      title: () => locale.resolveText(LECTURES_LABEL),
       guide: [{
         id: 'lectures',
         order: LECTURES_GUIDE_ORDER,
-        title: () => LECTURES_LABEL,
-        description: () => 'Read the lectures saved in this workspace.',
+        title: () => locale.resolveText(LECTURES_LABEL),
+        description: () => locale.resolveText({
+          en: 'Read the lectures saved in this workspace.',
+          zh: '阅读此工作区保存的讲义。',
+        }),
         icon: LecturesGlyph,
       }],
-    };
+    });
 
     // --- Study Sessions panel ------------------------------------------------
 
@@ -2102,39 +2046,39 @@ window.__ModuleLoader__.load({
 
     // The page shell, rows, and fold live in CSS so a container query can fold
     // the time under the title on narrow panes. Tokens come from the host theme.
-    const STUDY_SESSIONS_CSS = `.study-ss-page{box-sizing:border-box;height:100%;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:32px;padding:0 clamp(24px,4vw,48px) 48px;color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);container-type:inline-size}
+    const STUDY_SESSIONS_CSS = `.study-ss-page{box-sizing:border-box;height:100%;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:32px;padding:0 clamp(24px,4vw,32px) 32px;color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);container-type:inline-size}
 .study-ss-page>*{width:100%;max-width:960px}
-.study-ss-head{display:flex;flex-direction:column;padding-top:28px}
-[data-platform="darwin"] .study-ss-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}
-.study-ss-title{font-size:20px;line-height:28px;font-weight:500;margin:0}
+.study-ss-head{display:flex;flex-direction:column;padding-top:32px}
+[data-platform="darwin"] .study-ss-head{padding-top:calc(32px + var(--dsh-frame-top-clearance,0px))}
+.study-ss-title{font-size:15px;line-height:22px;font-weight:600;margin:0}
 .study-ss-intro{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary);margin:4px 0 0}
-.study-ss-group{display:flex;flex-direction:column;gap:8px}
-.study-ss-group-title{font-size:14px;line-height:22px;font-weight:500;margin:0}
+.study-ss-group{display:flex;flex-direction:column;gap:12px}
+.study-ss-group-title{font-size:13px;line-height:20px;font-weight:600;margin:0}
 .study-ss-fold{display:inline-flex;align-items:center;gap:8px;padding:0;background:none;border:none;font:inherit;color:inherit;cursor:pointer}
 .study-ss-fold:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
-.study-ss-count{font-size:13px;line-height:20px;font-weight:400;color:var(--dsw-alias-label-tertiary)}
+.study-ss-count{font-size:12px;line-height:18px;font-weight:400;color:var(--dsw-alias-label-tertiary)}
 .study-ss-chev{color:var(--dsw-alias-label-tertiary);transition:transform 120ms}
 .study-ss-fold[aria-expanded="false"] .study-ss-chev{transform:rotate(-90deg)}
-.study-ss-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.study-ss-item{margin:0 -8px}
-.study-ss-row{position:relative;width:100%;box-sizing:border-box;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:"tile title time" "tile meta time";column-gap:12px;row-gap:2px;align-items:start;padding:8px;border:none;border-radius:var(--dsw-radius-xl,20px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;white-space:normal}
+.study-ss-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.study-ss-item{margin:0}
+.study-ss-row{position:relative;width:100%;box-sizing:border-box;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:"tile title time" "tile meta time";column-gap:12px;row-gap:4px;align-items:start;padding:10px 12px;border:none;border-radius:10px;background:var(--dsw-alias-bg-layer-1);color:inherit;font:inherit;text-align:left;cursor:pointer;white-space:normal}
 .study-ss-row:hover{background:var(--dsw-alias-interactive-bg-hover)}
 .study-ss-row:focus-visible{outline:none}
 .study-ss-row:focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
-.study-ss-tile{grid-area:tile;align-self:center;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 10%,transparent);color:var(--dsw-alias-state-business-primary)}
-.study-ss-title{grid-area:title;font-size:14px;line-height:20px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.study-ss-meta{grid-area:meta;display:flex;align-items:center;gap:6px;min-width:0;font-size:13px;line-height:18px;color:var(--dsw-alias-label-tertiary);flex-wrap:wrap}
+.study-ss-tile{grid-area:tile;align-self:center;width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 10%,transparent);color:var(--dsw-alias-state-business-primary)}
+.study-ss-title{grid-area:title;font-size:13px;line-height:20px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.study-ss-meta{grid-area:meta;display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);flex-wrap:wrap}
 .study-ss-workspace{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.study-ss-time{grid-area:time;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;margin-top:2px}
-.study-ss-chip{display:inline-flex;align-items:center;height:18px;padding:0 7px;font-size:11px;line-height:17px;border:.5px solid var(--dsw-alias-border-l3);border-radius:999px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
-@container (max-width:520px){.study-ss-row{grid-template-areas:"tile title title" "tile meta time"}.study-ss-time{margin-top:0}}
-.study-ss-scan{display:flex;flex-direction:column;gap:10px}
+.study-ss-time{grid-area:time;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.study-ss-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;font-size:12px;line-height:16px;border:.5px solid var(--dsw-alias-border-l3);border-radius:6px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
+@container (max-width:520px){.study-ss-row{grid-template-areas:"tile title title" "tile meta time"}}
+.study-ss-scan{display:flex;flex-direction:column;gap:12px}
 .study-ss-status{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary);margin:0}
-.study-ss-track{height:2px;background:var(--dsw-alias-border-l3);border-radius:999px;overflow:hidden}
+.study-ss-track{height:8px;background:var(--dsw-alias-border-l3);border-radius:6px;overflow:hidden}
 .study-ss-fill{height:100%;background:var(--dsw-alias-state-business-primary)}
 .study-ss-error{display:flex;align-items:center;gap:8px;font-size:13px;line-height:20px;color:var(--dsw-alias-state-error-primary);margin:0}
 .study-ss-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor}
-.study-ss-empty{text-align:center;padding:48px 20px;font-size:14px;line-height:22px;color:var(--dsw-alias-label-tertiary);margin:0}
+.study-ss-empty{text-align:center;padding:32px 16px;font-size:13px;line-height:20px;color:var(--dsw-alias-label-tertiary);margin:0}
 .study-ss-empty code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:18px;background:var(--dsw-alias-bg-layer-2);border-radius:6px;padding:1px 6px}`;
 
     return {
@@ -2193,32 +2137,33 @@ window.__ModuleLoader__.load({
               useSessions: typeof props.useSessions === 'function' ? props.useSessions : NO_SESSIONS_HOOK,
             })),
           );
-        });
-        ctx.slots.inject(VIEW_SLOT, () =>
-          ctx.slots.register({
-            name: VIEW_SLOT,
-            id: VIEW_ID,
-            order: VIEW_ORDER,
-            label: VIEW_LABEL,
-            inject: (sessionId) => ({
-              sessionId,
-              workspaceFiles: ctx.remote.workspaceFiles,
-            }),
-          }, StudyView),
-        );
-        // A host without the right Sidebar never provides the registry, so this
-        // one seat waits. The rest of the plugin keeps working.
-        ctx.inject(['sidebarRightTabs'], (dock) => {
-          dock.effect(
-            () => dock.sidebarRightTabs.register(LECTURES_DEFINITION),
-            'dsh-nerd-mode: lectures tab type',
+          ctx.slots.inject(VIEW_SLOT, () =>
+            ctx.slots.register({
+              name: VIEW_SLOT,
+              id: VIEW_ID,
+              order: VIEW_ORDER,
+              label: () => localeCtx.locale.resolveText(VIEW_LABEL),
+              inject: (sessionId) => ({
+                sessionId,
+                workspaceFiles: ctx.remote.workspaceFiles,
+                locale: localeCtx.locale,
+              }),
+            }, StudyView),
           );
+          // A host without the right Sidebar never provides the registry, so this
+          // one seat waits. The rest of the plugin keeps working.
+          ctx.inject(['sidebarRightTabs'], (dock) => {
+            dock.effect(
+              () => dock.sidebarRightTabs.register(LECTURES_DEFINITION(localeCtx.locale)),
+              'dsh-nerd-mode: lectures tab type',
+            );
+          });
+          ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+            name: 'sidebar.right.pane.tab',
+            key: LECTURES_ID,
+            inject: (sessionId) => ({ sessionId, workspaceFiles: ctx.remote.workspaceFiles, locale: localeCtx.locale }),
+          }, LecturesPage));
         });
-        ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
-          name: 'sidebar.right.pane.tab',
-          key: LECTURES_ID,
-          inject: (sessionId) => ({ sessionId, workspaceFiles: ctx.remote.workspaceFiles }),
-        }, LecturesPage));
       },
     };
   },

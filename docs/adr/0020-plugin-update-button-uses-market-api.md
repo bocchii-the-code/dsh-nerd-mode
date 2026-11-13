@@ -1,6 +1,6 @@
 # Update the plugin through the DSH Market API
 
-Status: accepted
+Status: superseded by [0022](0022-plugin-update-runs-pnpm.md)
 
 The Nerd Mode settings page offers an update button. DSH Market already installs packages in a profile, verifies the version that lands on disk, keeps a recovery point, and can restart the host. The alternatives were the plugin running `dsh plugin add` or pnpm itself, which would need shell access, its own verification, and its own restart path, or a check-only button that only copies the command. The block therefore calls the Market's public Update API v1 from the client and adds no server code. The cost is a dependency on an API still marked beta: capability detection must fail soft, so a Market release that renames fields degrades the block to an explanation and a manual command instead of breaking the settings page.
 

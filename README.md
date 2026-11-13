@@ -214,7 +214,7 @@ Change the defaults under Settings → Nerd Mode.
 
 A four-option question appears as a card with one correct choice. The guide asks a short-answer question in the conversation. Save applies to the next session, Cancel discards a draft, and Restore defaults returns to recall off, 3 questions, short answer. A preference stated inside one `/study-plus` request wins for that session only and does not update the profile.
 
-The About group at the bottom shows the installed and the newest npm version. Its button installs an update through DSH Market and offers a restart when the host allows one. The whole page follows the DSH interface language.
+The About group at the bottom shows the installed version and the newer of the npm and official GitHub versions. Its button installs that version from its channel by running pnpm in the profile, then asks you to restart DSH. A pinned GitHub ref and a fork are not checked. A `link:` install is updated with git. The whole page follows the DSH interface language.
 
 ## How it fits into dsh
 
