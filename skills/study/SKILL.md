@@ -1,6 +1,6 @@
 ---
 name: study
-description: "[v0.6.0] Teach one concept or help complete one task, using the supplied material as scope and defaulting to chat output."
+description: "[v0.6.1] Teach one concept or help complete one task, using the supplied material as scope and defaulting to chat output."
 argument-hint: "<concept or task>"
 ---
 # Study
