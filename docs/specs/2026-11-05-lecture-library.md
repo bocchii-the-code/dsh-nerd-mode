@@ -2,7 +2,7 @@
 
 Status: resolved
 
-Superseded in part by `.scratch/course-folders/spec.md`: the panel lists the selected Course only, not every Course in the workspace.
+Superseded in part by [`2026-10-31-course-folders.md`](2026-10-31-course-folders.md): the panel lists the selected Course only, not every Course in the workspace.
 
 ## Problem Statement
 
