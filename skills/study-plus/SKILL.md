@@ -50,7 +50,7 @@ A graph change reruns only the affected stages. No research. The graph agent pro
 
 For a new graph:
 
-1. Create `study/<course>/` when it does not exist. Then dispatch `study-research` when the host has a subagent tool, before any table exists, with the subject, `Goal`, `Background`, the supplied material, the Chapter list, and the destination `study/<course>/sources.md`. It writes one source note and returns coverage, gaps, and disagreements. Without a subagent tool, gather the same note yourself. Skip this step on a Course that already has `graph.md` and on a graph change.
+1. Create `study/<course>/` when it does not exist. Then dispatch `study-research` when the host has a subagent tool, before any table exists, with the subject, `Goal`, `Background`, the supplied material, the Chapter titles the material gives when it has them, and the destination `study/<course>/sources.md`. It writes one source note and returns coverage, gaps, and disagreements. Without a subagent tool, gather the same note yourself. Skip this step on a Course that already has `graph.md` and on a graph change.
 2. Dispatch `study-graph` with the subject, `Goal`, `Background`, the supplied material, the `sources.md` path, and, for a change, the existing table. It returns the concept table in prerequisite order, the Chapter list with outcome scopes, and one line per omitted topic. It writes no file. A row carries a one-line definition and prerequisite numbers, and prerequisite order stays separate from textbook reading order. Without a subagent tool, build the same table yourself.
 3. Before the approval question, check coverage and alignment against the `Goal`. When the graph has chapters, every chapter scope names an outcome. Every outcome has a concept that teaches it. State each concept's role (core, supporting, or optional) in the approval message rather than in the table. Write one line for each topic the graph leaves out and why this Course does not need it. Keep this check in the conversation: never write it under `study/<course>/`.
 4. Show the full graph and chapter layout in the reply before the approval question, as a Markdown table. Keep the question text short, because it renders as one paragraph: ask whether to approve, edit, or rebuild the graph shown above, and state that approval starts draft generation for every concept, including any concept the learner then skips, and that drafts are not teaching. Do not put the table in the question text. Do not add another approval step.
@@ -86,7 +86,7 @@ A Lecture draft is complete teaching material written before any Concept cycle. 
 2. Dispatch one `study-draft` per Chapter when the host has a subagent tool, from `references/agents/draft.md`. Each prompt carries its Chapter's rows, the rows of every prerequisite outside the Chapter, the three brief lines, that Chapter's section of `sources.md`, and an explicit destination list. Copy `Goal`, `Background`, and `Teaching level` from `graph.md` verbatim: do not compress, summarize, or rewrite them. Two agents never share a destination path. Dispatch as many at once as the host allows. Without a subagent tool, write each Chapter yourself under `study` and the same contract.
 3. Check every returned file: path, `status: draft`, the `concept` number, one H1, coverage of every concept in the Chapter, prerequisite consistency, use of the supplied material, the chapter opener in the Chapter's first draft, the practice block with a reasoned answer for each item, and any contradiction across Chapters. Report a contradiction in one line.
 4. Keep a valid existing draft or dated Lecture at a destination. Report an occupied or unrecognized target and ask the learner how to resolve it instead of overwriting.
-5. Collect every figure request from the draft reports and dispatch `study-figure` once from `references/agents/figure.md`, with the Course's `diagrams/` root. Every figure a draft names exists at its path, or the report names the missing figure in one line.
+5. Collect every figure request from the draft reports and dispatch `study-figure` once from `references/agents/figure.md`, with the Course's `diagrams/` root and one destination per request, `study/<course>/diagrams/<name>.svg`. Every figure a draft names exists at its path, or the report names the missing figure in one line.
 6. Dispatch one `study-proofread` per Chapter batch, in parallel, with disjoint file lists, from `references/agents/proofread.md`. It fixes typos, punctuation, term spelling, and format in place, and reports coverage gaps, prerequisite conflicts, and missing practice blocks.
 7. After proofreading, dispatch one `study-consistency` over the whole Book from `references/agents/consistency.md`. It writes no file and reports each defect with its file and line. A graph change still runs this over the whole Book.
 8. Report the result: written paths, preserved paths, missing drafts, figure paths, proofread fixes, and consistency defects. A failed agent names its Chapter, and you write that Chapter yourself. Never print the drafts in chat. The learner can ask for one by name.
@@ -251,7 +251,7 @@ Preparation splits into six roles. Each role has one file under `references/agen
 | `study-proofread` | Once per Chapter batch | the same lecture files | mechanical fixes made, judgment calls |
 | `study-consistency` | Once per Book, after proofreading | nothing | whole-Book defects |
 
-The skill's base directory appears on the host's line that names it for this skill content. Replace `${CLAUDE_SKILL_DIR}` in a role file with that directory before you read a path or run a command. When no such line appears, the directory that holds this `SKILL.md` is the base. Never resolve a role file or the draft standard from the workspace: an installed plugin does not sit in the workspace.
+The skill's base directory appears on the host's line that names it for this skill content. Before you copy a role file into a dispatch prompt, replace `${CLAUDE_SKILL_DIR}` with that directory, so the dispatched agent receives a real path and never the token. When no such line appears, the directory that holds this `SKILL.md` is the base. Never resolve a role file or the draft standard from the workspace: an installed plugin does not sit in the workspace.
 
 ### The header block
 
@@ -260,9 +260,11 @@ Start every dispatch prompt with this block, copied verbatim:
 > **Preparation role.** You prepare material for one Course. The parent agent keeps the learner conversation, every tracker write, and every evidence-bearing step.
 >
 > - You do not speak to the learner. Ask no question and wait for no answer.
+> - You print no draft, lecture, or article text in chat. Return paths and the report only.
 > - You do not call or spawn another agent.
 > - You do not read or write `graph.md`, `state.md`, `log.md`, or `plan.md`, and you do not read the session log.
 > - Write only the paths this prompt names. Never invent a path, and create no directory this prompt did not name.
+> - A path that still contains an unresolved placeholder, such as a skill-directory token, is unresolved. Report it with `Result: blocked` instead of guessing.
 > - A destination that already holds a valid draft or dated lecture is not yours to replace. Report the path, unless your role edits that file in place. Leave an occupied or unrecognized target alone.
 > - When you cannot write, return the complete text for each destination path. Never return a summary in place of the text.
 > - Report in this shape, and add no section above it:

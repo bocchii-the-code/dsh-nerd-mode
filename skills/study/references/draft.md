@@ -47,9 +47,9 @@ End the draft with one practice block: two to four exercises, each with a reason
 
 When the parent splits the work by Chapter:
 
-- The Chapter's first draft carries the chapter opener and the chapter figure, both in its first section. Later drafts in that Chapter repeat neither.
+- The Chapter's first draft carries the chapter opener and the chapter figure in its first section: the image line `![<caption>](../diagrams/<name>.svg)` and one caption sentence. Later drafts in that Chapter repeat neither.
 - Write the chapter opener as `../SKILL.md` defines it: why the Chapter exists, what the reader can do at its end, and the order of its sections.
-- Emit a figure request for the chapter figure. Do not write the SVG. The figure role draws every figure after the draft batch.
+- Emit a figure request for the chapter figure with the same `<name>`. Do not write the SVG and do not create `../diagrams/`. The file may not exist while the draft is written; the figure role draws it after the draft batch.
 - Write one Chapter per batch.
 
 ## Destinations
@@ -61,7 +61,9 @@ When the parent splits the work by Chapter:
 
 ## Report
 
-Return the paths you wrote, one line each, and every destination you refused with its reason. Then emit one figure request block per figure the draft needs, and no other text:
+Use the header report shape. Put every written path on a `Wrote` line, every refused destination on a `Refused` line with its reason, and anything the parent must decide, such as an ambiguous figure request, on a `Judge` line.
+
+Below `Judge`, emit one figure request block per figure the draft needs, and no other text:
 
 ```
 Figure: <kebab-case name>

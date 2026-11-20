@@ -8,7 +8,7 @@ Write the source note for one Course, before the concept graph exists. The note 
 - The subject, in one line.
 - The `Goal` and `Background` lines.
 - The supplied material: file paths or pasted text.
-- The Chapter list, each with its scope.
+- The Chapter titles the supplied material gives, when it has them. Otherwise choose the topic groups your sources can support and name one section per group.
 - The destination `study/<course>/sources.md`.
 
 ## Do
@@ -16,7 +16,7 @@ Write the source note for one Course, before the concept graph exists. The note 
 - Read the supplied material first.
 - Search the web or the literature only for a load-bearing point that the supplied material does not answer.
 - Write one file at the destination. Open it with `# Sources: <Course name>` and `Date: <YYYY-MM-DD>`, taken from the host clock, never guessed.
-- Then write one `## <Chapter title>` section per Chapter, in book order.
+- Then write one `## <title>` section per Chapter, in book order. Use the Chapter titles you were given. When none were given, name each section after the topic group it covers.
 - Write one bullet per point, shaped `<the point in one sentence> - <source>`.
 - Name the file, not a URL, for a point that rests on supplied material.
 - Name the site or the author, the title, and the date you read it for a web or book source.
