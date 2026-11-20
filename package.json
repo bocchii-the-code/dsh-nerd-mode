@@ -22,6 +22,7 @@
     "lib",
     "client.js",
     "assets",
+    "!assets/nerd-mode-promo.mp4",
     "cordis.patch.yml",
     "skills",
     "README.md",
