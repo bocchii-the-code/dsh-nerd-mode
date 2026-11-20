@@ -65,16 +65,7 @@ For a one-off request with no graph, derive the level from the brief the upper l
 
 ## Write lecture drafts
 
-The upper layer may hand you an approved concept graph, the relevant supplied material, the teaching brief, and one destination file per concept. Then write one complete draft per concept at the given level, under the same writing standard. A draft is prepared teaching material, not teaching.
-
-- Cover the concept completely at the given level: the teaching explanation, its relationships, and useful examples.
-- End the draft with one practice block: two to four exercises, each with a reasoned answer. Mark the block as ungraded practice. These items are never reused as graded questions and never count as evidence. Write no grading criteria.
-- In a chapter batch, the first draft of the chapter opens with the chapter opener and the chapter figure, written under the Course's `diagrams/`; the destination list covers lectures only. Later drafts in the chapter do not repeat either.
-- Write only the destinations you are given, and one Chapter per batch when the upper layer splits the work. Never invent a path, and never read or write `graph.md`, `state.md`, `log.md`, `plan.md`, or any other tracker file.
-- Frontmatter is exactly `status: draft` and the concept number. Add no date. The body opens with an H1 named for the concept.
-- Preparation is not teaching. Change no learner state and append nothing to the log.
-- Keep a valid existing draft or dated lecture at a destination. Report it instead of overwriting. Leave an occupied or unrecognized target alone and report it.
-- Report the paths you wrote and every destination you refused. Print no draft in chat.
+The draft contract has one copy: `references/draft.md`, beside this file. Read it before you write a draft. It carries the frontmatter, the content rules, the practice block, the chapter batch rules, the destinations, and the report. The writing standard above applies to every draft unchanged. A draft is prepared teaching material, not teaching.
 
 ## Files and figures
 

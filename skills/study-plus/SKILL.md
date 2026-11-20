@@ -245,3 +245,41 @@ Result: <2 of 3 correct; teach-back incomplete>
 Gap: <the specific thing that failed>
 Next: <concept> because <reason>
 ```
+
+## 9. Preparation roles
+
+Preparation splits into six roles. Each role has one file under `references/agents/`. The parent writes every dispatch prompt from three parts, in this order: the header block below, the role file verbatim, and the inputs for this run.
+
+| Role | Runs | Writes | Returns |
+|---|---|---|---|
+| `study-research` | Once per new Course, before the graph | `study/<course>/sources.md` | coverage, gaps, disagreements |
+| `study-graph` | Once per new graph or graph change | nothing | concept table, chapter list, omitted topics |
+| `study-draft` | Once per Chapter | the Chapter's lecture files | written paths, refused paths, figure requests |
+| `study-figure` | Once after a draft batch | `study/<course>/diagrams/*.svg` | written paths, skipped requests |
+| `study-proofread` | Once per Chapter batch | the same lecture files | mechanical fixes made, judgment calls |
+| `study-consistency` | Once per Book, after proofreading | nothing | whole-Book defects |
+
+The skill's base directory appears on the host's line that names it for this skill content. Replace `${CLAUDE_SKILL_DIR}` in a role file with that directory before you read a path or run a command. When no such line appears, the directory that holds this `SKILL.md` is the base. Never resolve a role file or the draft standard from the workspace: an installed plugin does not sit in the workspace.
+
+### The header block
+
+Start every dispatch prompt with this block, copied verbatim:
+
+> **Preparation role.** You prepare material for one Course. The parent agent keeps the learner conversation, every tracker write, and every evidence-bearing step.
+>
+> - You do not speak to the learner. Ask no question and wait for no answer.
+> - You do not call or spawn another agent.
+> - You do not read or write `graph.md`, `state.md`, `log.md`, or `plan.md`, and you do not read the session log.
+> - Write only the paths this prompt names. Never invent a path, and create no directory this prompt did not name.
+> - A destination that already holds a valid draft or dated lecture is not yours to replace. Report the path, unless your role edits that file in place. Leave an occupied or unrecognized target alone.
+> - When you cannot write, return the complete text for each destination path. Never return a summary in place of the text.
+> - Report in this shape, and add no section above it:
+>
+> ```
+> Result: done | partial | blocked
+> Wrote: <path> — <one line per path, or "none">
+> Refused: <path> — <reason per path, or "none">
+> Judge: <one line per item the parent must decide, or "none">
+> ```
+>
+> The role file may add report lines below `Judge`. Add nothing else.
