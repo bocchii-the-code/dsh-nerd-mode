@@ -46,14 +46,15 @@ A graph change keeps work the learner already has.
 - A removed Concept moves its lecture file to `lectures/archive/`. Never delete it.
 - A changed definition or a changed prerequisite lists the affected drafts and asks whether to keep or rewrite each one.
 
+A graph change reruns only the affected stages. No research. The graph agent proposes only the changed part. A draft agent rewrites only the affected drafts. Proofreading covers only the changed files. The consistency review still reads the whole Book.
+
 For a new graph:
 
-1. Use supplied material first, then reliable sources when needed, then your own knowledge. Do not research the web for every lecture.
-2. Make a concept table in prerequisite order. Each row has a one-line definition and prerequisite numbers. Keep prerequisite order separate from textbook reading order.
-3. Use the source's book and chapter hierarchy when present. Otherwise, propose logical chapter groupings. Write each chapter scope as the outcome the chapter delivers, not a list of topics.
-4. Before the approval question, check coverage and alignment against the `Goal`. When the graph has chapters, every chapter scope names an outcome. Every outcome has a concept that teaches it. State each concept's role (core, supporting, or optional) in the approval message rather than in the table. Write one line for each topic the graph leaves out and why this Course does not need it. Keep this check in the conversation: never write it under `study/<course>/`.
-5. Show the full graph and chapter layout in the reply before the approval question, as a Markdown table. Keep the question text short, because it renders as one paragraph: ask whether to approve, edit, or rebuild the graph shown above, and state that approval starts draft generation for every concept, including any concept the learner then skips, and that drafts are not teaching. Do not put the table in the question text. Do not add another approval step.
-6. After approval, run calibration as one question-tool call with up to three items: what the learner wants to be able to do after this Course, what they have already read, studied, or used in this area in their own words, and which concepts in the approved graph they know well enough to skip, as a multi-select list. Items 1 and 2 are free text. Ask the goal and background items only when nothing already answers them: not the current request, not the opening question, not the supplied material. Reuse an opening-question answer verbatim. Derive the level. Then write `graph.md`, create `state.md` with every concept `new` and undated except the concepts selected to skip, which are `skipped`, create an empty `log.md`, and generate one draft per concept (section 3). Do not create `plan.md`.
+1. Create `study/<course>/` when it does not exist. Then dispatch `study-research` when the host has a subagent tool, before any table exists, with the subject, `Goal`, `Background`, the supplied material, the Chapter list, and the destination `study/<course>/sources.md`. It writes one source note and returns coverage, gaps, and disagreements. Without a subagent tool, gather the same note yourself. Skip this step on a Course that already has `graph.md` and on a graph change.
+2. Dispatch `study-graph` with the subject, `Goal`, `Background`, the supplied material, the `sources.md` path, and, for a change, the existing table. It returns the concept table in prerequisite order, the Chapter list with outcome scopes, and one line per omitted topic. It writes no file. A row carries a one-line definition and prerequisite numbers, and prerequisite order stays separate from textbook reading order. Without a subagent tool, build the same table yourself.
+3. Before the approval question, check coverage and alignment against the `Goal`. When the graph has chapters, every chapter scope names an outcome. Every outcome has a concept that teaches it. State each concept's role (core, supporting, or optional) in the approval message rather than in the table. Write one line for each topic the graph leaves out and why this Course does not need it. Keep this check in the conversation: never write it under `study/<course>/`.
+4. Show the full graph and chapter layout in the reply before the approval question, as a Markdown table. Keep the question text short, because it renders as one paragraph: ask whether to approve, edit, or rebuild the graph shown above, and state that approval starts draft generation for every concept, including any concept the learner then skips, and that drafts are not teaching. Do not put the table in the question text. Do not add another approval step.
+5. After approval, run calibration as one question-tool call with up to three items: what the learner wants to be able to do after this Course, what they have already read, studied, or used in this area in their own words, and which concepts in the approved graph they know well enough to skip, as a multi-select list. Items 1 and 2 are free text. Ask the goal and background items only when nothing already answers them: not the current request, not the opening question, not the supplied material. Reuse an opening-question answer verbatim. Derive the level. Then write `graph.md`, create `state.md` with every concept `new` and undated except the concepts selected to skip, which are `skipped`, create an empty `log.md`, and generate one draft per concept (section 3). Do not create `plan.md`.
 
 Calibration writes `Goal`, `Background`, and `Teaching level` to `graph.md`. Derive the level from the two answers:
 
@@ -82,25 +83,16 @@ A wrong order mis-teaches for weeks. Do not skip the approval.
 A Lecture draft is complete teaching material written before any Concept cycle. It is not teaching, it carries no teaching date, and it changes no learner state.
 
 1. Compute one destination per concept: `study/<course>/lectures/<NN>-<concept-slug>.md`, where `NN` is the graph's concept number padded to at least two digits. The list covers every concept, including skipped concepts.
-2. Hand the approved graph, the relevant supplied material, the three brief lines, and that explicit destination list to `study`. Copy `Goal`, `Background`, and `Teaching level` from `graph.md` verbatim: do not compress, summarize, or rewrite them. Pass one Chapter per request. `study` owns the draft content and its frontmatter, and it never reads tracker files or chooses paths.
-3. Split the Chapters across subagents when they are available. Give each one the `study` draft rules and keep each agent's destination list disjoint. Without subagents, write the Chapters yourself, one at a time.
-4. Check every returned file: path, `status: draft`, the `concept` number, one H1, coverage of every concept in the Chapter, prerequisite consistency, use of the supplied material, the chapter opener in the Chapter's first draft, the practice block with a reasoned answer for each item, and any contradiction across Chapters. Report a contradiction in one line.
-5. Keep a valid existing draft or dated Lecture at a destination. Report an occupied or unrecognized target and ask the learner how to resolve it instead of overwriting.
-6. Report the result: written paths, preserved paths, and missing drafts. Never print the drafts in chat. The learner can ask for one by name.
-7. Rebuild the HTML Book from the available material (section 8). A failed build does not block learning.
+2. Dispatch one `study-draft` per Chapter when the host has a subagent tool, from `references/agents/draft.md`. Each prompt carries its Chapter's rows, the rows of every prerequisite outside the Chapter, the three brief lines, that Chapter's section of `sources.md`, and an explicit destination list. Copy `Goal`, `Background`, and `Teaching level` from `graph.md` verbatim: do not compress, summarize, or rewrite them. Two agents never share a destination path. Dispatch in waves that respect the host's limit. Without a subagent tool, write each Chapter yourself under `study` and the same contract.
+3. Check every returned file: path, `status: draft`, the `concept` number, one H1, coverage of every concept in the Chapter, prerequisite consistency, use of the supplied material, the chapter opener in the Chapter's first draft, the practice block with a reasoned answer for each item, and any contradiction across Chapters. Report a contradiction in one line.
+4. Keep a valid existing draft or dated Lecture at a destination. Report an occupied or unrecognized target and ask the learner how to resolve it instead of overwriting.
+5. Collect every figure request from the draft reports and dispatch `study-figure` once from `references/agents/figure.md`, with the Course's `diagrams/` root. Every figure a draft names exists at its path, or the report names the missing figure in one line.
+6. Dispatch one `study-proofread` per Chapter batch, in parallel, with disjoint file lists, from `references/agents/proofread.md`. It fixes typos, punctuation, term spelling, and format in place, and reports coverage gaps, prerequisite conflicts, and missing practice blocks.
+7. After proofreading, dispatch one `study-consistency` over the whole Book from `references/agents/consistency.md`. It writes no file and reports each defect with its file and line. A graph change still runs this over the whole Book.
+8. Report the result: written paths, preserved paths, missing drafts, figure paths, proofread fixes, and consistency defects. A failed lane names its Chapter, and you write that Chapter yourself. Never print the drafts in chat. The learner can ask for one by name.
+9. Rebuild the HTML Book from the available material (section 8). A failed build does not block learning.
 
-A partial batch is normal. Completed drafts stay on disk, the Book includes them, the report names the missing ones, and the learner can keep going. When the learner selects a concept with no draft, write that draft before teaching starts.
-
-Draft frontmatter has `status: draft` and the concept number, and no teaching date:
-
-```md
----
-status: draft
-concept: 3
----
-
-# <concept name>
-```
+A partial batch is normal. Completed drafts stay on disk, the Book includes them, the report names the missing ones, and the learner can keep going. When the learner selects a concept with no draft, write that draft before teaching starts. Section 8 shows the draft frontmatter. The draft contract in `study` owns the rest.
 
 ## 4. Choose the concept
 
@@ -283,3 +275,20 @@ Start every dispatch prompt with this block, copied verbatim:
 > ```
 >
 > The role file may add report lines below `Judge`. Add nothing else.
+
+### Fallbacks
+
+In order:
+
+1. No subagent tool: run every step yourself, serially, and say so in the report.
+2. A failed or empty agent: write that Chapter yourself and name the failed lane in the report.
+3. An agent without write access: it returns the complete text for each destination, and you write the files.
+4. An occupied or unrecognized destination: the agent leaves the file alone and reports the path, and you ask the learner how to resolve it.
+
+Agents never spawn agents. The host enforces a depth of one.
+
+### Cost guards
+
+- No research on a Course that already has `graph.md`.
+- No research on a graph change.
+- No draft agent runs for a Chapter with no missing draft.
