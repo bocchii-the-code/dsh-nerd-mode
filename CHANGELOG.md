@@ -2,6 +2,23 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.6.1] - 2026-11-20
+
+### Added
+
+- Six preparation roles (research, graph, draft, figure, proofread, consistency), each with a role file and one shared dispatch header.
+- One `sources.md` source note per Course, written before the graph.
+- A figure request for each figure a draft needs, and a figure role that draws every request.
+- Proofreading that fixes typos, punctuation, term spelling, and format in place.
+- A whole-Book consistency review that reports defects with file and line and writes nothing.
+- Four fallbacks: no subagent tool, a failed agent, an agent without write access, and an occupied destination.
+- Cost guards: no research on a Course that already has `graph.md`, no research on a graph change, and no draft agent for a Chapter with no missing draft.
+
+### Changed
+
+- A draft no longer draws the chapter figure. It emits a figure request, and the figure role draws every figure after the draft batch.
+- The draft contract moved to `skills/study/references/draft.md`, and `study/SKILL.md` points there.
+
 ## [0.6.0] - 2026-11-20
 
 ### Added
