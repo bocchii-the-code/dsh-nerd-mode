@@ -9,7 +9,7 @@ window.__ModuleLoader__.load({
     const LABEL = 'Nerd Mode';
     const SETTINGS_NAMESPACE = 'dsh-nerd-mode';
     const SETTINGS_DEFAULTS = Object.freeze({
-      recallSessionEnabled: false,
+      recallSessionEnabled: true,
       unseenQuestionCount: 3,
       unseenQuestionType: 'short-answer',
     });

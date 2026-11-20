@@ -621,7 +621,6 @@ test('Cancel restores accepted values and Restore defaults changes only the draf
   await allOfType(restored, 'button').find(({ props }) => textOf(props.children) === 'Save').props.onClick()
   await view.flush()
   assert.deepEqual(view.mutations[0].operations, [
-    { op: 'unset', path: ['recallSessionEnabled'] },
     { op: 'unset', path: ['unseenQuestionCount'] },
     { op: 'unset', path: ['unseenQuestionType'] },
   ])

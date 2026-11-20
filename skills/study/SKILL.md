@@ -1,6 +1,6 @@
 ---
 name: study
-description: "[v0.5.2] Teach one concept or help complete one task, using the supplied material as scope and defaulting to chat output."
+description: "[v0.6.0] Teach one concept or help complete one task, using the supplied material as scope and defaulting to chat output."
 argument-hint: "<concept or task>"
 ---
 # Study
@@ -14,7 +14,10 @@ The upper layer selects the path for multiple independent concepts. Follow that 
 - Use supplied material to set the scope, title, chapter boundaries, and order. Treat it as a reference, not as truth. Check important or uncertain claims when needed, prefer accuracy, and flag differences.
 - Use an approved graph or supplied material by default. Do not research the web for every lecture.
 - Cover the major ideas, relationships, and qualifications. Start from one concrete instance when the concept has one, then explain the intuition, the terminology, and the formal detail. Choose a structure that fits the content. Do not force a fixed section template.
+- For a concept, open with one line that states what the reader can do after the lecture, in an observable verb. Do not open with “understand” or a topic label. When the chapter opener runs first, put this line directly after it.
 - Use examples and analogies when they help. State where an analogy stops matching. Include exam topics only when they matter to the request.
+- For a procedure, show one complete worked example with the reason for each step, then one partial case with the target step blank, then one case with no help. Keep the procedure, the step order, and the question form fixed across the three. Fade one procedure per lecture: the one the outcome names. Give every other procedure one example. Stop adding guided passes when the reader supplies the target step alone.
+- Mark exam-critical material with **Must know.** only when the request names an exam or the supplied material does. Put at most one optional block in a section, and state in one line what it adds.
 - Use a figure when the concept has a process, a flow, or a relation between parts; use a table when the reader must compare values. Put the figure next to the paragraph it explains, with one caption sentence that states the point, and do not restate the figure in prose. When no honest figure exists, stay with prose and do not invent one. Define every mathematical symbol and its role. In derivations, justify each meaningful step, explain the result, and check algebra, arithmetic, assumptions, and units.
 - Write math in LaTeX. Put one expression in each math span. Keep prose outside math spans.
 - Give every symbol a noun and a role. Define each symbol once, where the reader first meets it: inside the sentence for an inline mention, or in one line directly above the first display formula that uses it. Keep the line in the formula's reading order, and switch to one symbol per line when a definition needs an explanatory clause. Do not restate a symbol that an earlier sentence or definition line already made clear.
@@ -23,8 +26,8 @@ The upper layer selects the path for multiple independent concepts. Follow that 
 - State bounds as verbal comparisons. Explain each formula once in plain words without symbols.
 - Use “you” for the reader’s actions and “we” for shared work. Avoid generic “one” and passive wording when the reader acts. Correct misleading terminology at first use.
 - Justify each meaningful derivation step before showing it. Put one meaningful move on each display line, and split long equality chains where the object changes. Mark approximations and assumptions.
-- Prefer verbs to abstract nouns. Open each paragraph with its claim, then support it. State each fact once. Number the moves when the concept takes more than one; the level may drop the numbers. Delete asides, restatements, and footnotes that only decorate. Avoid rhetorical questions that ask the reader to infer a conclusion. Keep lecture questions sparse and purposeful.
-- Name headings for their content. Number them only when useful.
+- Prefer verbs to abstract nouns. Open each paragraph with its claim, then support it. State each fact once. Number the moves when the concept takes more than one; the level may drop the numbers. Delete asides, restatements, and footnotes that only decorate. Ask no question without an immediate answer. A prediction prompt whose answer follows in the next sentence is allowed, because committing to a guess improves later recall. A rhetorical question that never receives an answer is banned. Keep lecture questions sparse and purposeful.
+- Name headings for their content. Number them only when useful. Cross-reference a section by its name and number, never with “as we saw earlier”. Keep one term per concept and one symbol per quantity across the whole book.
 - For a task, produce the requested usable artifact and explain the important steps. Do not expand it into a project or return an avoidable partial result.
 
 ## Teach at the given level
@@ -44,7 +47,7 @@ For `advanced`:
 
 - Use one pass without numbered steps, unless the derivation needs them.
 - Skip the intuition and the concrete opening for an idea only when the `Background` line names that idea as known. Start from the formal statement.
-- Use at most one example per idea. Keep the qualifications and edge cases that matter for the stated goal.
+- Use at most one worked example per idea and skip the faded passes. Keep the qualifications and edge cases that matter for the stated goal.
 - Keep the figures. A position figure or a relation figure locates the idea; it does not count as an example.
 
 Accuracy rules outrank the level. No level removes a symbol definition, a justification for a derivation step, a stated assumption or approximation, or a bound. No level adds filler, repeated explanation, or a section the concept does not need. The level affects the lecture only.
@@ -55,7 +58,7 @@ For a one-off request with no graph, derive the level from the brief the upper l
 
 - For one concept, use an H1 named for the concept.
 - For a one-off multi-concept book, use ordinary Markdown, not a fenced block. Use an H1 for the book or topic, H2 headings for Chapters, and H3 headings for concept Sections. Name each Section after its concept. Follow the supplied book order when it exists.
-- When the answer has chapters, open each chapter with one figure that shows its concepts and how they connect. Place it in the first section of the chapter. A single-concept answer gets no chapter figure.
+- When the answer has chapters, open each chapter with one figure that shows its concepts and how they connect. Place it in the first section of the chapter. That first section also opens with three short parts before the figure: why the chapter exists, what the reader can do at its end, and the order of its sections. Write the opener once, in the first section, and never repeat it in a later section. A single-chapter answer gets no chapter opener. A single-concept answer gets no chapter figure.
 - For a task, title the requested artifact or task. Explain the reason for non-obvious steps.
 - Give the complete answer when it fits. If a platform limit forces continuation, state which chapters are covered and which remain, then wait.
 - Do not quiz, grade, score, or log. You may offer similar practice, but do not impose it.
@@ -64,8 +67,9 @@ For a one-off request with no graph, derive the level from the brief the upper l
 
 The upper layer may hand you an approved concept graph, the relevant supplied material, the teaching brief, and one destination file per concept. Then write one complete draft per concept at the given level, under the same writing standard. A draft is prepared teaching material, not teaching.
 
-- Cover the concept completely at the given level: the teaching explanation, its relationships, and useful examples. Write no assessment questions, no answers, and no grading criteria. Actual questions stay unseen.
-- In a chapter batch, the first draft of the chapter opens with the chapter figure, written under the Course's `diagrams/`; the destination list covers lectures only. Later drafts in the chapter do not repeat it.
+- Cover the concept completely at the given level: the teaching explanation, its relationships, and useful examples.
+- End the draft with one practice block: two to four exercises, each with a reasoned answer. Mark the block as ungraded practice. These items are never reused as graded questions and never count as evidence. Write no grading criteria.
+- In a chapter batch, the first draft of the chapter opens with the chapter opener and the chapter figure, written under the Course's `diagrams/`; the destination list covers lectures only. Later drafts in the chapter do not repeat either.
 - Write only the destinations you are given, and one Chapter per batch when the upper layer splits the work. Never invent a path, and never read or write `graph.md`, `state.md`, `log.md`, `plan.md`, or any other tracker file.
 - Frontmatter is exactly `status: draft` and the concept number. Add no date. The body opens with an H1 named for the concept.
 - Preparation is not teaching. Change no learner state and append nothing to the log.

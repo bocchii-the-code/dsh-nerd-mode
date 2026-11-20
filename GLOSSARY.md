@@ -17,7 +17,7 @@ The switched-on state of one conversation. It sets teaching as the default postu
 _Avoid_: study mode (the former name), tutor mode, mode preset
 
 **Recall Session / 课前回忆**:
-A pre-teaching activity within a `study-plus` session. The learner answers one question about a recently taught relevant concept, then receives ungraded feedback and a brief recap. The answer is not evidence and does not change the learner model or session log.
+A pre-teaching activity within a `study-plus` session. The learner answers one question about a recently taught relevant concept, then receives ungraded feedback and a brief recap. The answer is not evidence and does not change the learner model or session log. It does not control the one-line recap of a skipped prerequisite.
 _Avoid_: recall step, retrieval quiz
 
 **Fork**:
@@ -138,8 +138,12 @@ _Avoid_: ready, next topic, backlog
 The learner overriding the chosen concept. A run of vetoes is a signal that the learning order is wrong.
 
 **Lecture draft**:
-Complete teaching material prepared from an approved concept graph before a Concept cycle. It sits in the Concept's final lecture path, carries `status: draft` and the Concept number, and has no teaching date. It is not evidence that teaching or learning took place.
+Complete teaching material prepared from an approved concept graph before a Concept cycle. It sits in the Concept's final lecture path, carries `status: draft` and the Concept number, and has no teaching date. It ends with a practice block. It is not evidence that teaching or learning took place.
 _Avoid_: Lecture, taught lecture
+
+**Practice block**:
+A short set of exercises, each with a reasoned answer, at the end of a Lecture draft. It is ungraded, is never reused as a graded question, and never counts as evidence.
+_Avoid_: exercise set, homework, quiz
 
 **Archive**:
 The folder `lectures/archive/` inside a Course. It holds the lecture file of a Concept that a graph change removed. The HTML Book never includes it.

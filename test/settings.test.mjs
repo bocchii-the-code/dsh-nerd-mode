@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 
 const { Config, apply } = await import('../lib/index.js')
 const SETTINGS = {
-  recallSessionEnabled: false,
+  recallSessionEnabled: true,
   unseenQuestionCount: 3,
   unseenQuestionType: 'short-answer',
 }
@@ -95,7 +95,7 @@ test('config defaults the section from the bundled file and validates settings',
 
   const config = Config({ section: ' policy ' })
   assert.equal(config.section, ' policy ')
-  assert.equal(config.recallSessionEnabled.get(), false)
+  assert.equal(config.recallSessionEnabled.get(), true)
   assert.equal(config.unseenQuestionCount.get(), 3)
   assert.equal(config.unseenQuestionType.get(), 'short-answer')
 })

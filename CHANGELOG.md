@@ -2,6 +2,28 @@
 
 Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/), newest first.
 
+## [0.6.0] - 2026-11-20
+
+### Added
+
+- A fade rule in the lecture standard: a complete worked example, a partial case with the target step blank, then a case with no help. Advanced lectures keep one example.
+- Every lecture draft ends with an ungraded practice block: two to four exercises with a reasoned answer each. The items never feed the tracker and are never reused as a graded question.
+- A chapter opener in the chapter's first section: why the chapter exists, what the reader can do at its end, and the section order.
+- A coverage and alignment check before graph approval: each chapter scope states an outcome, each outcome has a concept, and each omitted topic gets one line of justification.
+- A prediction prompt is allowed when its answer follows in the next sentence.
+
+### Changed
+
+- Recall Session is on by default. Settings shows `on`, and Restore defaults returns to on.
+- A skipped prerequisite gets one recap line whether Recall Session is on or off. The toggle now controls only the retrieval question.
+- A lecture stops when the reader can perform the outcome without help, not when the model judges the concept complete.
+- Chapters and lectures state a performance at the top, not a topic label.
+- Cross-references name the section, and one term and one symbol are kept across the whole book.
+
+### Fixed
+
+- A draft no longer promises to contain no answers. It carries ungraded practice, while graded items stay unseen.
+
 ## [0.5.2] - 2026-11-13
 
 ### Changed
@@ -10,7 +32,7 @@ Every npm release of `dsh-nerd-mode` gets an entry here. The format follows [Kee
 - A GitHub install updates too: the check reads the official repository at the tracked ref, and the button re-resolves the spec. A pinned ref and a fork are not checked.
 - The check reads both npm and the official GitHub repository. The higher version wins, and the update moves the install source to that channel.
 - The update button installs by running `pnpm add dsh-nerd-mode@<version> --save-exact` in the profile, then asks for a DSH restart.
-- A `github:` install explains that one reinstall in Settings → Plugins switches it to npm. A `link:` install keeps the git note.
+- A `github:` install that finds a newer npm release names npm in the confirmation, and the install switches the profile spec to npm. A `link:` install keeps the git note.
 
 ### Removed
 
