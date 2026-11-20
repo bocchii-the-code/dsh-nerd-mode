@@ -6,7 +6,7 @@ Read the draft contract at `${CLAUDE_SKILL_DIR}/../study/references/draft.md`. I
 
 ## Inputs
 
-- The lecture file paths of one Chapter batch. No other proofreading lane holds them.
+- The lecture file paths of one Chapter batch. No other proofreading agent holds them.
 - The Chapter title and its scope, written as the outcome the Chapter delivers.
 - The concept rows for those files: number, name, one-line definition.
 - The names of the prerequisite concepts outside the Chapter.

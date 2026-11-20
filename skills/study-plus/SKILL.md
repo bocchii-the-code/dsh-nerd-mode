@@ -83,13 +83,13 @@ A wrong order mis-teaches for weeks. Do not skip the approval.
 A Lecture draft is complete teaching material written before any Concept cycle. It is not teaching, it carries no teaching date, and it changes no learner state.
 
 1. Compute one destination per concept: `study/<course>/lectures/<NN>-<concept-slug>.md`, where `NN` is the graph's concept number padded to at least two digits. The list covers every concept, including skipped concepts.
-2. Dispatch one `study-draft` per Chapter when the host has a subagent tool, from `references/agents/draft.md`. Each prompt carries its Chapter's rows, the rows of every prerequisite outside the Chapter, the three brief lines, that Chapter's section of `sources.md`, and an explicit destination list. Copy `Goal`, `Background`, and `Teaching level` from `graph.md` verbatim: do not compress, summarize, or rewrite them. Two agents never share a destination path. Dispatch in waves that respect the host's limit. Without a subagent tool, write each Chapter yourself under `study` and the same contract.
+2. Dispatch one `study-draft` per Chapter when the host has a subagent tool, from `references/agents/draft.md`. Each prompt carries its Chapter's rows, the rows of every prerequisite outside the Chapter, the three brief lines, that Chapter's section of `sources.md`, and an explicit destination list. Copy `Goal`, `Background`, and `Teaching level` from `graph.md` verbatim: do not compress, summarize, or rewrite them. Two agents never share a destination path. Dispatch as many at once as the host allows. Without a subagent tool, write each Chapter yourself under `study` and the same contract.
 3. Check every returned file: path, `status: draft`, the `concept` number, one H1, coverage of every concept in the Chapter, prerequisite consistency, use of the supplied material, the chapter opener in the Chapter's first draft, the practice block with a reasoned answer for each item, and any contradiction across Chapters. Report a contradiction in one line.
 4. Keep a valid existing draft or dated Lecture at a destination. Report an occupied or unrecognized target and ask the learner how to resolve it instead of overwriting.
 5. Collect every figure request from the draft reports and dispatch `study-figure` once from `references/agents/figure.md`, with the Course's `diagrams/` root. Every figure a draft names exists at its path, or the report names the missing figure in one line.
 6. Dispatch one `study-proofread` per Chapter batch, in parallel, with disjoint file lists, from `references/agents/proofread.md`. It fixes typos, punctuation, term spelling, and format in place, and reports coverage gaps, prerequisite conflicts, and missing practice blocks.
 7. After proofreading, dispatch one `study-consistency` over the whole Book from `references/agents/consistency.md`. It writes no file and reports each defect with its file and line. A graph change still runs this over the whole Book.
-8. Report the result: written paths, preserved paths, missing drafts, figure paths, proofread fixes, and consistency defects. A failed lane names its Chapter, and you write that Chapter yourself. Never print the drafts in chat. The learner can ask for one by name.
+8. Report the result: written paths, preserved paths, missing drafts, figure paths, proofread fixes, and consistency defects. A failed agent names its Chapter, and you write that Chapter yourself. Never print the drafts in chat. The learner can ask for one by name.
 9. Rebuild the HTML Book from the available material (section 8). A failed build does not block learning.
 
 A partial batch is normal. Completed drafts stay on disk, the Book includes them, the report names the missing ones, and the learner can keep going. When the learner selects a concept with no draft, write that draft before teaching starts. Section 8 shows the draft frontmatter. The draft contract in `study` owns the rest.
@@ -281,7 +281,7 @@ Start every dispatch prompt with this block, copied verbatim:
 In order:
 
 1. No subagent tool: run every step yourself, serially, and say so in the report.
-2. A failed or empty agent: write that Chapter yourself and name the failed lane in the report.
+2. A failed or empty agent: write that Chapter yourself and name the failed agent in the report.
 3. An agent without write access: it returns the complete text for each destination, and you write the files.
 4. An occupied or unrecognized destination: the agent leaves the file alone and reports the path, and you ask the learner how to resolve it.
 

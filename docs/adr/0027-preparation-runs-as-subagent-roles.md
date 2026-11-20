@@ -1,6 +1,6 @@
 # Preparation runs as six subagent roles
 
-Status: accepted, 2026-11-20. The spec asked for ADR 0025. That number and 0026 were taken, so this decision is 0027.
+Status: accepted, 2026-11-20.
 
 One context window carries research, graph building, drafting, figure drawing, proofreading, and the whole-Book review. As the Book grows, the later steps crowd the earlier ones and quality falls.
 

@@ -31,4 +31,3 @@ Draw one SVG for each figure request a draft batch returns. The request sets the
 Start with the header lines, then add these below `Judge`, one per item:
 
 - `Skipped: <figure name> - <reason>` for every request you did not draw, or `Skipped: none`.
-- `Rewrite: <figure name> - <what the draft must change>` when the request cannot agree with the draft.
