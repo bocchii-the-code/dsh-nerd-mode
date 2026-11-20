@@ -28,6 +28,7 @@ A chat lesson ends when the answer arrives. Nothing checks that you understood i
 ## Contents
 
 - [Features](#features)
+- [Screens](#screens)
 - [Install](#install)
 - [Quick start](#quick-start)
 - [Two ways to learn](#two-ways-to-learn)
@@ -50,6 +51,17 @@ A chat lesson ends when the answer arrives. Nothing checks that you understood i
 - **Progress without opening a file.** The Study tab reads the Tracker for this conversation and shows one progress percentage, the previous, current, and next Section, the shaky Concepts, and the three most recent Concept cycles. It never writes.
 - **Lectures you can find again.** The Lectures tab keeps the course picker in the page header, lists only the courses that exist, and marks each lecture as a draft, a dated lecture, or an archived one. The archived lectures fold behind a count.
 - **Your study conversations in one place.** The Study Sessions panel in the left sidebar lists every conversation where Nerd Mode was switched on at least once, in three groups: In-depth, Quick, and Past. Each group folds from its heading, In-depth and Quick start open, Past starts closed, and a click opens that conversation.
+
+## Screens
+
+<p align="center">
+  <img src="assets/study-view.png" width="380" alt="The Study tab: one progress percentage, the previous, current, and next Section, the shaky Concepts, and the three most recent Concept cycles.">
+  <img src="assets/lectures-pane.png" width="380" alt="The Lectures pane: a Course picker, draft and dated lectures, and a folded archive with its count.">
+</p>
+
+<p align="center">
+  <img src="assets/study-sessions.png" width="720" alt="The Study Sessions page: In-depth, Quick, and Past groups, each with a count and rows that show the conversation title, workspace, and time.">
+</p>
 
 ## Install
 

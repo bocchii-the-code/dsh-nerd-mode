@@ -218,3 +218,20 @@ test('every README image is a real SVG with a title and a viewBox', () => {
     }
   }
 })
+
+// The PNG signature, so a renamed or truncated file fails here, not on GitHub.
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
+test('every README screenshot is a real PNG', () => {
+  for (const path of ['README.md', 'README.zh.md']) {
+    const text = read(path)
+    const sources = [...text.matchAll(/src="(assets\/[^"]+\.png)"/g)].map((match) => match[1])
+    assert.ok(sources.length >= 3, `${path} references ${sources.length} screenshots`)
+    for (const source of new Set(sources)) {
+      const file = fileURLToPath(new URL(`../${source}`, import.meta.url))
+      assert.ok(existsSync(file), `${path} points at a missing ${source}`)
+      const head = readFileSync(file).subarray(0, PNG_SIGNATURE.length)
+      assert.deepEqual(head, PNG_SIGNATURE, `${source} is not a PNG`)
+    }
+  }
+})
