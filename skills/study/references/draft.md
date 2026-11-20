@@ -47,10 +47,10 @@ End the draft with one practice block: two to four exercises, each with a reason
 
 When the parent splits the work by Chapter:
 
-- The Chapter's first draft opens with the chapter opener and the chapter figure. Later drafts in that Chapter repeat neither.
+- The Chapter's first draft carries the chapter opener and the chapter figure, both in its first section. Later drafts in that Chapter repeat neither.
 - Write the chapter opener as `../SKILL.md` defines it: why the Chapter exists, what the reader can do at its end, and the order of its sections.
 - Emit a figure request for the chapter figure. Do not write the SVG. The figure role draws every figure after the draft batch.
-- Write one Chapter per batch. Take the Chapter's rows, the rows of every prerequisite outside the Chapter, the three brief lines, and the source note section the parent names.
+- Write one Chapter per batch.
 
 ## Destinations
 

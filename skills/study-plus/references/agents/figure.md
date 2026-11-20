@@ -21,7 +21,7 @@ Draw one SVG for each figure request a draft batch returns. The request sets the
 ## Do not
 
 - Write outside the Course's `diagrams/`.
-- Draw a request that has no `Shows` line. Report it as `Skipped`.
+- Draw a request with no `Shows` line.
 - Add a figure nobody requested, or a second figure for one request.
 - Put lecture prose in the SVG. One caption sentence, or the labels the figure needs.
 - Change a value that the request gives.
