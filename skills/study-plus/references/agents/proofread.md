@@ -37,9 +37,9 @@ A mechanical fix changes form only: `teh` to `the`, `**bold **` to `**bold**`, `
 
 Start with the header block. Add these lines below `Judge`:
 
-- `Fixed: <path> — <count> fixes`, one line per file, or `Fixed: none`.
-- `Coverage: <path>:<line> — <the outcome the Chapter claims and the draft does not teach>` when it occurs.
+- `Fixed: <path> - <count> fixes`, one line per file, or `Fixed: none`.
+- `Coverage: <path>:<line> - <the outcome the Chapter claims and the draft does not teach>` when it occurs.
 
-Put every judgment call in `Judge` as `path:line — defect`, one line each, in this order: a coverage gap against the Chapter scope, a prerequisite conflict, a missing practice block or an item with no reasoned answer, a load-bearing claim with no source, then the one term drift line.
+Put every judgment call in `Judge` as `path:line - defect`, one line each, in this order: a coverage gap against the Chapter scope, a prerequisite conflict, a missing practice block or an item with no reasoned answer, a load-bearing claim with no source, then the one term drift line.
 
-Name the defect, not a repair. Write `03-chain-rule.md:41 — no source for the 0.5% failure rate`, not a suggested citation.
+Name the defect, not a repair. Write `03-chain-rule.md:41 - no source for the 0.5% failure rate`, not a suggested citation.

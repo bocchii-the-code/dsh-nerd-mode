@@ -269,8 +269,8 @@ Start every dispatch prompt with this block, copied verbatim:
 >
 > ```
 > Result: done | partial | blocked
-> Wrote: <path> — <one line per path, or "none">
-> Refused: <path> — <reason per path, or "none">
+> Wrote: <path> - <one line per path, or "none">
+> Refused: <path> - <reason per path, or "none">
 > Judge: <one line per item the parent must decide, or "none">
 > ```
 >

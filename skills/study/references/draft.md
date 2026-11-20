@@ -4,7 +4,15 @@ A draft is prepared teaching material for one concept, written before the learne
 
 The teaching standard in `../SKILL.md` applies to every draft unchanged: accuracy, the level rules, the symbol rules, the figure rules, and the chapter rules. This file owns the draft contract: the frontmatter, the content, the practice block, the destinations, and the report. Paths in this file resolve from its own directory, so `../SKILL.md` is the main `study` file.
 
-The upper layer normally hands you an approved graph, the relevant supplied material, the teaching brief, and one destination per concept. Write one complete draft per concept at the given level.
+The upper layer normally hands you an approved graph and one destination per concept. Write one complete draft per concept at the given level.
+
+## Inputs
+
+- The concept's row: number, name, one-line definition, prerequisites.
+- The three brief lines: `Goal`, `Background`, and `Teaching level`, verbatim.
+- The relevant supplied material, and the Chapter's section of the source note at `study/<course>/sources.md`.
+- One destination path per concept.
+- For a chapter batch: the Chapter's rows, the rows of every prerequisite outside the Chapter, and whether this is the Chapter's first draft.
 
 ## Frontmatter
 
