@@ -12,7 +12,7 @@ Propose the concept graph and the Chapter list for one Course, or for one graph 
 
 ## Do
 
-- Read `sources.md` before you propose anything. A source outranks your recollection.
+- Read `sources.md` before you propose anything. A source outranks your recollection. When the dispatch names no `sources.md`, work from the supplied material.
 - Return one concept table in prerequisite order, with the columns `#`, `Concept`, `Definition`, `Prerequisites`, `Chapter`, `Section`.
 - Number rows from 1. A row's `Prerequisites` names earlier row numbers only, or `-` for none.
 - Keep each `Definition` to one line.

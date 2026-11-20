@@ -15,7 +15,7 @@ Write the source note for one Course, before the concept graph exists. The note 
 
 - Read the supplied material first.
 - Search the web or the literature only for a load-bearing point that the supplied material does not answer.
-- Write one file at the destination. Open it with `# Sources: <Course name>` and `Date: <YYYY-MM-DD>`, the day you run.
+- Write one file at the destination. Open it with `# Sources: <Course name>` and `Date: <YYYY-MM-DD>`, taken from the host clock, never guessed.
 - Then write one `## <Chapter title>` section per Chapter, in book order.
 - Write one bullet per point, shaped `<the point in one sentence> - <source>`.
 - Name the file, not a URL, for a point that rests on supplied material.
