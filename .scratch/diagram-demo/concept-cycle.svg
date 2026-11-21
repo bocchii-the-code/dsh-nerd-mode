@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" width="720" height="260" role="img" aria-label="One concept cycle: recall, teach, unseen questions, teach-back, record, then the next concept">
+  <style>
+    .panel { fill: #ffffff; stroke: #e2e8f0; }
+    .title { fill: #0f172a; }
+    .label { fill: #1e293b; }
+    .sub { fill: #475569; }
+    .note { fill: #64748b; }
+    .wire { stroke: #94a3b8; }
+    .head { fill: #94a3b8; }
+    .b1 { fill: #2563eb; fill-opacity: .08; stroke: #2563eb; }
+    .b2 { fill: #b45309; fill-opacity: .08; stroke: #b45309; }
+    .b3 { fill: #15803d; fill-opacity: .08; stroke: #15803d; }
+    .b4 { fill: #6d28d9; fill-opacity: .08; stroke: #6d28d9; }
+    @media (prefers-color-scheme: dark) {
+      .panel { fill: #17191d; stroke: #2c313a; }
+      .title { fill: #f1f3f7; }
+      .label { fill: #e6e9ef; }
+      .sub { fill: #a6afbd; }
+      .note { fill: #8a94a3; }
+      .wire { stroke: #5b6675; }
+      .b1 { fill: #4c8dff; fill-opacity: .12; stroke: #4c8dff; }
+      .b2 { fill: #d98324; fill-opacity: .12; stroke: #d98324; }
+      .b3 { fill: #3fa86a; fill-opacity: .12; stroke: #3fa86a; }
+      .b4 { fill: #a78bfa; fill-opacity: .12; stroke: #a78bfa; }
+      .head { fill: #5b6675; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
+    </marker>
+  </defs>
+  <rect class="panel" x="0.75" y="0.75" width="718.5" height="258.5" rx="12" stroke-width="1.5"/>
+  <text class="title" x="28" y="40" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" font-weight="600">One concept cycle</text>
+
+  <g font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13">
+    <rect class="panel" x="28" y="80" width="112" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="84" y="105" text-anchor="middle" font-weight="600">Recall</text>
+    <text class="sub" x="84" y="124" text-anchor="middle">optional</text>
+
+    <rect class="panel" x="164" y="80" width="112" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="220" y="105" text-anchor="middle" font-weight="600">Teach</text>
+    <text class="sub" x="220" y="124" text-anchor="middle">one idea</text>
+
+    <rect class="b1" x="300" y="80" width="112" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="356" y="105" text-anchor="middle" font-weight="600">Questions</text>
+    <text class="sub" x="356" y="124" text-anchor="middle">unseen</text>
+
+    <rect class="b1" x="436" y="80" width="112" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="492" y="105" text-anchor="middle" font-weight="600">Teach-back</text>
+    <text class="sub" x="492" y="124" text-anchor="middle">explain</text>
+
+    <rect class="b2" x="572" y="80" width="112" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="628" y="105" text-anchor="middle" font-weight="600">Record</text>
+    <text class="sub" x="628" y="124" text-anchor="middle">dated</text>
+  </g>
+
+  <g class="wire" stroke-width="1.5" fill="none">
+    <line x1="142" y1="110" x2="160" y2="110" marker-end="url(#arrow)"/>
+    <line x1="278" y1="110" x2="296" y2="110" marker-end="url(#arrow)"/>
+    <line x1="414" y1="110" x2="432" y2="110" marker-end="url(#arrow)"/>
+    <line x1="550" y1="110" x2="568" y2="110" marker-end="url(#arrow)"/>
+    <path d="M628 140 C628 196 84 196 84 140" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  </g>
+  <text class="note" x="356" y="214" text-anchor="middle" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">next concept</text>
+</svg>

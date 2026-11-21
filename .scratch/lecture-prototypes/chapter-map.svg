@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 230" width="720" height="230" role="img" aria-label="Chapter map: softmax feeds cross-entropy per prefix, which is followed by perplexity and KL divergence">
+  <style>
+    .panel { fill: #ffffff; stroke: #e2e8f0; }
+    .title { fill: #0f172a; }
+    .label { fill: #1e293b; }
+    .sub { fill: #475569; }
+    .note { fill: #64748b; }
+    .wire { stroke: #94a3b8; }
+    .head { fill: #94a3b8; }
+    .b1 { fill: #2563eb; fill-opacity: .08; stroke: #2563eb; }
+    .b2 { fill: #b45309; fill-opacity: .08; stroke: #b45309; }
+    .b3 { fill: #15803d; fill-opacity: .08; stroke: #15803d; }
+    .b4 { fill: #6d28d9; fill-opacity: .08; stroke: #6d28d9; }
+    @media (prefers-color-scheme: dark) {
+      .panel { fill: #17191d; stroke: #2c313a; }
+      .title { fill: #f1f3f7; }
+      .label { fill: #e6e9ef; }
+      .sub { fill: #a6afbd; }
+      .note { fill: #8a94a3; }
+      .wire { stroke: #5b6675; }
+      .b1 { fill: #4c8dff; fill-opacity: .12; stroke: #4c8dff; }
+      .b2 { fill: #d98324; fill-opacity: .12; stroke: #d98324; }
+      .b3 { fill: #3fa86a; fill-opacity: .12; stroke: #3fa86a; }
+      .b4 { fill: #a78bfa; fill-opacity: .12; stroke: #a78bfa; }
+      .head { fill: #5b6675; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
+    </marker>
+  </defs>
+  <rect class="panel" x="0.75" y="0.75" width="718.5" height="228.5" rx="12" stroke-width="1.5"/>
+  <text class="title" x="28" y="40" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" font-weight="600">Where this section sits</text>
+
+  <g font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13">
+    <rect class="b3" x="28" y="80" width="150" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="103" y="105" text-anchor="middle" font-weight="600">softmax</text>
+    <text class="sub" x="103" y="124" text-anchor="middle">scores to p</text>
+
+    <rect class="b1" x="200" y="80" width="150" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="275" y="105" text-anchor="middle" font-weight="600">cross-entropy</text>
+    <text class="sub" x="275" y="124" text-anchor="middle">per prefix</text>
+
+    <rect class="b3" x="372" y="80" width="150" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="447" y="105" text-anchor="middle" font-weight="600">perplexity</text>
+    <text class="sub" x="447" y="124" text-anchor="middle">exp of NLL</text>
+
+    <rect class="b3" x="544" y="80" width="150" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="619" y="105" text-anchor="middle" font-weight="600">KL</text>
+    <text class="sub" x="619" y="124" text-anchor="middle">gap to entropy</text>
+
+    <line class="wire" x1="178" y1="110" x2="196" y2="110" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line class="wire" x1="350" y1="110" x2="368" y2="110" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line class="wire" x1="522" y1="110" x2="540" y2="110" stroke-width="1.5" marker-end="url(#arrow)"/>
+  </g>
+
+  <text class="note" x="28" y="180" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">Left: prerequisites. Right: next steps. The highlighted box is this section.</text>
+</svg>

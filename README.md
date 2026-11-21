@@ -226,7 +226,7 @@ Change the defaults under Settings → Nerd Mode.
 
 A four-option question appears as a card with one correct choice. The guide asks a short-answer question in the conversation. Save applies to the next session, Cancel discards a draft, and Restore defaults returns to recall on, 3 questions, short answer. A preference stated inside one `/study-plus` request wins for that session only and does not update the profile.
 
-The About group at the bottom shows the installed version and the newer of the npm and official GitHub versions. Its button installs that version from its channel by running pnpm in the profile, then asks you to restart DSH. A pinned GitHub ref and a fork are not checked. A `link:` install is updated with git. The whole page follows the DSH interface language.
+The About group at the bottom shows the installed version and the newer of the npm and official GitHub versions. Its button installs that version from its channel by running pnpm in the profile, so it needs a pnpm profile, then asks you to restart DSH. An update can move the install to the other channel, and the confirmation names it. A pinned GitHub ref and a fork are not checked. A `link:` copy gets a note to update it with git, because the plugin never runs git. The whole page follows the DSH interface language.
 
 ## How it fits into dsh
 
@@ -239,6 +239,7 @@ package.json
 │     │     ├── session projection — on/off state, folded from the session log
 │     │     ├── prompt section — assets/section.md at order 550, while on
 │     │     ├── /nerd-mode — the switch
+│     │     ├── GET|POST /api/update — version check and a pnpm install
 │     │     └── GET /api/study-sessions — the read-only session index
 │     ├── study-plus-skills — skills/ as a filesystem skill provider
 │     └── goal packages — disabled
@@ -252,6 +253,8 @@ package.json
 **Settings** reach the model as a short defaults block appended to that section, only during a tracked session. They never change the tool set.
 
 **Session history** is a second, read-only store. `lib/study-sessions.js` scans the conversation logs in chunks, keys each file by its size and modification time, and writes `~/.dsh/study-sessions-index.json`, which sits outside every workspace. The panel reads it through one route that answers only GET, refuses a request with no session cookie (401) and a foreign host or origin (403).
+
+**Updates** run from a second route. `GET` reads the profile manifest and asks npm and the official GitHub repository for their newest version, then keeps the higher one. `POST` runs `pnpm add` in the profile with a fixed argument list, accepts only a plain `major.minor.patch` npm version, and allows one run at a time. This route sits behind the same connection fence and is the plugin's only write path.
 
 **Patch scope** covers the whole profile. It loads `skills/` with a `!!js` expression, so review patch changes as host-process code. It also disables the three goal packages, because the built-in goal tool turns one study answer into an auto-continuing run.
 
@@ -293,7 +296,7 @@ npm run check
 
 | Path | Holds |
 |---|---|
-| `lib/index.js` | plugin entry: projection, prompt section, command, session defaults, session index route |
+| `lib/index.js` | plugin entry: projection, prompt section, command, session defaults, session index and update routes |
 | `lib/fold.js` | the state fold and its constants |
 | `lib/study-sessions.js` | the session history scan and its index |
 | `client.js` | composer pill, Study and Lectures tabs, Study Sessions panel, Settings section |

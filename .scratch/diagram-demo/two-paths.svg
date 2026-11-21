@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" role="img" aria-label="Two study paths: one-off study stays in chat; tracked study-plus writes a graph, state, log, and dated lectures">
+  <style>
+    .panel { fill: #ffffff; stroke: #e2e8f0; }
+    .title { fill: #0f172a; }
+    .label { fill: #1e293b; }
+    .sub { fill: #475569; }
+    .note { fill: #64748b; }
+    .wire { stroke: #94a3b8; }
+    .head { fill: #94a3b8; }
+    .b1 { fill: #2563eb; fill-opacity: .08; stroke: #2563eb; }
+    .b2 { fill: #b45309; fill-opacity: .08; stroke: #b45309; }
+    .b3 { fill: #15803d; fill-opacity: .08; stroke: #15803d; }
+    .b4 { fill: #6d28d9; fill-opacity: .08; stroke: #6d28d9; }
+    @media (prefers-color-scheme: dark) {
+      .panel { fill: #17191d; stroke: #2c313a; }
+      .title { fill: #f1f3f7; }
+      .label { fill: #e6e9ef; }
+      .sub { fill: #a6afbd; }
+      .note { fill: #8a94a3; }
+      .wire { stroke: #5b6675; }
+      .b1 { fill: #4c8dff; fill-opacity: .12; stroke: #4c8dff; }
+      .b2 { fill: #d98324; fill-opacity: .12; stroke: #d98324; }
+      .b3 { fill: #3fa86a; fill-opacity: .12; stroke: #3fa86a; }
+      .b4 { fill: #a78bfa; fill-opacity: .12; stroke: #a78bfa; }
+      .head { fill: #5b6675; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
+    </marker>
+  </defs>
+  <rect class="panel" x="0.75" y="0.75" width="718.5" height="298.5" rx="12" stroke-width="1.5"/>
+  <text class="title" x="28" y="40" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" font-weight="600">Two study paths</text>
+
+  <g font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13">
+    <rect class="b1" x="160" y="72" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="285" y="99" text-anchor="middle" font-weight="600">One-off /study</text>
+
+    <rect class="b2" x="420" y="72" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="545" y="99" text-anchor="middle" font-weight="600">Tracked /study-plus</text>
+
+    <text class="sub" x="28" y="159">Use it for</text>
+    <rect class="b1" x="160" y="132" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="285" y="159" text-anchor="middle">one concept or task</text>
+    <rect class="b2" x="420" y="132" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="545" y="159" text-anchor="middle">one concept per session</text>
+
+    <text class="sub" x="28" y="215">Writes</text>
+    <rect class="b1" x="160" y="188" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="285" y="215" text-anchor="middle">chat only</text>
+    <rect class="b2" x="420" y="188" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="545" y="215" text-anchor="middle">graph, state, log, lectures</text>
+
+    <text class="sub" x="28" y="271">Remembers</text>
+    <rect class="b1" x="160" y="244" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="285" y="271" text-anchor="middle">nothing</text>
+    <rect class="b2" x="420" y="244" width="250" height="44" rx="8" stroke-width="1.5"/>
+    <text class="label" x="545" y="271" text-anchor="middle">a dated record</text>
+  </g>
+</svg>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 290" width="720" height="290" role="img" aria-label="A prefix passes through the model to a next-token distribution; the target token's probability gives the loss at that position">
+  <style>
+    .panel { fill: #ffffff; stroke: #e2e8f0; }
+    .title { fill: #0f172a; }
+    .label { fill: #1e293b; }
+    .sub { fill: #475569; }
+    .note { fill: #64748b; }
+    .wire { stroke: #94a3b8; }
+    .head { fill: #94a3b8; }
+    .b1 { fill: #2563eb; fill-opacity: .08; stroke: #2563eb; }
+    .b2 { fill: #b45309; fill-opacity: .08; stroke: #b45309; }
+    .b3 { fill: #15803d; fill-opacity: .08; stroke: #15803d; }
+    .b4 { fill: #6d28d9; fill-opacity: .08; stroke: #6d28d9; }
+    @media (prefers-color-scheme: dark) {
+      .panel { fill: #17191d; stroke: #2c313a; }
+      .title { fill: #f1f3f7; }
+      .label { fill: #e6e9ef; }
+      .sub { fill: #a6afbd; }
+      .note { fill: #8a94a3; }
+      .wire { stroke: #5b6675; }
+      .b1 { fill: #4c8dff; fill-opacity: .12; stroke: #4c8dff; }
+      .b2 { fill: #d98324; fill-opacity: .12; stroke: #d98324; }
+      .b3 { fill: #3fa86a; fill-opacity: .12; stroke: #3fa86a; }
+      .b4 { fill: #a78bfa; fill-opacity: .12; stroke: #a78bfa; }
+      .head { fill: #5b6675; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
+    </marker>
+  </defs>
+  <rect class="panel" x="0.75" y="0.75" width="718.5" height="288.5" rx="12" stroke-width="1.5"/>
+  <text class="title" x="28" y="40" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" font-weight="600">One position, four steps</text>
+
+  <g font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13">
+    <rect class="b1" x="28" y="76" width="180" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="118" y="101" text-anchor="middle" font-weight="600">prefix C</text>
+    <text class="sub" x="118" y="120" text-anchor="middle">"The cat sat"</text>
+
+    <rect class="b1" x="270" y="76" width="180" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="360" y="101" text-anchor="middle" font-weight="600">model</text>
+    <text class="sub" x="360" y="120" text-anchor="middle">pθ for every token</text>
+
+    <rect class="b1" x="512" y="76" width="180" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="602" y="101" text-anchor="middle" font-weight="600">distribution</text>
+    <text class="sub" x="602" y="120" text-anchor="middle">cat .40 · mat .20</text>
+
+    <line class="wire" x1="208" y1="106" x2="266" y2="106" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line class="wire" x1="450" y1="106" x2="508" y2="106" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line class="wire" x1="602" y1="136" x2="602" y2="172" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <rect class="b2" x="28" y="176" width="664" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="360" y="201" text-anchor="middle" font-weight="600">target: cat</text>
+    <text class="sub" x="360" y="220" text-anchor="middle">loss = −ln 0.40 = 0.9163</text>
+  </g>
+
+  <text class="note" x="28" y="266" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">Only the target enters the loss. The other mass still shapes p(cat).</text>
+</svg>

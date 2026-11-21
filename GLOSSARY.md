@@ -76,6 +76,10 @@ _Avoid_: learner level, proficiency, difficulty
 The three `graph.md` lines passed verbatim to `study`: `Goal`, `Background`, and `Teaching level`. It is context for writing a lecture, not a record of what the learner knows.
 _Avoid_: learner profile, learner model, settings
 
+**Source note** (调研笔记):
+The research output for one Course, saved as `study/<course>/sources.md`. It lists sourced points per Chapter and names where each load-bearing claim comes from. It is working material, is never evidence, and never appears in the Book.
+_Avoid_: research file, bibliography, reading list
+
 **Learner model**:
 A durable record of what one learner has demonstrated, one state per concept, used to decide what to teach next.
 _Avoid_: learner profile, memory, progress tracker
@@ -145,6 +149,14 @@ _Avoid_: Lecture, taught lecture
 A short set of exercises, each with a reasoned answer, at the end of a Lecture draft. It is ungraded, is never reused as a graded question, and never counts as evidence.
 _Avoid_: exercise set, homework, quiz
 
+**Proofread** (逐篇校对):
+A review pass over one written file. It fixes typos, punctuation, term spelling, and format in place, and reports judgment calls such as incomplete coverage, a prerequisite conflict, or a missing example. It changes no learner state.
+_Avoid_: spell check, edit pass, QA
+
+**Consistency review** (跨章审校):
+A read-only pass over the whole Book after per-file proofreading. It looks for prerequisite-order contradictions, repeated examples, term drift, and claims that conflict across Chapters. It reports defects and writes nothing.
+_Avoid_: global check, final review, cross-check
+
 **Archive**:
 The folder `lectures/archive/` inside a Course. It holds the lecture file of a Concept that a graph change removed. The HTML Book never includes it.
 _Avoid_: trash, backup
@@ -160,6 +172,10 @@ _Avoid_: notes panel, docs browser, file manager
 **Figure**:
 One SVG image that shows one idea, used in a lesson or lecture.
 _Avoid_: chart, picture
+
+**Figure request** (图单):
+A list a draft writer emits for one Chapter. Each entry names the figure file, what the figure shows, and the data points it plots. The figure agent renders every entry to `diagrams/` and reports the paths. It is a work order, not lecture text.
+_Avoid_: figure list, image spec, chart plan
 
 **Symbol definition** (符号定义):
 The line directly above a display formula that gives each symbol the formula introduces a noun and a role. A symbol gets one definition, at the place the reader first meets it, and later formulas reuse it.

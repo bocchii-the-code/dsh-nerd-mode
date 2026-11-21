@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 280" width="720" height="280" role="img" aria-label="Concept status: new is taught into in_process; a miss makes it shaky, a pass makes it fluent; a fluent concept drops back to shaky when a dependent fails">
+  <style>
+    .panel { fill: #ffffff; stroke: #e2e8f0; }
+    .title { fill: #0f172a; }
+    .label { fill: #1e293b; }
+    .sub { fill: #475569; }
+    .note { fill: #64748b; }
+    .wire { stroke: #94a3b8; }
+    .head { fill: #94a3b8; }
+    .b1 { fill: #2563eb; fill-opacity: .08; stroke: #2563eb; }
+    .b2 { fill: #b45309; fill-opacity: .08; stroke: #b45309; }
+    .b3 { fill: #15803d; fill-opacity: .08; stroke: #15803d; }
+    .b4 { fill: #6d28d9; fill-opacity: .08; stroke: #6d28d9; }
+    @media (prefers-color-scheme: dark) {
+      .panel { fill: #17191d; stroke: #2c313a; }
+      .title { fill: #f1f3f7; }
+      .label { fill: #e6e9ef; }
+      .sub { fill: #a6afbd; }
+      .note { fill: #8a94a3; }
+      .wire { stroke: #5b6675; }
+      .b1 { fill: #4c8dff; fill-opacity: .12; stroke: #4c8dff; }
+      .b2 { fill: #d98324; fill-opacity: .12; stroke: #d98324; }
+      .b3 { fill: #3fa86a; fill-opacity: .12; stroke: #3fa86a; }
+      .b4 { fill: #a78bfa; fill-opacity: .12; stroke: #a78bfa; }
+      .head { fill: #5b6675; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
+    </marker>
+  </defs>
+  <rect class="panel" x="0.75" y="0.75" width="718.5" height="278.5" rx="12" stroke-width="1.5"/>
+  <text class="title" x="28" y="40" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" font-weight="600">Concept status</text>
+
+  <g font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13">
+    <rect class="panel" x="28" y="50" width="160" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="108" y="75" text-anchor="middle" font-weight="600">new</text>
+    <text class="sub" x="108" y="94" text-anchor="middle">no evidence</text>
+
+    <rect class="b2" x="28" y="150" width="160" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="108" y="175" text-anchor="middle" font-weight="600">in_process</text>
+    <text class="sub" x="108" y="194" text-anchor="middle">teaching started</text>
+
+    <rect class="b4" x="270" y="50" width="180" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="360" y="75" text-anchor="middle" font-weight="600">shaky</text>
+    <text class="sub" x="360" y="94" text-anchor="middle">a miss</text>
+
+    <rect class="b3" x="270" y="150" width="180" height="60" rx="8" stroke-width="1.5"/>
+    <text class="label" x="360" y="175" text-anchor="middle" font-weight="600">fluent</text>
+    <text class="sub" x="360" y="194" text-anchor="middle">a pass</text>
+  </g>
+
+  <g class="wire" stroke-width="1.5" fill="none">
+    <line x1="108" y1="112" x2="108" y2="146" marker-end="url(#arrow)"/>
+    <line x1="190" y1="162" x2="266" y2="96" marker-end="url(#arrow)"/>
+    <line x1="190" y1="180" x2="266" y2="180" marker-end="url(#arrow)"/>
+    <line x1="360" y1="148" x2="360" y2="114" marker-end="url(#arrow)"/>
+  </g>
+
+  <text class="note" x="120" y="132" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">teach</text>
+  <text class="note" x="196" y="128" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">miss</text>
+  <text class="note" x="228" y="200" text-anchor="middle" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">pass</text>
+  <text class="note" x="372" y="132" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12">dependent fails</text>
+</svg>

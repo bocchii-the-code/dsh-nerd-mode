@@ -226,7 +226,7 @@ HTML 书页会在每次批量写稿和每节课后刷新，每节一页，还没
 
 四选一以卡片出现，四个选项里只有一个对；简答直接在对话里问。保存从下一节课开始生效，取消只丢草稿，恢复默认回到开启、3 题、简答。在一次 `/study-plus` 请求里明确说出的偏好，只对那一次会话生效，不会改 profile。
 
-底部的「关于」显示已安装版本，以及 npm 和官方 GitHub 中较高的版本。点按钮会从那个渠道运行 pnpm 安装，然后提示重启 DSH。固定的 GitHub ref 和 fork 不检查。`link:` 安装用 git 更新。整页文案跟随 DSH 界面语言。
+底部的「关于」显示已安装版本，以及 npm 和官方 GitHub 中较高的版本。点按钮会用 pnpm 从那个渠道安装，因此需要 pnpm profile，然后提示重启 DSH。更新可能把安装源换到另一个渠道，确认框会写明是哪个。固定的 GitHub ref 和 fork 不检查。`link:` 副本只会看到一句提示，让你自己用 git 更新，插件从不执行 git。整页文案跟随 DSH 界面语言。
 
 ## 它怎么接进 dsh
 
@@ -239,6 +239,7 @@ package.json
 │     │     ├── session projection — 开关状态，从会话日志折叠出来
 │     │     ├── prompt section — assets/section.md，顺序 550，只在开着时注入
 │     │     ├── /nerd-mode — 开关
+│     │     ├── GET|POST /api/update — 版本检查与 pnpm 安装
 │     │     └── GET /api/study-sessions — 只读的学习会话索引
 │     ├── study-plus-skills — skills/ 作为文件系统技能来源
 │     └── goal packages — 已禁用
@@ -252,6 +253,8 @@ package.json
 **设置**只在带记录的会话里，以一小段默认值附在那段提示后面。它们从不改变工具目录。
 
 **会话历史**是第二份只读记录。`lib/study-sessions.js` 分块扫描会话日志，按文件大小和修改时间记账，写到 `~/.dsh/study-sessions-index.json`，这个文件在每个工作区之外。面板通过一条路由读它：只接受 GET，没有会话 cookie 的请求返回 401，主机名或来源不对返回 403。
+
+**更新**走第二条路由。`GET` 读 profile 清单，同时问 npm 和官方 GitHub 仓库的最新版本，取较高的一个。`POST` 在 profile 里用固定参数跑 `pnpm add`，npm 版本必须先匹配 `major.minor.patch`，同一时间只允许一次安装。这条路和会话索引共用同一道连接校验，也是插件唯一会写 profile 的路径。
 
 **补丁范围**覆盖整个 profile。补丁用 `!!js` 表达式加载 `skills/`，改之前要按宿主进程代码来审。补丁还禁用了三个 goal 包，因为内置的 goal 工具会把一次讲解变成自动续跑的循环。
 
@@ -293,7 +296,7 @@ npm run check
 
 | 路径 | 内容 |
 |---|---|
-| `lib/index.js` | 插件入口：投影、提示段落、命令、会话默认值、会话索引路由 |
+| `lib/index.js` | 插件入口：投影、提示段落、命令、会话默认值、会话索引与更新路由 |
 | `lib/fold.js` | 状态折叠与常量 |
 | `lib/study-sessions.js` | 会话历史扫描与索引 |
 | `client.js` | 输入框胶囊、Study 与 Lectures 标签页、Study Sessions 面板、设置页 |
